@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth import AgentRevokedError, AgentSession
+from agentauth.identity import AgentSession
+from agentauth.identity.errors import AgentRevokedError
 
 
 # --------------------------------------------------------------------------- #

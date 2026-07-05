@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import common
 
-from agentauth import AgentRevokedError
+from agentauth.identity.errors import AgentRevokedError
 
 
 def main() -> None:

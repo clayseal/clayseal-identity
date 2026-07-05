@@ -10,6 +10,10 @@ pip install -e ".[dev]"
 python examples/01_quickstart.py
 ```
 
+```python
+from agentauth.identity import AgentAuth
+```
+
 ## Run identity service
 
 ```bash
