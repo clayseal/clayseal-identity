@@ -121,7 +121,7 @@ class AgentSession:
         attested identity. Requires ``pip install agentauth-receipts``."""
         try:
             from agentauth.receipts import AgentWrapper
-            from agentauth.receipts.authority_binding import AuthorityBinding
+            from agentauth.core.authority_binding import AuthorityBinding
         except ImportError as exc:
             raise ImportError(
                 "AgentSession.wrap() requires the receipts layer. "
