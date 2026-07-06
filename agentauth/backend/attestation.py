@@ -30,6 +30,7 @@ from datetime import datetime
 
 import jwt
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .errors import AttestationDeniedError
@@ -95,27 +96,31 @@ def record_attestation_use(
     jti: str,
     expires_at: datetime,
 ) -> None:
-    """Reject attestation documents that have already minted a credential."""
-    existing = db.scalar(
-        select(AttestationUse).where(
-            AttestationUse.customer_id == customer_id,
-            AttestationUse.jti == jti,
-        )
-    )
-    if existing is not None:
+    """Reject attestation documents that have already minted a credential.
+
+    The one-time guarantee is enforced by the DB's UNIQUE (customer_id, jti):
+    we insert-and-catch rather than select-then-insert so two concurrent
+    identify() calls with the same document can't both slip through the gap
+    between a SELECT and an INSERT on Postgres. The insert runs inside a
+    SAVEPOINT so a duplicate rolls back only this statement, leaving the caller's
+    transaction usable to raise a clean replay error.
+    """
+    try:
+        with db.begin_nested():
+            db.add(
+                AttestationUse(
+                    customer_id=customer_id,
+                    jti=jti,
+                    expires_at=expires_at,
+                )
+            )
+            db.flush()
+    except IntegrityError as exc:
         raise AttestationDeniedError(
             "Attestation document has already been used to mint a credential.",
             suggestion="Fetch a fresh attestation document from the node agent and call identify() again.",
             attestation_jti=jti,
-        )
-    db.add(
-        AttestationUse(
-            customer_id=customer_id,
-            jti=jti,
-            expires_at=expires_at,
-        )
-    )
-    db.flush()
+        ) from exc
 
 
 # --------------------------------------------------------------------------- #

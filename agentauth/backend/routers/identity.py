@@ -1,7 +1,7 @@
 """HTTP surface for the Identity Service."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,7 @@ from .. import capabilities as cap_service
 from .. import identity as identity_service
 from ..api_keys import generate_api_key
 from ..db import get_db
-from ..deps import get_current_customer, verify_mtls_binding
+from ..deps import get_current_customer, require_admin, verify_mtls_binding
 from ..errors import (
     AgentNotFoundError,
     InvalidTokenError,
@@ -59,9 +59,19 @@ def _credential_out(db: Session, agent: Agent, token: str) -> CredentialOut:
     )
 
 
-@router.post("/customers", response_model=CustomerOut, status_code=201)
+@router.post(
+    "/customers",
+    response_model=CustomerOut,
+    status_code=201,
+    dependencies=[Depends(require_admin)],
+)
 def create_customer(body: CustomerCreate, db: Session = Depends(get_db)) -> CustomerOut:
-    """Sign up a tenant. Returns the API key (shown once) and provisions a key."""
+    """Sign up a tenant. Returns the API key (shown once) and provisions a key.
+
+    Admin-gated: requires ``X-Admin-Key`` when ``AGENTAUTH_ADMIN_API_KEY`` is set
+    (always required in production). The endpoint also does RSA keygen, so it is
+    additionally subject to the stricter mutating rate-limit bucket.
+    """
     api_key, api_key_lookup, api_key_hash = generate_api_key()
     customer = Customer(
         id=new_id(),
@@ -242,13 +252,20 @@ def list_agents(
     db: Session = Depends(get_db),
     status: str | None = None,
     agent_type: str | None = None,
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
 ) -> list[AgentOut]:
+    """List a tenant's agents (newest first), paginated.
+
+    ``limit`` caps a page at 1000 rows so a tenant with a large history can't
+    force an unbounded result set; use ``offset`` to page through.
+    """
     stmt = select(Agent).where(Agent.customer_id == customer.id)
     if status:
         stmt = stmt.where(Agent.status == status)
     if agent_type:
         stmt = stmt.where(Agent.agent_type == agent_type)
-    stmt = stmt.order_by(Agent.created_at.desc())
+    stmt = stmt.order_by(Agent.created_at.desc()).limit(limit).offset(offset)
     return [AgentOut.model_validate(a) for a in db.scalars(stmt).all()]
 
 

@@ -6,6 +6,12 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+# Upper bound on a single attestation document (a signed JWT of node + workload
+# evidence is a few KB at most). This is a per-field guard against a pathological
+# payload inflating RSA-verify/parse work; a global request body-size limit still
+# belongs at the edge (ALB/API gateway / uvicorn --limit-request-*).
+MAX_ATTESTATION_DOCUMENT_CHARS = 16 * 1024
+
 
 # --- Customers ------------------------------------------------------------- #
 class CustomerCreate(BaseModel):
@@ -106,7 +112,9 @@ class IdentifyRequest(BaseModel):
     agent_type and scopes are NOT self-declared -- they come from the matched
     registration entry."""
 
-    attestation_document: str = Field(..., min_length=1)
+    attestation_document: str = Field(
+        ..., min_length=1, max_length=MAX_ATTESTATION_DOCUMENT_CHARS
+    )
     ttl_seconds: int | None = None
     # JOSE typ for the minted JWT-SVID. "wit+jwt" opts into WIMSE Workload
     # Identity Token framing (cnf-bound, never bearer); default is unchanged.

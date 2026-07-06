@@ -51,7 +51,7 @@ from biscuit_auth import (
     PublicKey,
     Rule,
 )
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from agentauth.workload_keys import (
@@ -280,7 +280,29 @@ def issue_server_challenge(db: Session, customer_id: str) -> str:
 
 
 def consume_server_challenge(db: Session, customer_id: str, challenge: str) -> str | None:
-    """Consume a server-issued challenge or return a denial reason."""
+    """Consume a server-issued challenge or return a denial reason.
+
+    The claim is a single conditional ``UPDATE ... WHERE used_at IS NULL`` so two
+    concurrent requests presenting the same challenge can't both win: exactly one
+    UPDATE flips ``used_at`` and reports rowcount 1; the loser sees rowcount 0.
+    On a miss we read the row back to explain *why* (unknown / used / expired).
+    """
+    now = utcnow()
+    result = db.execute(
+        update(CapabilityChallenge)
+        .where(
+            CapabilityChallenge.customer_id == customer_id,
+            CapabilityChallenge.challenge == challenge,
+            CapabilityChallenge.used_at.is_(None),
+            CapabilityChallenge.expires_at > now,
+        )
+        .values(used_at=now)
+    )
+    if result.rowcount == 1:
+        db.commit()
+        return None
+    db.rollback()
+
     record = db.scalar(
         select(CapabilityChallenge).where(
             CapabilityChallenge.customer_id == customer_id,
@@ -291,13 +313,10 @@ def consume_server_challenge(db: Session, customer_id: str, challenge: str) -> s
         return "proof-of-possession challenge is unknown or was not issued by this server"
     if record.used_at is not None:
         return "proof-of-possession challenge has already been used"
-    now = utcnow()
     if record.expires_at <= now:
         return "proof-of-possession challenge has expired"
-    record.used_at = now
-    db.add(record)
-    db.commit()
-    return None
+    # Extremely rare: window slipped between UPDATE and re-read; treat as a race.
+    return "proof-of-possession challenge could not be consumed"
 
 
 # --------------------------------------------------------------------------- #

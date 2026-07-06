@@ -9,10 +9,71 @@ import os
 from functools import lru_cache
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 class Settings:
     def __init__(self) -> None:
+        # Deployment environment. ``production`` turns on the strict guards
+        # (no SQLite, secret encryption required, rate limiting on by default).
+        self.env: str = os.getenv("AGENTAUTH_ENV", "development").strip().lower()
+
         self.database_url: str = os.getenv(
             "AGENTAUTH_DATABASE_URL", "sqlite:///./agents.db"
+        )
+
+        # --- SQLAlchemy connection-pool tuning (ignored for SQLite) --------- #
+        # pool_pre_ping detects and recycles stale connections (RDS failovers,
+        # idle-timeout kills) before they surface as errors; pool_recycle caps
+        # a connection's lifetime. All env-overridable.
+        self.db_pool_size: int = int(os.getenv("AGENTAUTH_DB_POOL_SIZE", "5"))
+        self.db_max_overflow: int = int(os.getenv("AGENTAUTH_DB_MAX_OVERFLOW", "10"))
+        self.db_pool_recycle: int = int(os.getenv("AGENTAUTH_DB_POOL_RECYCLE", "1800"))
+        self.db_pool_timeout: int = int(os.getenv("AGENTAUTH_DB_POOL_TIMEOUT", "30"))
+        self.db_pool_pre_ping: bool = _env_flag("AGENTAUTH_DB_POOL_PRE_PING", True)
+
+        # Schema management strategy: "alembic" means DDL is applied out-of-band
+        # by `alembic upgrade head` and the app never creates/alters tables at
+        # startup (recommended for prod/Postgres). Anything else keeps the
+        # dev-friendly create_all + additive column sync.
+        self.manage_schema: str = os.getenv("AGENTAUTH_MANAGE_SCHEMA", "auto").strip().lower()
+
+        # Admin bootstrap key gating tenant creation. When set, POST /v1/customers
+        # requires a matching X-Admin-Key header. Unset => open in dev, refused
+        # in production (fail closed).
+        self.admin_api_key: str | None = os.getenv("AGENTAUTH_ADMIN_API_KEY") or None
+
+        # --- Rate limiting (in-memory; AWS WAF/gateway is authoritative behind
+        # multiple instances) ------------------------------------------------ #
+        self.rate_limit_enabled: bool = _env_flag(
+            "AGENTAUTH_RATE_LIMIT_ENABLED", self.env == "production"
+        )
+        self.rate_limit_window_seconds: int = int(
+            os.getenv("AGENTAUTH_RATE_LIMIT_WINDOW", "60")
+        )
+        # Requests per window for ordinary reads (per client IP and per API key).
+        self.rate_limit_default: int = int(os.getenv("AGENTAUTH_RATE_LIMIT_DEFAULT", "600"))
+        # Stricter budget for mutating / key-generating endpoints.
+        self.rate_limit_mutating: int = int(os.getenv("AGENTAUTH_RATE_LIMIT_MUTATING", "60"))
+
+        # --- Caches (bounded TTL, in-memory) -------------------------------- #
+        # Verified API-key cache: repeat authenticated calls skip PBKDF2.
+        self.api_key_cache_ttl_seconds: int = int(
+            os.getenv("AGENTAUTH_API_KEY_CACHE_TTL", "300")
+        )
+        self.api_key_cache_max_size: int = int(
+            os.getenv("AGENTAUTH_API_KEY_CACHE_MAX", "2048")
+        )
+        # Decrypted signing-material cache: skip per-issuance KMS/AES decrypt.
+        self.signing_key_cache_ttl_seconds: int = int(
+            os.getenv("AGENTAUTH_SIGNING_KEY_CACHE_TTL", "300")
+        )
+        self.signing_key_cache_max_size: int = int(
+            os.getenv("AGENTAUTH_SIGNING_KEY_CACHE_MAX", "1024")
         )
         # The identity event log (issuance / revocation / rotation) is now a
         # hash-chained table in the database above (see backend/audit.py), not a
@@ -67,6 +128,13 @@ class Settings:
         # Proxy mode: DER cert forwarded as base64 in this header (e.g. by nginx/Envoy).
         # Also used by tests to inject certs without a real TLS handshake.
         self.mtls_client_cert_header: str | None = os.getenv("AGENTAUTH_MTLS_CLIENT_CERT_HEADER")
+
+        # Structured logging verbosity.
+        self.log_level: str = os.getenv("AGENTAUTH_LOG_LEVEL", "INFO").strip().upper()
+
+    @property
+    def is_production(self) -> bool:
+        return self.env == "production"
 
 
 @lru_cache

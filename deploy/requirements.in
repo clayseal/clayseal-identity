@@ -1,0 +1,34 @@
+# AgentAuth identity backend -- DEPLOYABLE third-party runtime dependency inputs.
+#
+# The internal `agentauth-core` distribution is installed from its built wheel in
+# the deploy image (it is not published to PyPI), so it is intentionally NOT in
+# this file. This locks only the third-party runtime tree.
+#
+# Compile a hash-pinned lock with either:
+#   uv pip compile deploy/requirements.in --generate-hashes \
+#       --python-version 3.13 -o deploy/requirements.lock
+#   # or, with pip-tools:
+#   pip-compile --generate-hashes deploy/requirements.in -o deploy/requirements.lock
+#
+# Install in the image with:
+#   pip install --require-hashes -r deploy/requirements.lock
+
+# --- runtime deps mirrored from agentauth-identity/pyproject.toml ---
+httpx>=0.27
+biscuit-python>=0.4,<0.5
+PyJWT>=2.8,<3.0
+cryptography>=42.0
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.27,<1.0
+SQLAlchemy>=2.0,<3.0
+pydantic>=2.6,<3.0
+psycopg[binary]>=3.1,<4.0
+alembic>=1.13,<2.0
+
+# --- deploy-only addition (NOT declared in pyproject.toml) ---
+# boto3 is imported lazily by AwsKmsProvider when
+# AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms (the production setting). It is NOT
+# a declared dependency of agentauth-identity and the identity Dockerfile installs
+# from pyproject, so the deploy image MUST add boto3 separately (or install from
+# this lock) for the aws_kms provider to work.
+boto3>=1.34

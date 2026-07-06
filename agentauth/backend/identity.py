@@ -680,7 +680,7 @@ def validate_token(
             "Token uses an unsupported signing algorithm.",
             suggestion="Mint a fresh signed credential with identify().",
         )
-    if header.get("typ") != JWT_TYPE:
+    if header.get("typ") not in SUPPORTED_JWT_TYPES:
         raise InvalidTokenError(
             "Token type is not an AgentAuth SVID.",
             suggestion="Pass the credential JWT returned by identify(), not another JWT type.",

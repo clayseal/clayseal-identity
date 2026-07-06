@@ -75,6 +75,12 @@ class AttestationUse(Base):
     """Record of a consumed attestation document ``jti`` (one-time identify)."""
 
     __tablename__ = "attestation_uses"
+    # The DB is the one-time authority: a UNIQUE (customer_id, jti) lets the
+    # insert-and-catch replay guard work correctly under concurrency on Postgres
+    # (a select-then-insert races). See attestation.record_attestation_use.
+    __table_args__ = (
+        UniqueConstraint("customer_id", "jti", name="uq_attestation_use"),
+    )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     customer_id: Mapped[str] = mapped_column(

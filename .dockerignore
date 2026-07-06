@@ -1,0 +1,43 @@
+# VCS / CI
+.git
+.github
+.gitignore
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Tests, docs, examples, SDK tests -- not needed in the runtime image
+backend/tests/
+sdk/python/tests/
+docs/
+examples/
+config/
+scripts/
+
+# Local databases / secrets / env
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+
+# Editor / OS cruft
+.idea/
+.vscode/
+.DS_Store
+
+# Claude local settings
+.claude/

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import os
 import secrets
+from functools import lru_cache
 from typing import Protocol
 
 from cryptography.exceptions import InvalidTag
@@ -34,9 +35,22 @@ def _env_truthy(name: str) -> bool:
     return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _is_production() -> bool:
+    # Read the env var directly (not the lru_cached Settings) so this stays
+    # correct under tests that toggle AGENTAUTH_ENV via monkeypatch.
+    return os.getenv("AGENTAUTH_ENV", "development").strip().lower() == "production"
+
+
 def secret_encryption_required(database_url: str | None = None) -> bool:
-    """Return whether private key encryption must be configured for this process."""
+    """Return whether private key encryption must be configured for this process.
+
+    Required when: explicitly forced, running in production (regardless of the DB
+    backend -- prod must never persist private keys in plaintext), or the store
+    is any durable/non-local (non-SQLite) database.
+    """
     if _env_truthy(REQUIRE_ENCRYPTION_ENV):
+        return True
+    if _is_production():
         return True
     if database_url is None:
         return False
@@ -44,13 +58,14 @@ def secret_encryption_required(database_url: str | None = None) -> bool:
 
 
 def validate_secret_encryption_config(database_url: str | None = None) -> None:
-    """Fail startup when durable/non-local stores would persist private keys in plaintext."""
+    """Fail startup when private keys would be persisted in plaintext."""
     if not secret_encryption_required(database_url):
         return
     if get_encryption_provider() is None:
         raise RuntimeError(
-            "secret encryption is required for this database configuration; set "
-            f"{PROVIDER_ENV}=local with {LOCAL_MASTER_KEY_ENV}, or configure aws_kms/gcp_kms"
+            "secret encryption is required for this configuration (production or a "
+            f"durable database); set {PROVIDER_ENV}=local with {LOCAL_MASTER_KEY_ENV}, "
+            "or configure aws_kms/gcp_kms"
         )
 
 
@@ -123,18 +138,42 @@ class LocalAesGcmProvider:
             raise ValueError("failed to decrypt local secret") from exc
 
 
+@lru_cache(maxsize=1)
+def _cached_boto3_kms_client():
+    """A process-wide cached boto3 KMS client.
+
+    boto3 clients are thread-safe and relatively expensive to construct (they
+    build a botocore session, resolve endpoints, load credentials); creating one
+    per encrypt/decrypt added real latency to every issuance. One client is
+    reused for the process lifetime.
+    """
+    try:
+        import boto3
+    except ImportError as exc:
+        raise RuntimeError(
+            "boto3 is required when AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms"
+        ) from exc
+    return boto3.client("kms")
+
+
+@lru_cache(maxsize=1)
+def _cached_gcp_kms_client():
+    """A process-wide cached GCP KMS client (see :func:`_cached_boto3_kms_client`)."""
+    try:
+        from google.cloud import kms
+    except ImportError as exc:
+        raise RuntimeError(
+            "google-cloud-kms is required when AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=gcp_kms"
+        ) from exc
+    return kms.KeyManagementServiceClient()
+
+
 class AwsKmsProvider:
     def __init__(self, key_id: str) -> None:
         self._key_id = key_id
 
     def _client(self):
-        try:
-            import boto3
-        except ImportError as exc:
-            raise RuntimeError(
-                "boto3 is required when AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms"
-            ) from exc
-        return boto3.client("kms")
+        return _cached_boto3_kms_client()
 
     def encrypt(self, plaintext: bytes, *, context: str) -> str:
         response = self._client().encrypt(
@@ -161,13 +200,7 @@ class GcpKmsProvider:
         self._key_name = key_name
 
     def _client(self):
-        try:
-            from google.cloud import kms
-        except ImportError as exc:
-            raise RuntimeError(
-                "google-cloud-kms is required when AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=gcp_kms"
-            ) from exc
-        return kms.KeyManagementServiceClient()
+        return _cached_gcp_kms_client()
 
     def encrypt(self, plaintext: bytes, *, context: str) -> str:
         client = self._client()

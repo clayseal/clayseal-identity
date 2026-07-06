@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from .cache import TTLCache
+from .config import get_settings
 from .secret_encryption import (
     decrypt_secret,
     encrypt_secret,
@@ -10,6 +12,16 @@ from .secret_encryption import (
 )
 
 SIGNING_CONTEXT = "signing_ed25519_pem_v1"
+
+# Bounded-TTL cache of ciphertext -> decrypted PEM. A given ciphertext always
+# decrypts to the same plaintext, so this is safe to memoize; it spares a KMS
+# round-trip (or AES-GCM open) on every credential issuance. Rotation/re-encrypt
+# produces a new ciphertext, so a stale entry is never served for a rotated key.
+_settings = get_settings()
+_signing_key_cache: TTLCache[str, str] = TTLCache(
+    max_size=_settings.signing_key_cache_max_size,
+    ttl_seconds=_settings.signing_key_cache_ttl_seconds,
+)
 
 
 def is_encrypted_private_pem(stored: str) -> bool:
@@ -31,7 +43,12 @@ def decrypt_private_pem(stored: str) -> str:
                 "refusing to load plaintext signing key while secret encryption is enabled"
             )
         return stored
-    return decrypt_secret(stored, context=SIGNING_CONTEXT)
+    cached = _signing_key_cache.get(stored)
+    if cached is not None:
+        return cached
+    plaintext = decrypt_secret(stored, context=SIGNING_CONTEXT)
+    _signing_key_cache.set(stored, plaintext)
+    return plaintext
 
 
 def maybe_reencrypt_signing_key(db, signing_key) -> None:

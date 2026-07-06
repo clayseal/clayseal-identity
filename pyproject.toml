@@ -19,6 +19,11 @@ dependencies = [
   "uvicorn[standard]>=0.27,<1.0",
   "SQLAlchemy>=2.0,<3.0",
   "pydantic>=2.6,<3.0",
+  # Production database driver (psycopg v3). SQLite (stdlib) remains the
+  # zero-config default for dev/tests; Postgres URLs are pinned to this driver.
+  "psycopg[binary]>=3.1,<4.0",
+  # Schema migrations (run `alembic upgrade head` as a pre-deploy step).
+  "alembic>=1.13,<2.0",
 ]
 
 [project.urls]
@@ -30,6 +35,11 @@ Changelog = "https://github.com/pberlizov/agentauth-identity/blob/main/CHANGELOG
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
+# AWS KMS envelope-encryption provider for signing/Biscuit keys at rest
+# (AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms). boto3 is lazy-imported by
+# secret_encryption.AwsKmsProvider, so it is only required when that provider
+# is selected — install `agentauth-identity[kms]` (or the umbrella) in prod.
+kms = ["boto3>=1.34"]
 
 # Ship ONLY the identity-owned paths in the shared `agentauth` namespace.
 # `agentauth.core` comes from the agentauth-core wheel; claiming the whole
