@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import time
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
+
+from agentauth.core.hash_util import canonical_json_bytes
 
 
 def _b64u(data: bytes) -> str:
@@ -51,7 +52,7 @@ def jwk_thumbprint_for_pem(pubkey_pem: str) -> str:
     """Return the RFC 7638-style JWK SHA-256 thumbprint for a PEM public key."""
     public_key = load_workload_public_key(pubkey_pem)
     jwk = public_key_jwk(public_key)
-    canonical = json.dumps(jwk, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    canonical = canonical_json_bytes(jwk)
     return _b64u(hashlib.sha256(canonical).digest())
 
 
@@ -94,7 +95,7 @@ def request_pop_message(
     }
     if operation is not None:
         payload["operation"] = {"resource": operation[0], "action": operation[1]}
-    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return canonical_json_bytes(payload)
 
 
 def _sign_message(privkey_pem: str, message: bytes) -> str:

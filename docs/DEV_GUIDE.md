@@ -113,7 +113,7 @@ Biscuits provide **attenuation**: a parent token can derive child tokens that ca
 
 ### AuthorityBinding (shared with L2/L3)
 
-`AuthorityBinding` (`agentauth.core.authority_binding`) normalizes verified credential material into an `AuthorityContext` that upper layers understand. If you integrate with capabilities or receipts, you will see this type cross repo boundaries. Layer 1’s `session.wrap()` produces bindings compatible with that contract.
+`AuthorityBinding` (`agentauth.core.authority_binding`, from the `agentauth-core` contract package) normalizes verified credential material into an `AuthorityContext` that upper layers understand. If you integrate with capabilities or receipts, you will see this type cross repo boundaries. Layer 1's `Credential.to_binding_dict()` produces the raw claims that `AuthorityBinding.from_agentauth_credential()` consumes.
 
 ---
 
@@ -149,16 +149,20 @@ claims = auth.verify_credential(credential.to_jwt())
 assert claims["sub"] == agent.spiffe_id
 ```
 
-### Sessions and wrapping
+### Sessions and downstream layers
 
-After identification, use a session when passing authority into layer 2 or 3:
+After identification, pass authority into layer 2 or 3 through the umbrella
+package's cross-layer wiring — a lower layer never imports a higher one, so the
+receipting convenience lives in `agentauth`, not here:
 
 ```python
+import agentauth
+
 session = auth.session(credential)
-binding = session.wrap()  # AuthorityBinding for downstream layers
+agent = agentauth.wrap(session, my_model, policy=policy)  # receipts bound to this identity
 ```
 
-Do not hand-roll claim dicts for upper layers unless you are implementing a custom identity adapter in capabilities (see that repo’s cross-provider guide).
+Do not hand-roll claim dicts for upper layers unless you are implementing a custom identity adapter in capabilities (see that repo's cross-provider guide).
 
 ### Persisting agent certificates
 

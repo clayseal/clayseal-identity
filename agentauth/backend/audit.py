@@ -17,13 +17,14 @@ append-only log should persist regardless of the surrounding request).
 from __future__ import annotations
 
 import hashlib
-import json
 import threading
 import time
 from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, OperationalError
+
+from agentauth.core.hash_util import canonical_json_bytes
 
 from .db import SessionLocal
 from .models import AuditEvent
@@ -34,7 +35,7 @@ _APPEND_RETRIES = 5
 
 
 def _canonical_json(value: object) -> str:
-    return json.dumps(value, default=str, sort_keys=True, separators=(",", ":"))
+    return canonical_json_bytes(value, default=str).decode("utf-8")
 
 
 def _record_hash(record: dict) -> str:

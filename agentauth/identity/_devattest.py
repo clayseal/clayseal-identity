@@ -26,13 +26,14 @@ users who never call ``identify`` pay nothing.
 from __future__ import annotations
 
 import hashlib
-import json
 import time
 import uuid
 
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
+
+from agentauth.core.hash_util import canonical_json_bytes
 
 
 def _rsa_keypair() -> tuple[str, str]:
@@ -119,7 +120,7 @@ class DevAttestor:
             "scopes": list(scopes or []),
             "capabilities": list(capabilities or []),
         }
-        canonical = json.dumps(material, sort_keys=True, separators=(",", ":"))
+        canonical = canonical_json_bytes(material).decode("utf-8")
         digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
         return canonical, digest
 

@@ -115,32 +115,11 @@ class AgentSession:
             }
         return self._client.validate(self.token, pop=pop)
 
-    # --- receipts (layer 3, optional) -------------------------------------- #
-    def wrap(self, model, *, policy, task_mandate=None, **kwargs):
-        """Wrap ``model`` in a receipting :class:`AgentWrapper` bound to *this*
-        attested identity. Requires ``pip install agentauth-receipts``."""
-        try:
-            from agentauth.receipts import AgentWrapper
-            from agentauth.core.authority_binding import AuthorityBinding
-        except ImportError as exc:
-            raise ImportError(
-                "AgentSession.wrap() requires the receipts layer. "
-                "Install with: pip install agentauth-receipts"
-            ) from exc
-
-        binding = AuthorityBinding.from_agentauth_credential(
-            self.credential.to_binding_dict()
-        )
-        capability_authorizer = self.authorize if self.credential.biscuit else None
-        if task_mandate is not None:
-            kwargs["task_mandate"] = task_mandate
-        return AgentWrapper(
-            model,
-            policy,
-            default_authority_binding=binding,
-            capability_authorizer=capability_authorizer,
-            **kwargs,
-        )
+    # NOTE: the receipts-layer convenience (``session.wrap(model, policy=...)``)
+    # deliberately does NOT live here — a lower layer never imports a higher one.
+    # Use ``agentauth.wrap(session, model, policy=...)`` from the umbrella
+    # package, which wires this session's binding + authorizer into a receipting
+    # wrapper via the provider-neutral integration seam.
 
     # --- capabilities (offline) -------------------------------------------- #
     def authorize(
@@ -255,13 +234,7 @@ class AgentSession:
 
     def attenuate_for_task_scope(self, mandate: dict) -> AgentSession:
         """Narrow the Biscuit to path patterns from a signed mandate (SM-7)."""
-        try:
-            from agentauth.capabilities.task_scope import compile_task_scope
-        except ImportError as exc:
-            raise ImportError(
-                "attenuate_for_task_scope() requires the capabilities layer. "
-                "Install with: pip install agentauth-capabilities"
-            ) from exc
+        from agentauth.core.task_scope import compile_task_scope
 
         scope = compile_task_scope(mandate)
         return self.attenuate(

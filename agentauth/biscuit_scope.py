@@ -1,17 +1,27 @@
 """Biscuit path-pattern scope helpers (SM-7).
 
 Dynamic L2 file scope is encoded as ``allowed_path`` / ``denied_path`` facts on
-attenuated Biscuit tokens. Path matching runs in Python (fnmatch); Datalog still
-gates the coarse ``(resource, action)`` capability.
+attenuated Biscuit tokens. Fact extraction (Biscuit-specific) lives here; the
+matching semantics are the canonical implementation in
+``agentauth.core.path_matching``, re-exported for callers of this module.
+Datalog still gates the coarse ``(resource, action)`` capability.
 """
 
 from __future__ import annotations
 
-import fnmatch
 import re
 from typing import Any
 
+from agentauth.core.path_matching import evaluate_path_scope, path_matches_any
+
 FILE_RESOURCE = "file"
+
+__all__ = [
+    "FILE_RESOURCE",
+    "path_patterns_from_biscuit_blocks",
+    "path_matches_any",
+    "evaluate_path_scope",
+]
 
 _ALLOWED_PATH_RE = re.compile(r'allowed_path\("([^"]+)"\)')
 _DENIED_PATH_RE = re.compile(r'denied_path\("([^"]+)"\)')
@@ -28,27 +38,3 @@ def path_patterns_from_biscuit_blocks(token: Any) -> tuple[list[str], list[str]]
         allowed.extend(_ALLOWED_PATH_RE.findall(source))
         denied.extend(_DENIED_PATH_RE.findall(source))
     return list(dict.fromkeys(allowed)), list(dict.fromkeys(denied))
-
-
-def path_matches_any(path: str, patterns: list[str]) -> bool:
-    normalized = path.strip()
-    for pattern in patterns:
-        if fnmatch.fnmatchcase(normalized, pattern.strip()):
-            return True
-    return False
-
-
-def evaluate_path_scope(
-    file_path: str | None,
-    *,
-    allowed_paths: list[str],
-    denied_paths: list[str],
-) -> tuple[bool, str]:
-    """Return ``(allowed, reason)`` for a file path against token path facts."""
-    if file_path is None:
-        return True, "no file path presented"
-    if denied_paths and path_matches_any(file_path, denied_paths):
-        return False, f"path {file_path!r} matches a denied_path pattern"
-    if allowed_paths and not path_matches_any(file_path, allowed_paths):
-        return False, f"path {file_path!r} is outside allowed_path patterns"
-    return True, "path scope satisfied"
