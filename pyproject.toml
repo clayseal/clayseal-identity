@@ -9,13 +9,6 @@ description = "AgentAuth layer 1 — attested agent identity and Biscuit capabil
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.14"
-
-[project.urls]
-Homepage = "https://github.com/pberlizov/agentauth-identity"
-Documentation = "https://github.com/pberlizov/agentauth-identity/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/agentauth-identity"
-Issues = "https://github.com/pberlizov/agentauth-identity/issues"
-Changelog = "https://github.com/pberlizov/agentauth-identity/blob/main/CHANGELOG.md"
 dependencies = [
   "httpx>=0.27",
   "biscuit-python>=0.4,<0.5",
@@ -26,6 +19,13 @@ dependencies = [
   "SQLAlchemy>=2.0,<3.0",
   "pydantic>=2.6,<3.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/pberlizov/agentauth-identity"
+Documentation = "https://github.com/pberlizov/agentauth-identity/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/pberlizov/agentauth-identity"
+Issues = "https://github.com/pberlizov/agentauth-identity/issues"
+Changelog = "https://github.com/pberlizov/agentauth-identity/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
