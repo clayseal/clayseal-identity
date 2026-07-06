@@ -1,7 +1,7 @@
 """Identity Service.
 
 Issues and validates signed agent credentials. Each credential is a JWT
-(EdDSA/Ed25519) signed with a per-customer keypair that this service manages,
+(RS256) signed with a per-customer keypair that this service manages,
 including automatic rotation. Developers never see a key.
 """
 from __future__ import annotations
@@ -48,7 +48,13 @@ from .signing_keys import decrypt_private_pem, encrypt_private_pem, maybe_reencr
 # --------------------------------------------------------------------------- #
 # Key management
 # --------------------------------------------------------------------------- #
-JWT_ALGORITHM = "EdDSA"
+# RS256 on purpose: it is the one JWT-SVID algorithm accepted EVERYWHERE we
+# federate — the SPIFFE JWT-SVID allowlist (RS/ES/PS; EdDSA excluded), AWS,
+# GCP, and Azure workload federation (Azure is RS256-only), and RFC 7523
+# consumers like Anthropic's Workload Identity Federation. Ed25519 remains the
+# sender-constraining (cnf.jkt PoP) and Biscuit-root algorithm, where it never
+# crosses a federation boundary.
+JWT_ALGORITHM = "RS256"
 JWT_TYPE = "agentauth-svid+jwt"
 
 
@@ -71,8 +77,27 @@ def generate_ed25519_keypair() -> tuple[str, str]:
     return private_pem, public_pem
 
 
+def generate_rsa_keypair() -> tuple[str, str]:
+    """Return a fresh RSA-2048 ``(private_pem, public_pem)`` pair for RS256."""
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    private_pem = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode()
+    public_pem = (
+        key.public_key()
+        .public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        .decode()
+    )
+    return private_pem, public_pem
+
+
 def create_signing_key(db: Session, customer_id: str) -> SigningKey:
-    private_pem, public_pem = generate_ed25519_keypair()
+    private_pem, public_pem = generate_rsa_keypair()
     key = SigningKey(
         kid=new_id(),
         customer_id=customer_id,
@@ -96,8 +121,8 @@ def get_active_key(db: Session, customer_id: str) -> SigningKey:
             .order_by(SigningKey.created_at.desc())
         ).all()
     )
-    ed25519_keys = [key for key in active_keys if key.algorithm == JWT_ALGORITHM]
-    key = ed25519_keys[0] if ed25519_keys else None
+    algorithm_keys = [key for key in active_keys if key.algorithm == JWT_ALGORITHM]
+    key = algorithm_keys[0] if algorithm_keys else None
     changed = False
     for stale in active_keys:
         if stale.algorithm != JWT_ALGORITHM or (key is not None and stale.kid != key.kid):
@@ -638,7 +663,7 @@ def validate_token(
     if header.get("alg") != JWT_ALGORITHM or key.algorithm != JWT_ALGORITHM:
         raise InvalidTokenError(
             "Token uses an unsupported signing algorithm.",
-            suggestion="Mint a fresh Ed25519-signed credential with identify().",
+            suggestion="Mint a fresh signed credential with identify().",
         )
     if header.get("typ") != JWT_TYPE:
         raise InvalidTokenError(
@@ -838,9 +863,9 @@ def build_jwks(db: Session, customer_id: str) -> dict:
     jwk_list = []
     for k in keys:
         public_key = serialization.load_pem_public_key(k.public_pem.encode())
-        if not isinstance(public_key, ed25519.Ed25519PublicKey):
+        if not isinstance(public_key, rsa.RSAPublicKey):
             continue
-        jwk = json.loads(jwt.algorithms.OKPAlgorithm.to_jwk(public_key))
+        jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(public_key))
         jwk.update({"kid": k.kid, "use": "sig", "alg": JWT_ALGORITHM})
         jwk_list.append(jwk)
     return {"keys": jwk_list}

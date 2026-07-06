@@ -101,7 +101,7 @@ class SigningKey(Base):
     )
     private_pem: Mapped[str] = mapped_column(Text, nullable=False)
     public_pem: Mapped[str] = mapped_column(Text, nullable=False)
-    algorithm: Mapped[str] = mapped_column(String, default="EdDSA")
+    algorithm: Mapped[str] = mapped_column(String, default="RS256")
     status: Mapped[str] = mapped_column(String, default="active")  # active | retired
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     retired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

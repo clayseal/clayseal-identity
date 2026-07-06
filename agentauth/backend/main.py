@@ -10,7 +10,7 @@ from . import __version__
 from .config import get_settings
 from .db import init_db
 from .errors import AgentAuthError
-from .routers import identity
+from .routers import federation, identity
 from .secret_encryption import (
     encryption_enabled,
     secret_encryption_required,
@@ -67,6 +67,7 @@ def create_app() -> FastAPI:
         }
 
     app.include_router(identity.router)
+    app.include_router(federation.router)
     return app
 
 

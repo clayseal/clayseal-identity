@@ -28,7 +28,7 @@ class Settings:
         # and it doubles as the JWT issuer (`iss`).
         self.trust_domain: str = os.getenv("AGENTAUTH_TRUST_DOMAIN", "agentauth.io")
         self.jwt_issuer: str = os.getenv("AGENTAUTH_ISSUER", self.trust_domain)
-        self.jwt_algorithm: str = "EdDSA"
+        self.jwt_algorithm: str = "RS256"
         # Minimum key size for the prototype node-attestation RSA trust anchor.
         # AgentAuth-issued credentials use Ed25519.
         self.rsa_key_size: int = int(os.getenv("AGENTAUTH_RSA_KEY_SIZE", "2048"))

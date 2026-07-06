@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from agentauth.backend.db import SessionLocal
 from agentauth.backend.identity import create_signing_key, get_active_key
@@ -24,9 +24,9 @@ def test_create_signing_key_stores_encrypted_private_pem(customer):
         assert "BEGIN" not in key.private_pem
         pem = decrypt_private_pem(key.private_pem)
         assert "BEGIN PRIVATE KEY" in pem
-        assert key.algorithm == "EdDSA"
+        assert key.algorithm == "RS256"
         public_key = serialization.load_pem_public_key(key.public_pem.encode())
-        assert isinstance(public_key, ed25519.Ed25519PublicKey)
+        assert isinstance(public_key, rsa.RSAPublicKey)
 
 
 def test_maybe_reencrypt_signing_key_upgrades_legacy_plaintext(customer):
@@ -37,7 +37,7 @@ def test_maybe_reencrypt_signing_key_upgrades_legacy_plaintext(customer):
             customer_id=cust.id,
             private_pem="-----BEGIN PRIVATE KEY-----\nlegacy\n-----END PRIVATE KEY-----\n",
             public_pem="-----BEGIN PUBLIC KEY-----\nlegacy\n-----END PUBLIC KEY-----\n",
-            algorithm="EdDSA",
+            algorithm="RS256",
             status="active",
         )
         db.add(legacy)
@@ -49,7 +49,7 @@ def test_maybe_reencrypt_signing_key_upgrades_legacy_plaintext(customer):
         assert decrypt_private_pem(legacy.private_pem).startswith("-----BEGIN PRIVATE KEY-----")
 
 
-def test_get_active_key_replaces_legacy_rsa_signing_key(customer):
+def test_get_active_key_replaces_legacy_eddsa_signing_key(customer):
     with SessionLocal() as db:
         cust = db.get(Customer, customer["customer_id"])
         current = get_active_key(db, cust.id)
@@ -57,11 +57,11 @@ def test_get_active_key_replaces_legacy_rsa_signing_key(customer):
         db.add(current)
         db.commit()
         legacy = SigningKey(
-            kid="legacy-rsa-kid",
+            kid="legacy-eddsa-kid",
             customer_id=cust.id,
             private_pem="-----BEGIN PRIVATE KEY-----\nlegacy\n-----END PRIVATE KEY-----\n",
             public_pem="-----BEGIN PUBLIC KEY-----\nlegacy\n-----END PUBLIC KEY-----\n",
-            algorithm="RS256",
+            algorithm="EdDSA",
             status="active",
         )
         db.add(legacy)
@@ -72,7 +72,7 @@ def test_get_active_key_replaces_legacy_rsa_signing_key(customer):
 
         assert legacy.status == "retired"
         assert key.kid != legacy.kid
-        assert key.algorithm == "EdDSA"
+        assert key.algorithm == "RS256"
 
 
 def test_encrypt_decrypt_roundtrip():

@@ -200,7 +200,7 @@ def test_attestation_issues_jwt_svid(client, customer):
     # The credential is a JWT-SVID: three segments + a kid header.
     assert data["token"].count(".") == 2
     header = jwt.get_unverified_header(data["token"])
-    assert header["alg"] == "EdDSA"
+    assert header["alg"] == "RS256"
     assert header["typ"] == "agentauth-svid+jwt"
     assert header["kid"]
 
@@ -600,7 +600,7 @@ def test_expired_token_rejected_and_marks_agent_expired(client, customer):
                 "selectors": [],
             },
             decrypt_private_pem(key.private_pem),
-            algorithm="EdDSA",
+            algorithm="RS256",
             headers={"kid": key.kid, "typ": "agentauth-svid+jwt"},
         )
 
@@ -696,9 +696,8 @@ def test_jwks_exposes_public_keys(client, customer):
     jwks = client.get("/v1/jwks.json", headers=h).json()
     assert len(jwks["keys"]) >= 2
     for k in jwks["keys"]:
-        assert k["kty"] == "OKP"
-        assert k["crv"] == "Ed25519"
-        assert k["alg"] == "EdDSA"
+        assert k["kty"] == "RSA"
+        assert k["alg"] == "RS256"
         assert k["kid"]
 
 
