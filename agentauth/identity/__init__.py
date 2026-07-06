@@ -31,6 +31,13 @@ from .errors import (
 )
 from .models import AgentInfo, Credential, ValidationResult
 from .session import AgentSession
+from .adapters import (
+    IdentityAdapter,
+    IdentityBinding,
+    get_identity_adapter,
+    list_identity_adapters,
+    register_identity_adapter,
+)
 
 __version__ = "0.2.1"
 
@@ -40,6 +47,11 @@ __all__ = [
     "Credential",
     "AgentInfo",
     "ValidationResult",
+    "IdentityAdapter",
+    "IdentityBinding",
+    "get_identity_adapter",
+    "list_identity_adapters",
+    "register_identity_adapter",
     "AgentAuthError",
     "TransportError",
     "InvalidAPIKeyError",
