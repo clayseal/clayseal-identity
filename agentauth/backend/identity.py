@@ -56,6 +56,12 @@ from .signing_keys import decrypt_private_pem, encrypt_private_pem, maybe_reencr
 # crosses a federation boundary.
 JWT_ALGORITHM = "RS256"
 JWT_TYPE = "agentauth-svid+jwt"
+# WIMSE Workload Identity Token framing (draft-ietf-wimse-workload-creds): our
+# JWT-SVIDs are already WIT-shaped — cnf is REQUIRED (always set below) and the
+# token must not be accepted as a bearer credential. Opting into typ=wit+jwt
+# lets WIMSE-aware relying parties recognize that contract from the header.
+WIT_JWT_TYPE = "wit+jwt"
+SUPPORTED_JWT_TYPES = (JWT_TYPE, WIT_JWT_TYPE)
 
 
 def generate_ed25519_keypair() -> tuple[str, str]:
@@ -200,6 +206,7 @@ def issue_credential(
     selectors: list[str] | None = None,
     workload_pubkey_pem: str | None = None,
     extra_claims: dict | None = None,
+    token_typ: str | None = None,
 ) -> tuple[Agent, str]:
     """Mint a new agent identity and return ``(agent_row, jwt_svid_string)``.
 
@@ -222,6 +229,12 @@ def issue_credential(
             ),
         )
     capabilities, scopes = cap_service.reconcile_capabilities(capabilities, scopes)
+    token_typ = token_typ or JWT_TYPE
+    if token_typ not in SUPPORTED_JWT_TYPES:
+        raise AttestationDeniedError(
+            f"Unsupported token typ {token_typ!r}.",
+            suggestion=f"token_typ must be one of {sorted(SUPPORTED_JWT_TYPES)}.",
+        )
     selectors = list(selectors or [])
     ttl = _clamp_ttl(ttl_seconds)
     settings = get_settings()
@@ -285,7 +298,7 @@ def issue_credential(
         claims,
         decrypt_private_pem(key.private_pem),
         algorithm=JWT_ALGORITHM,
-        headers={"kid": key.kid, "typ": JWT_TYPE},
+        headers={"kid": key.kid, "typ": token_typ},
     )
 
     agent = Agent(
@@ -555,6 +568,7 @@ def attest(
     *,
     attestation_document: str,
     ttl_seconds: int | None = None,
+    token_typ: str | None = None,
 ) -> tuple[Agent, str]:
     """Prove an identity from verified evidence and mint a JWT-SVID.
 
@@ -619,6 +633,7 @@ def attest(
         ttl_seconds=resolved_ttl,
         selectors=matched_selectors,
         workload_pubkey_pem=workload_pubkey_pem,
+        token_typ=token_typ,
     )
 
 

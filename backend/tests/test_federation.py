@@ -71,3 +71,25 @@ def test_issued_token_verifies_with_stock_pyjwt_via_public_jwks(client, customer
     )
     assert claims["sub"].startswith("spiffe://")
     assert "cnf" in claims  # sender-constrained: the PoP thumbprint travels
+
+
+def test_default_token_typ_unchanged(client, customer):
+    token = register_and_identify(client, customer["headers"]).json()["token"]
+    assert pyjwt.get_unverified_header(token)["typ"] == "agentauth-svid+jwt"
+
+
+def test_wit_typ_opt_in_mints_wit_shaped_token(client, customer):
+    """WIMSE WIT framing: typ=wit+jwt with cnf REQUIRED (sender-constrained)."""
+    resp = register_and_identify(client, customer["headers"], token_typ="wit+jwt")
+    assert resp.status_code == 200
+    token = resp.json()["token"]
+    header = pyjwt.get_unverified_header(token)
+    assert header["typ"] == "wit+jwt"
+    claims = pyjwt.decode(token, options={"verify_signature": False})
+    assert claims["cnf"]["jkt"]  # never a bearer token
+    assert claims["sub"].startswith("spiffe://")
+
+
+def test_unknown_token_typ_rejected(client, customer):
+    resp = register_and_identify(client, customer["headers"], token_typ="bearer+jwt")
+    assert resp.status_code == 422  # rejected at the schema boundary

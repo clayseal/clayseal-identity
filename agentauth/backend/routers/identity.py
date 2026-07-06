@@ -184,6 +184,7 @@ def identify(
         customer,
         attestation_document=body.attestation_document,
         ttl_seconds=body.ttl_seconds,
+        token_typ=body.token_typ,
     )
     return _credential_out(db, agent, token)
 

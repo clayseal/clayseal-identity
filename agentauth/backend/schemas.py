@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -107,6 +108,9 @@ class IdentifyRequest(BaseModel):
 
     attestation_document: str = Field(..., min_length=1)
     ttl_seconds: int | None = None
+    # JOSE typ for the minted JWT-SVID. "wit+jwt" opts into WIMSE Workload
+    # Identity Token framing (cnf-bound, never bearer); default is unchanged.
+    token_typ: Literal["agentauth-svid+jwt", "wit+jwt"] | None = None
 
 
 class CredentialOut(BaseModel):

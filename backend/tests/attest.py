@@ -201,6 +201,7 @@ def register_and_identify(
     pod_label=None,
     with_pubkey=True,
     customer_id: str | None = None,
+    token_typ=None,
 ):
     """End-to-end attestation: ensure anchor + entry, sign matching evidence,
     and call ``/v1/identify``. Returns the raw response (callers ``.json()`` it).
@@ -223,4 +224,6 @@ def register_and_identify(
     body = {"attestation_document": document}
     if ttl is not None:
         body["ttl_seconds"] = ttl
+    if token_typ is not None:
+        body["token_typ"] = token_typ
     return client.post("/v1/identify", json=body, headers=headers)
