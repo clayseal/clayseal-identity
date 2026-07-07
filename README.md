@@ -60,7 +60,7 @@ pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 Production KMS support is optional:
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0[kms]"
+pip install "agentauth-identity[kms] @ git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 
 ## Quickstart
