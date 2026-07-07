@@ -19,7 +19,7 @@ class OidcIdentityAdapter:
     name: str = "oidc"
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         return IdentityBinding(
             subject_id=str(raw.get("sub", "")),

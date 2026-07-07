@@ -6,7 +6,12 @@ This document is written for engineers who need to **run, integrate, or extend**
 
 ## What this repository is for
 
-**agentauth-identity** is layer 1 of a three-layer stack. Its job is narrow and important: give every autonomous agent a **cryptographically attested identity** that downstream systems can verify offline.
+**Clay Seal Identity** is layer 1 of the Clay Seal stack. Its package name is
+still `agentauth-identity`, and its Python namespace is still
+`agentauth.identity`, but the product name developers and customers should see
+is Clay Seal. Its job is narrow and important: give every autonomous agent a
+**cryptographically attested identity** that downstream systems can verify
+offline.
 
 Concretely, this repo provides:
 
@@ -55,7 +60,7 @@ From a clone:
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-identity.git
-cd agentauth-identity
+cd clay-seal-identity
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -262,6 +267,23 @@ Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession` abstra
 
 ---
 
+## Privacy and data handling
+
+Layer 1 handles identity metadata and secret-bearing credential material. Treat
+persisted agent certificates, signing keys, admin API keys, database credentials,
+and live JWT-SVIDs as secrets.
+
+Design production integrations so identity records contain stable identifiers
+and verification metadata, not prompts, source code, model outputs, or full
+business payloads. Use short credential TTLs, define retention for issuance and
+verification audit records, and redact credentials from logs and support
+bundles.
+
+Read [docs/PRIVACY.md](PRIVACY.md) before connecting Clay Seal Identity to
+employee, customer, or regulated data.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -300,5 +322,6 @@ pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 - **Scope and commit tokens** → [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
 - **Receipts, audit, MCP gateway** → [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/cross_layer_integration.md)
+- **Privacy and data handling** → [docs/PRIVACY.md](PRIVACY.md)
 
 If something in this guide does not match the code you checked out, prefer the tagged release you installed and file an issue with the tag name and command you ran.

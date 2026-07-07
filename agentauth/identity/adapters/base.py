@@ -14,7 +14,7 @@ class IdentityBinding:
     owner_ref: str | None = None
     subject_type: str | None = None
     expires_at: Any = None
-    evidence_verified: bool = True
+    evidence_verified: bool = False
     raw: dict[str, Any] = field(default_factory=dict)
 
     def to_claims(self) -> dict[str, Any]:
@@ -35,6 +35,6 @@ class IdentityAdapter(Protocol):
     name: str
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         ...

@@ -59,6 +59,10 @@ class Settings:
         self.rate_limit_default: int = int(os.getenv("AGENTAUTH_RATE_LIMIT_DEFAULT", "600"))
         # Stricter budget for mutating / key-generating endpoints.
         self.rate_limit_mutating: int = int(os.getenv("AGENTAUTH_RATE_LIMIT_MUTATING", "60"))
+        # When behind ALB/API gateway, use the left-most X-Forwarded-For client IP.
+        self.trust_proxy_headers: bool = _env_flag(
+            "AGENTAUTH_TRUST_PROXY_HEADERS", self.env == "production"
+        )
 
         # --- Caches (bounded TTL, in-memory) -------------------------------- #
         # Verified API-key cache: repeat authenticated calls skip PBKDF2.

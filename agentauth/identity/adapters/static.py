@@ -12,7 +12,7 @@ class StaticIdentityAdapter:
     name: str = "static"
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         return IdentityBinding(
             subject_id=str(raw.get("subject_id") or raw.get("sub") or raw.get("agent_id", "")),

@@ -38,4 +38,26 @@ def _identity_specific_violations(settings: Settings) -> list[str]:
         violations.append(
             "AGENTAUTH_HTTP_ALLOWED_HOSTS must list IdP/CIMD hosts permitted for outbound fetch"
         )
+    if settings.is_production and settings.manage_schema.strip().lower() == "auto":
+        violations.append(
+            "AGENTAUTH_MANAGE_SCHEMA must be 'alembic' in production (run alembic upgrade head pre-deploy)"
+        )
+    violations.extend(_unmigrated_api_key_violations())
     return violations
+
+
+def _unmigrated_api_key_violations() -> list[str]:
+    from sqlalchemy import func, select
+
+    from .db import SessionLocal
+    from .models import Customer
+
+    with SessionLocal() as session:
+        count = session.scalar(
+            select(func.count()).select_from(Customer).where(Customer.api_key_hash.is_(None))
+        )
+    if count:
+        return [
+            f"{count} tenant(s) lack PBKDF2 api_key_hash; run scripts/migrate_api_keys.py before production traffic"
+        ]
+    return []
