@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
+from datetime import timedelta
 
 from biscuit_auth import (
     Algorithm,
@@ -54,6 +55,15 @@ _AUTHORIZER_POLICY = """
     allow if capability($r, "*"), operation($r, $_);
     deny if true;
 """
+
+
+def _with_authorizer_limits(builder: AuthorizerBuilder) -> AuthorizerBuilder:
+    limits = builder.limits()
+    limits.max_facts = max(limits.max_facts, 10_000)
+    limits.max_iterations = max(limits.max_iterations, 1_000)
+    limits.max_time = max(limits.max_time, timedelta(milliseconds=50))
+    builder.set_limits(limits)
+    return builder
 
 
 @dataclass
@@ -182,9 +192,9 @@ def authorize_biscuit(
         else:
             reason = "request-bound proof-of-possession signature is invalid"
 
-    builder = AuthorizerBuilder(
+    builder = _with_authorizer_limits(AuthorizerBuilder(
         _AUTHORIZER_POLICY, {"resource": operation[0], "action": operation[1]}
-    )
+    ))
     if valid_pop:
         builder.add_fact(Fact("valid_pop(true)"))
     builder.set_time()
