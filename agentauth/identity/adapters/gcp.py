@@ -19,7 +19,7 @@ class GcpIdentityAdapter:
     name: str = "gcp_service_account"
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         subject = raw.get("sub") or raw.get("email") or raw.get("google.subject")
         return IdentityBinding(

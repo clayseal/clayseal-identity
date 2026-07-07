@@ -82,9 +82,11 @@ def reset_rate_limiter() -> None:
 
 
 def _client_ip(request: Request) -> str:
-    # request.client.host is the socket peer. Behind a trusted proxy/ALB the real
-    # client is in X-Forwarded-For; WAF/gateway is authoritative there, so we use
-    # the socket peer here and treat the edge limiter as primary.
+    settings = get_settings()
+    if settings.trust_proxy_headers:
+        forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        if forwarded:
+            return forwarded
     return request.client.host if request.client else "unknown"
 
 

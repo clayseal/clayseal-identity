@@ -18,7 +18,7 @@ class AzureIdentityAdapter:
     name: str = "azure_ad"
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         subject = raw.get("oid") or raw.get("sub") or raw.get("appid") or raw.get("azp")
         return IdentityBinding(

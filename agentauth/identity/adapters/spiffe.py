@@ -19,7 +19,7 @@ class SpiffeJwtIdentityAdapter:
     name: str = "spiffe_jwt"
 
     def to_binding(
-        self, raw: dict[str, Any], *, evidence_verified: bool = True
+        self, raw: dict[str, Any], *, evidence_verified: bool = False
     ) -> IdentityBinding:
         subject = str(raw.get("sub", ""))
         tenant_id = raw.get("tenant_id")
