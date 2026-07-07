@@ -17,8 +17,8 @@ Concretely, this repo provides:
 
 What this repo deliberately does **not** include:
 
-- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is [agentauth-capabilities](https://github.com/pberlizov/agentauth-capabilities) (layer 2).
-- Execution receipts, audit logs, MCP gateways, or policy proofs — that is [agentauth-receipts](https://github.com/pberlizov/agentauth-receipts) (layer 3).
+- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities) (layer 2).
+- Execution receipts, audit logs, MCP gateways, or policy proofs — that is [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts) (layer 3).
 
 If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
 
@@ -54,7 +54,7 @@ There is intentionally **no** top-level `from agentauth import Identity` here. T
 From a clone:
 
 ```bash
-git clone https://github.com/pberlizov/agentauth-identity.git
+git clone https://github.com/pberlizov/clay-seal-identity.git
 cd agentauth-identity
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
@@ -63,8 +63,8 @@ pip install -e ".[dev]"
 From a pinned tag (recommended for partners):
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 
 ### With the full stack
@@ -72,10 +72,10 @@ pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
 Install in order — each layer depends on the one below:
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-receipts.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-receipts.git@v0.5.0"
 ```
 
 Or use the smoke script in the receipts repo: `scripts/layer_install_smoke.sh`.
@@ -289,16 +289,16 @@ Checklist for maintainers:
 Partners should pin:
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 
 ---
 
 ## Where to go next
 
-- **Scope and commit tokens** → [agentauth-capabilities](https://github.com/pberlizov/agentauth-capabilities/blob/main/docs/DEV_GUIDE.md)
-- **Receipts, audit, MCP gateway** → [agentauth-receipts](https://github.com/pberlizov/agentauth-receipts/blob/main/docs/DEV_GUIDE.md)
-- **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/agentauth-capabilities/blob/main/docs/cross_layer_integration.md)
+- **Scope and commit tokens** → [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
+- **Receipts, audit, MCP gateway** → [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
+- **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/cross_layer_integration.md)
 
 If something in this guide does not match the code you checked out, prefer the tagged release you installed and file an issue with the tag name and command you ran.

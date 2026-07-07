@@ -25,7 +25,7 @@ from agentauth.identity import AgentAuth
 uvicorn agentauth.backend.main:app --reload
 ```
 
-Layer 2 (dynamic capabilities): [agentauth-capabilities](https://github.com/pberlizov/agentauth-capabilities)
-Layer 3 (receipts + verify): [agentauth-receipts](https://github.com/pberlizov/agentauth-receipts)
+Layer 2 (dynamic capabilities): [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities)
+Layer 3 (receipts + verify): [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts)
 
 Full developer guide: [docs/DEV_GUIDE.md](docs/DEV_GUIDE.md)

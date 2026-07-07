@@ -27,11 +27,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pberlizov/agentauth-identity"
-Documentation = "https://github.com/pberlizov/agentauth-identity/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/agentauth-identity"
-Issues = "https://github.com/pberlizov/agentauth-identity/issues"
-Changelog = "https://github.com/pberlizov/agentauth-identity/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/pberlizov/clay-seal-identity"
+Documentation = "https://github.com/pberlizov/clay-seal-identity/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/pberlizov/clay-seal-identity"
+Issues = "https://github.com/pberlizov/clay-seal-identity/issues"
+Changelog = "https://github.com/pberlizov/clay-seal-identity/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
