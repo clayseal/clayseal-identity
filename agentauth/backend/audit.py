@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -68,7 +68,7 @@ def record_event(event_type: str, customer_id: str, **fields: object) -> dict:
                 prev_hash = last.entry_hash if last is not None else None
                 next_sequence = (last.sequence + 1) if last is not None else 1
 
-                ts = datetime.utcnow().isoformat() + "Z"
+                ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 record = {
                     "schema": _CHAIN_SCHEMA,
                     "sequence": next_sequence,

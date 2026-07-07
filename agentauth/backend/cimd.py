@@ -76,14 +76,22 @@ def fetch_client_metadata(
     """
     validate_client_id_url(client_id)
     if http_get is None:
-        import httpx
+        from agentauth.core.safe_http import safe_http_get
 
         def http_get(url: str) -> Any:
-            return httpx.get(
-                url,
-                timeout=timeout,
-                headers={"Accept": "application/json"},
-                follow_redirects=False,
+            class _Response:
+                def __init__(self, content: bytes) -> None:
+                    self.content = content
+
+                def raise_for_status(self) -> None:
+                    return None
+
+            return _Response(
+                safe_http_get(
+                    url,
+                    timeout=timeout,
+                    headers={"Accept": "application/json"},
+                )
             )
 
     response = http_get(client_id)

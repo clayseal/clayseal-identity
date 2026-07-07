@@ -1,0 +1,41 @@
+"""Production startup validation for the identity backend."""
+
+from __future__ import annotations
+
+import os
+
+from agentauth.core.production import enforce_production_policy
+
+from .config import Settings, get_settings
+from .db import validate_database_config
+from .secret_encryption import validate_secret_encryption_config
+
+
+def validate_production_startup(settings: Settings | None = None) -> None:
+    """Fail fast before serving traffic in production."""
+    settings = settings or get_settings()
+    validate_database_config(settings)
+    validate_secret_encryption_config(settings.database_url)
+    if not settings.is_production:
+        return
+    enforce_production_policy(layer="identity")
+    extra = _identity_specific_violations(settings)
+    if extra:
+        raise RuntimeError(
+            "identity production deployment refused to start: " + "; ".join(sorted(extra))
+        )
+
+
+def _identity_specific_violations(settings: Settings) -> list[str]:
+    violations: list[str] = []
+    if settings.mtls_enabled and not settings.tls_ca_bundle:
+        violations.append(
+            "AGENTAUTH_MTLS_ENABLED=1 requires AGENTAUTH_TLS_CA_BUNDLE for client verification"
+        )
+    if settings.secret_encryption_provider.strip().lower() == "aws_kms" and not settings.aws_kms_key_id:
+        violations.append("AGENTAUTH_AWS_KMS_KEY_ID is required when using aws_kms encryption")
+    if not os.environ.get("AGENTAUTH_HTTP_ALLOWED_HOSTS", "").strip():
+        violations.append(
+            "AGENTAUTH_HTTP_ALLOWED_HOSTS must list IdP/CIMD hosts permitted for outbound fetch"
+        )
+    return violations

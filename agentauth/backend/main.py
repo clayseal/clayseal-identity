@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from . import __version__
 from .config import get_settings
-from .db import SessionLocal, init_db, validate_database_config
+from .db import SessionLocal, init_db
 from .errors import AgentAuthError
 from .observability import RequestLoggingMiddleware, configure_logging, get_logger
 from .rate_limit import RateLimitMiddleware
@@ -19,8 +19,8 @@ from .routers import federation, identity
 from .secret_encryption import (
     encryption_enabled,
     secret_encryption_required,
-    validate_secret_encryption_config,
 )
+from .production import validate_production_startup
 
 
 @asynccontextmanager
@@ -33,8 +33,7 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings)
     # Fail fast on unsafe production config before serving any traffic.
-    validate_database_config(settings)
-    validate_secret_encryption_config(settings.database_url)
+    validate_production_startup(settings)
     init_db()
     get_logger().info(
         "startup complete",

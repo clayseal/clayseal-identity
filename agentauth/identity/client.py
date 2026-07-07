@@ -70,6 +70,9 @@ class AgentAuth:
         self._dev_attestation = (
             _env_truthy(DEV_ATTESTOR_ENV) if dev_attestation is None else dev_attestation
         )
+        from agentauth.core.production import refuse_dev_attestation_client
+
+        refuse_dev_attestation_client(dev_attestation_enabled=self._dev_attestation)
         self._dev_attestor = None  # created lazily when explicit dev attestation is enabled
         self._biscuit_root_pub: str | None = None  # cached root public key
 

@@ -20,14 +20,15 @@ def new_id() -> str:
 
 def utcnow() -> datetime:
     # Naive UTC -- see module docstring.
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def to_epoch(dt: datetime) -> int:
     """Convert a naive-UTC datetime to a Unix timestamp.
 
-    ``datetime.utcnow()`` returns a *naive* value; calling ``.timestamp()`` on
-    it would wrongly interpret it as local time. We pin tzinfo to UTC first.
+    The model layer stores UTC as naive datetimes; calling ``.timestamp()`` on
+    a naive value would wrongly interpret it as local time. We pin tzinfo to UTC
+    first.
     """
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)

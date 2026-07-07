@@ -55,4 +55,3 @@ only-include = [
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "sdk/python/tests"]
 pythonpath = ["."]
-asyncio_mode = "auto"

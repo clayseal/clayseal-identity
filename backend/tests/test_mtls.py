@@ -43,8 +43,8 @@ def _make_cert(private_key) -> bytes:
         .issuer_name(subject)
         .public_key(private_key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.utcnow())
-        .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
+        .not_valid_after(datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=1))
         .add_extension(x509.SubjectAlternativeName([spiffe_san]), critical=False)
         .sign(private_key, None)  # Ed25519 uses None for the hash algorithm
     )
