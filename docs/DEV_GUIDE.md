@@ -1,6 +1,6 @@
-# Developer guide — AgentAuth Identity (Layer 1)
+# Developer guide — Clay Seal Identity (Layer 1)
 
-This document is written for engineers who need to **run, integrate, or extend** the identity layer of AgentAuth. It assumes you are comfortable with Python and basic PKI concepts, but not that you have read the rest of the codebase first.
+This document is written for engineers who need to **run, integrate, or extend** the identity layer of Clay Seal. It assumes you are comfortable with Python and basic PKI concepts, but not that you have read the rest of the codebase first.
 
 ---
 
@@ -43,7 +43,7 @@ from agentauth.identity import AgentAuth
 from agentauth.identity.session import Session
 ```
 
-There is intentionally **no** top-level `from agentauth import AgentAuth` here. That unified export lives only in the receipts repo, which owns the public `agentauth` package surface for full-stack users.
+There is intentionally **no** top-level `from agentauth import Identity` here. That unified export lives only in the receipts repo, which owns the public `agentauth` package surface for full-stack users.
 
 ---
 
@@ -88,9 +88,9 @@ Supported: **3.10 through 3.13** (see `pyproject.toml`). Biscuit’s native whee
 
 ## Core concepts
 
-### AgentAuth client
+### Clay Seal client
 
-`AgentAuth` is the main entry point. You configure a trust domain (SPIFFE-style), signing keys, and optional persistence for agent certificates.
+`AgentAuth` is the compatibility API class and the Clay Seal identity entry point. You configure a trust domain (SPIFFE-style), signing keys, and optional persistence for agent certificates.
 
 Typical flow:
 
@@ -101,7 +101,7 @@ Typical flow:
 
 ### Credentials and JWT-SVID shape
 
-Credentials are signed JWTs with SPIFFE-compatible claims (`sub`, `iss`, `aud`, `exp`, etc.) plus AgentAuth-specific extensions for attestation and proof-of-possession.
+Credentials are signed JWTs with SPIFFE-compatible claims (`sub`, `iss`, `aud`, `exp`, etc.) plus Clay Seal-specific extensions for attestation and proof-of-possession.
 
 Design intent:
 
@@ -236,7 +236,7 @@ If imports fail with “cannot import name X from agentauth”, you almost alway
 
 ## Integrating with layer 2 and 3
 
-Layer 2 accepts native AgentAuth credentials through the `agentauth` identity adapter:
+Layer 2 accepts native Clay Seal credentials through the `agentauth` identity adapter:
 
 ```python
 from agentauth.capabilities.identity_adapters import get_identity_provider
@@ -244,7 +244,7 @@ from agentauth.capabilities.identity_adapters import get_identity_provider
 session = get_identity_provider("agentauth").build_session(credential.to_binding_dict())
 ```
 
-You do not need to change layer 1 code for OIDC, Auth0, SPIRE, or AWS STS — those adapters live in capabilities. Layer 1 remains the **native** stack when you want the full AgentAuth attestation model.
+You do not need to change layer 1 code for OIDC, Auth0, SPIRE, or AWS STS — those adapters live in capabilities. Layer 1 remains the **native** stack when you want the full Clay Seal attestation model.
 
 Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession` abstraction. See the capabilities doc `docs/cross_layer_integration.md` and the receipts `docs/DEV_GUIDE.md`.
 

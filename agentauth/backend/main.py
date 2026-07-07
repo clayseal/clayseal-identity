@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="AgentAuth",
+        title="Clay Seal",
         version=__version__,
         description=(
             "Attested identity and verifiable execution receipts for AI agents "

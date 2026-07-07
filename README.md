@@ -1,4 +1,9 @@
-# AgentAuth Identity (layer 1)
+# Clay Seal Identity (layer 1)
+
+<img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
+
+Clay Seal Identity is currently published as `agentauth-identity` under the
+`agentauth.identity` Python namespace for compatibility.
 
 Attested agent credentials: JWT-SVID identity, Biscuit capability tokens,
 proof-of-possession, and optional hosted FastAPI identity service.

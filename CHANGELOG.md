@@ -33,4 +33,4 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Initial standalone release of the identity layer extracted from Agent Receipts monorepo.
+- Initial standalone release of the identity layer extracted from Clay Seal Receipts monorepo.

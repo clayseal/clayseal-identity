@@ -1,8 +1,8 @@
-# Federating AgentAuth identities
+# Federating Clay Seal identities
 
-AgentAuth JWT-SVIDs are **RS256-signed** and published through standard,
+Clay Seal JWT-SVIDs are **RS256-signed** and published through standard,
 unauthenticated discovery documents — so external systems verify them with
-off-the-shelf tooling, no AgentAuth code required.
+off-the-shelf tooling, no Clay Seal code required.
 
 ## The public surface (per tenant)
 
@@ -43,7 +43,7 @@ the discovery URL, or import the JWKS as an external key source.
 Anthropic's API accepts external workload identities via RFC 7523
 (`urn:ietf:params:oauth:grant-type:jwt-bearer`) at `POST /v1/oauth/token`,
 returning short-lived `sk-ant-oat01-…` access tokens. Requirements on the
-assertion (all satisfied by AgentAuth JWT-SVIDs):
+assertion (all satisfied by Clay Seal JWT-SVIDs):
 
 - `aud` = `https://api.anthropic.com` — pass `extra_claims={"aud": ...}` /
   audience at identify() time or mint a purpose-bound credential
@@ -67,7 +67,7 @@ public-surface flow locally; performs the live Anthropic exchange only when
 
 ## WIMSE Workload Identity Tokens
 
-AgentAuth JWT-SVIDs are already WIT-shaped — `cnf` is always present
+Clay Seal JWT-SVIDs are already WIT-shaped — `cnf` is always present
 (sender-constrained, never bearer). Pass `"token_typ": "wit+jwt"` on
 `POST /v1/identify` to mint with the WIMSE JOSE header so WIT-aware relying
 parties recognize the contract; the default `agentauth-svid+jwt` is unchanged.
@@ -78,7 +78,7 @@ The MCP spec's authorization flow discovers the AS via **Protected Resource
 Metadata** (RFC 9728) and identifies clients via **Client ID Metadata
 Documents** (Dynamic Client Registration is deprecated):
 
-- AgentAuth's receipted MCP server serves
+- Clay Seal's receipted MCP server serves
   `/.well-known/oauth-protected-resource`; point its
   `AGENTAUTH_MCP_AUTHORIZATION_SERVERS` at a tenant issuer
   (`https://YOUR_HOST/t/TENANT`) so clients resolve this backend's discovery
