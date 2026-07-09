@@ -41,6 +41,12 @@ from .diagnostics import (
     preflight_endpoint,
     scan_mcp_config,
 )
+from .usability import (
+    diff_token_payload,
+    generate_integration,
+    replay_lab_payload,
+    whoami_payload,
+)
 from .adapters import (
     IdentityAdapter,
     IdentityBinding,
@@ -67,6 +73,10 @@ __all__ = [
     "findings_payload",
     "preflight_endpoint",
     "scan_mcp_config",
+    "diff_token_payload",
+    "generate_integration",
+    "replay_lab_payload",
+    "whoami_payload",
     "IdentityAdapter",
     "IdentityBinding",
     "get_identity_adapter",

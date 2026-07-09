@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,14 +19,26 @@ from .diagnostics import (
     scan_mcp_config,
 )
 from .profile import explain_token, lint_summary, lint_token
+from .usability import (
+    diff_token_payload,
+    generate_integration,
+    replay_lab_payload,
+    whoami_payload,
+)
 from .verifier import verify_offline
 
 
 def _read_token(value: str) -> str:
     if value == "-":
         return sys.stdin.read().strip()
+    if value.count(".") == 2 and "/" not in value:
+        return value.strip()
     path = Path(value)
-    if path.exists():
+    try:
+        exists = path.exists()
+    except OSError:
+        exists = False
+    if exists:
         return path.read_text().strip()
     return value.strip()
 
@@ -38,6 +51,12 @@ def _load_json(path_or_url: str) -> dict[str, Any]:
 
 def _print_json(data: Any) -> None:
     print(json.dumps(data, indent=2, sort_keys=True))
+
+
+def _print_kv(label: str, value: Any) -> None:
+    if value in (None, "", []):
+        value = "-"
+    print(f"{label:22} {value}")
 
 
 def cmd_explain(args: argparse.Namespace) -> int:
@@ -164,6 +183,91 @@ def cmd_scan_mcp(args: argparse.Namespace) -> int:
     return 1 if payload["summary"]["fail"] else 0
 
 
+def cmd_status(args: argparse.Namespace) -> int:
+    payload: dict[str, Any] = {
+        "env": {
+            "CLAYSEAL_AGENT_TOKEN": bool(os.environ.get("CLAYSEAL_AGENT_TOKEN")),
+            "AGENTAUTH_API_KEY": bool(os.environ.get("AGENTAUTH_API_KEY")),
+            "CLAYSEAL_IDENTITY_URL": os.environ.get("CLAYSEAL_IDENTITY_URL") or "",
+        },
+        "token": None,
+        "mcp": None,
+    }
+    findings = []
+    token = args.token or os.environ.get("CLAYSEAL_AGENT_TOKEN")
+    if token:
+        payload["token"] = whoami_payload(_read_token(token))
+    if args.mcp:
+        mcp_findings = scan_mcp_config(_load_json(args.mcp))
+        payload["mcp"] = findings_payload(mcp_findings)
+        findings.extend(mcp_findings)
+    if args.json:
+        _print_json(payload)
+    else:
+        print("Clay Seal Identity status")
+        _print_kv("agent token", "present" if token else "missing")
+        _print_kv("api key", "present" if payload["env"]["AGENTAUTH_API_KEY"] else "missing")
+        _print_kv("identity url", payload["env"]["CLAYSEAL_IDENTITY_URL"])
+        if payload["token"]:
+            _print_kv("agent id", payload["token"]["agent_id"])
+            _print_kv("agent type", payload["token"]["agent_type"])
+            _print_kv("audience", payload["token"]["audience"])
+            _print_kv("ttl seconds", payload["token"]["ttl_seconds"])
+        if payload["mcp"]:
+            _print_kv("mcp findings", payload["mcp"]["summary"])
+    return 1 if any(f.level == "fail" for f in findings) else 0
+
+
+def cmd_whoami(args: argparse.Namespace) -> int:
+    payload = whoami_payload(_read_token(args.token))
+    if args.json:
+        _print_json(payload)
+    else:
+        print("Clay Seal agent identity")
+        _print_kv("agent id", payload["agent_id"])
+        _print_kv("agent type", payload["agent_type"])
+        _print_kv("principal", payload["principal"])
+        _print_kv("subject", payload["subject"])
+        _print_kv("issuer", payload["issuer"])
+        _print_kv("audience", payload["audience"])
+        _print_kv("scopes", ", ".join(payload["scopes"]))
+        _print_kv("selectors", ", ".join(payload["selectors"]))
+        _print_kv("ttl seconds", payload["ttl_seconds"])
+        _print_kv("proof of possession", "yes" if payload["proof_of_possession"] else "no")
+        _print_kv("lint summary", payload["summary"])
+        for warning in payload["warnings"]:
+            print(f"{warning['level'].upper():4} {warning['code']:20} {warning['message']}")
+    return 1 if payload["summary"]["fail"] else 0
+
+
+def cmd_diff_token(args: argparse.Namespace) -> int:
+    payload = diff_token_payload(_read_token(args.before), _read_token(args.after))
+    _print_json(payload)
+    return 0
+
+
+def cmd_generate(args: argparse.Namespace) -> int:
+    payload = generate_integration(args.framework)
+    if args.json:
+        _print_json(payload)
+    else:
+        print(f"Clay Seal {payload['framework']} starter")
+        for file in payload["files"]:
+            print(f"\n# {file['path']}")
+            print(file["contents"].rstrip())
+        if payload["next_steps"]:
+            print("\nNext steps")
+            for step in payload["next_steps"]:
+                print(f"- {step}")
+    return 0
+
+
+def cmd_replay_lab(args: argparse.Namespace) -> int:
+    payload = replay_lab_payload()
+    _print_json(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="clayseal-identity")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -221,6 +325,30 @@ def build_parser() -> argparse.ArgumentParser:
     scan_mcp = sub.add_parser("scan-mcp", help="Scan an MCP config for identity/auth risks")
     scan_mcp.add_argument("config", help="MCP JSON config file")
     scan_mcp.set_defaults(func=cmd_scan_mcp)
+
+    status = sub.add_parser("status", help="Show local Clay Seal identity setup")
+    status.add_argument("--token", help="JWT string, path, or '-' for stdin; defaults to CLAYSEAL_AGENT_TOKEN")
+    status.add_argument("--mcp", help="Optional MCP JSON config to scan")
+    status.add_argument("--json", action="store_true", help="Emit JSON")
+    status.set_defaults(func=cmd_status)
+
+    whoami = sub.add_parser("whoami", help="Show the agent described by a token")
+    whoami.add_argument("token", help="JWT string, path, or '-' for stdin")
+    whoami.add_argument("--json", action="store_true", help="Emit JSON")
+    whoami.set_defaults(func=cmd_whoami)
+
+    diff_token = sub.add_parser("diff-token", help="Compare identity and authority changes between two tokens")
+    diff_token.add_argument("before", help="JWT string, path, or '-' for stdin")
+    diff_token.add_argument("after", help="JWT string or path")
+    diff_token.set_defaults(func=cmd_diff_token)
+
+    generate = sub.add_parser("generate", help="Print starter integration snippets")
+    generate.add_argument("framework", choices=["fastapi", "mcp", "gha", "express"])
+    generate.add_argument("--json", action="store_true", help="Emit JSON")
+    generate.set_defaults(func=cmd_generate)
+
+    replay_lab = sub.add_parser("replay-lab", help="Generate signed example tokens for common identity failures")
+    replay_lab.set_defaults(func=cmd_replay_lab)
     return parser
 
 

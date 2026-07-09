@@ -16,6 +16,12 @@ from agentauth.identity.diagnostics import (
     preflight_endpoint,
     scan_mcp_config,
 )
+from agentauth.identity.usability import (
+    diff_token_payload,
+    generate_integration,
+    replay_lab_payload,
+    whoami_payload,
+)
 from agentauth.identity.integrations.fastapi import AgentIdentityVerifier
 from agentauth.identity.integrations.langchain import identity_config, with_agent_identity
 from agentauth.identity.integrations.mcp import authorization_header, identity_metadata
@@ -27,25 +33,28 @@ def _rsa_keypair():
     return private, private.public_key()
 
 
-def _token_and_jwks():
+def _token_and_jwks(claim_overrides=None):
     private, public = _rsa_keypair()
     now = int(time.time())
+    claims = {
+        "iss": "agentauth.io",
+        "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+        "aud": "acme",
+        "iat": now,
+        "nbf": now,
+        "exp": now + 300,
+        "jti": "jti-1",
+        "agent_id": "agent-1",
+        "agent_type": "researcher",
+        "owner": "alice@example.com",
+        "scope": ["repo:read"],
+        "selectors": ["k8s:sa:researcher"],
+        "cnf": {"jkt": "thumbprint"},
+    }
+    if claim_overrides:
+        claims.update(claim_overrides)
     token = jwt.encode(
-        {
-            "iss": "agentauth.io",
-            "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
-            "aud": "acme",
-            "iat": now,
-            "nbf": now,
-            "exp": now + 300,
-            "jti": "jti-1",
-            "agent_id": "agent-1",
-            "agent_type": "researcher",
-            "owner": "alice@example.com",
-            "scope": ["repo:read"],
-            "selectors": ["k8s:sa:researcher"],
-            "cnf": {"jkt": "thumbprint"},
-        },
+        claims,
         private,
         algorithm="RS256",
         headers={"kid": "kid-1", "typ": "agentauth-svid+jwt"},
@@ -176,6 +185,52 @@ def test_cli_doctor_and_scan_mcp(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "verify.offline" in out
     assert "mcp.local.transport" in out
+
+
+def test_usability_helpers_summarize_diff_generate_and_lab():
+    token, _jwks = _token_and_jwks()
+    wider_token, _ = _token_and_jwks({"aud": "payments-api", "scope": ["repo:read", "repo:write"]})
+
+    summary = whoami_payload(token)
+    assert summary["agent_id"] == "agent-1"
+    assert summary["proof_of_possession"] is True
+
+    diff = diff_token_payload(token, wider_token)
+    changed_fields = {change["field"] for change in diff["changes"]}
+    assert {"aud", "scope"}.issubset(changed_fields)
+
+    snippet = generate_integration("fastapi")
+    assert snippet["files"][0]["path"] == "app.py"
+    assert "AgentIdentityVerifier" in snippet["files"][0]["contents"]
+
+    lab = replay_lab_payload()
+    assert {case["name"] for case in lab["cases"]} == {"good", "missing-cnf", "wrong-audience", "long-ttl"}
+    assert lab["jwks"]["keys"][0]["kid"] == "lab-key"
+    by_name = {case["name"]: case for case in lab["cases"]}
+    assert by_name["good"]["verify"]["valid"] is True
+    assert by_name["wrong-audience"]["verify"]["valid"] is False
+
+
+def test_cli_status_whoami_diff_generate_and_replay_lab(tmp_path, capsys, monkeypatch):
+    token, _jwks = _token_and_jwks()
+    wider_token, _ = _token_and_jwks({"scope": ["repo:read", "repo:write"]})
+    token_path = tmp_path / "token.jwt"
+    wider_path = tmp_path / "wider.jwt"
+    token_path.write_text(token)
+    wider_path.write_text(wider_token)
+    monkeypatch.setenv("CLAYSEAL_AGENT_TOKEN", token)
+
+    assert cli_main(["status"]) == 0
+    assert cli_main(["whoami", str(token_path)]) == 0
+    assert cli_main(["diff-token", str(token_path), str(wider_path)]) == 0
+    assert cli_main(["generate", "mcp"]) == 0
+    assert cli_main(["replay-lab"]) == 0
+    out = capsys.readouterr().out
+    assert "Clay Seal Identity status" in out
+    assert "Clay Seal agent identity" in out
+    assert '"field": "scope"' in out
+    assert "CLAYSEAL_AGENT_TOKEN" in out
+    assert '"name": "missing-cnf"' in out
 
 
 def test_preflight_endpoint_is_importable():

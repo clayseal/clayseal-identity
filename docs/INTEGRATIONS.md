@@ -76,6 +76,21 @@ clayseal-identity preflight http://localhost:8000/tool
 
 The preflight command checks whether missing and malformed identity are rejected.
 
+## Starter Snippets
+
+For a quick integration skeleton:
+
+```bash
+clayseal-identity generate fastapi
+clayseal-identity generate mcp
+clayseal-identity generate gha
+clayseal-identity generate express
+```
+
+These are small starter snippets, not production policy. They are meant to get
+the request boundary correct quickly so you can then add issuer, JWKS, audience,
+and deployment-specific constraints.
+
 ## MCP Config Scan
 
 For MCP client configs:
