@@ -4,6 +4,66 @@ All notable changes to **clayseal-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+Open-source readiness pass. Several changes are breaking and warrant a minor
+version bump before release.
+
+### Added
+
+- Community health files: `SECURITY.md` (private vulnerability reporting),
+  `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates.
+- `release.yml` workflow: tag-triggered `python -m build` + PyPI Trusted
+  Publishing. CI now runs ruff (lint), an advisory mypy typecheck, and pytest
+  with coverage; the layering contract is a dependency-free grep guard.
+- `ruff` + `mypy` configuration in `pyproject.toml`.
+- JWT attack tests (`alg:none`, RS256→HS256 confusion, unknown-`kid`, key-swap,
+  stripped/tampered signatures) for `verify_offline`, and the `bad-token-zoo`
+  fixtures are now wired into the profile linter via a parametrized test.
+- Bounded exponential-backoff retries in the SDK HTTP transport for transient
+  network/5xx failures (idempotent methods; connect errors for all methods).
+- Fail-safe warnings when the admin gate is open in non-production and when a
+  legacy plaintext API key is accepted; strict mTLS now rejects tokens missing
+  `cnf.jkt`. Deployment hardening documented in the threat model.
+- Prominent disclosure that the attestation layer is a SPIRE prototype stand-in
+  (bring-your-own-attestation) in the README and threat model.
+
+### Changed
+
+- **Breaking:** the FastAPI identity service (`clayseal.backend`) and its heavy
+  dependencies (`fastapi`, `uvicorn`, `SQLAlchemy`, `pydantic`, `psycopg`,
+  `alembic`) moved behind a `[server]` optional extra. The client SDK
+  (`clayseal.identity`) now installs only `agentauth-core`, `httpx`,
+  `biscuit-python`, `PyJWT`, and `cryptography`.
+- `scripts/bootstrap.sh` rewritten to real setup; `.gitignore` pruned of
+  monorepo leftovers; docs corrected (no more `clayseal.wrap`, `clayseal/core/`,
+  or a second CLI alias).
+
+### Removed
+
+- **Breaking:** the never-incremented `action_count` field on the agent
+  read-model (`AgentOut`) / SDK `AgentInfo`.
+- The unwired `clayseal.backend.cimd` module; the non-functional mTLS "direct
+  mode"; the advertised-but-rejected public `constraints` field on `Capability`
+  (invalid constraints still fail closed); and dead SDK/backend helpers
+  (`ClaySeal.biscuit_root_public_key`, `HttpClient.put/delete/context-manager`,
+  `Credential.to_binding_dict`, `AgentSession.can_read_path` /
+  `attenuate_for_task_scope`, `mtls.spiffe_id_from_cert`).
+
+### Fixed
+
+- Client-side mTLS transport passed an unsupported `ssl_context=` kwarg to
+  `httpx.HTTPTransport`; it now uses `verify=`.
+- Grammatical/branding residue ("an ClaySeal") in examples and error messages.
+
+### Known follow-ups
+
+- SDK↔backend mirrors (error hierarchy, offline JWT verify, profile/authorizer
+  constants) remain duplicated, guarded by a cross-package parity test; full
+  consolidation awaits a shared module in `agentauth-core`.
+- mypy runs advisory: ~30 type nits to burn down. `AuditEvent.customer_id` has no
+  FK; timestamp helpers not yet unified.
+
 ## [0.5.0] - 2026-07-08
 
 ### Added

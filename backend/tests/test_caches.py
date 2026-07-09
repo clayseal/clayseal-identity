@@ -6,8 +6,6 @@ import sys
 import time
 import types
 
-import pytest
-
 from clayseal.backend import deps, secret_encryption
 from clayseal.backend import signing_keys as sk
 from clayseal.backend.cache import TTLCache

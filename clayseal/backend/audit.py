@@ -21,10 +21,9 @@ import threading
 import time
 from datetime import datetime, timezone
 
+from agentauth.core.hash_util import canonical_json_bytes
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, OperationalError
-
-from agentauth.core.hash_util import canonical_json_bytes
 
 from .db import SessionLocal
 from .models import AuditEvent

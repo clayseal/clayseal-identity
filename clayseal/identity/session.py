@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import serialization
 
@@ -127,8 +127,8 @@ class AgentSession:
         resource: str,
         action: str,
         *,
-        challenge: Optional[str] = None,
-        file_path: Optional[str] = None,
+        challenge: str | None = None,
+        file_path: str | None = None,
     ) -> dict:
         """Decide whether this token authorizes ``(resource, action)``, fully
         offline. Signs proof-of-possession with the workload key. Returns
@@ -180,18 +180,12 @@ class AgentSession:
         resource: str,
         action: str,
         *,
-        file_path: Optional[str] = None,
+        file_path: str | None = None,
     ) -> bool:
         """``True`` if this token authorizes ``(resource, action)`` (offline)."""
         return bool(self.authorize(resource, action, file_path=file_path).get("allowed"))
 
-    def can_read_path(self, path: str) -> bool:
-        """Shorthand for file read authorization with path-scope facts (SM-7)."""
-        from clayseal.biscuit_scope import FILE_RESOURCE
-
-        return self.can(FILE_RESOURCE, "read", file_path=path)
-
-    def enforce(self, resource: str, action: str, *, file_path: Optional[str] = None) -> None:
+    def enforce(self, resource: str, action: str, *, file_path: str | None = None) -> None:
         """Raise :class:`CapabilityDeniedError` unless the operation is allowed."""
         result = self.authorize(resource, action, file_path=file_path)
         if not result.get("allowed"):
@@ -204,9 +198,9 @@ class AgentSession:
     def attenuate(
         self,
         *,
-        capabilities: Optional[list[dict]] = None,
-        path_patterns: Optional[list[str]] = None,
-        denied_paths: Optional[list[str]] = None,
+        capabilities: list[dict] | None = None,
+        path_patterns: list[str] | None = None,
+        denied_paths: list[str] | None = None,
         expires_at=None,
     ) -> AgentSession:
         """Return a NEW session whose capability token is narrowed to a subset of
@@ -230,16 +224,6 @@ class AgentSession:
         )
         return AgentSession(
             self._client, new_cred, workload_private_pem=self._workload_private_pem
-        )
-
-    def attenuate_for_task_scope(self, mandate: dict) -> AgentSession:
-        """Narrow the Biscuit to path patterns from a signed mandate (SM-7)."""
-        from agentauth.core.task_scope import compile_task_scope
-
-        scope = compile_task_scope(mandate)
-        return self.attenuate(
-            path_patterns=list(scope.allowed_paths) or None,
-            denied_paths=list(scope.denied_paths) or None,
         )
 
     def delegate(self, *, capabilities: list[dict]) -> str:

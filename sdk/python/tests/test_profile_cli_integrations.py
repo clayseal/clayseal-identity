@@ -4,7 +4,6 @@ import json
 import time
 
 import jwt
-import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from clayseal.identity import explain_token, lint_token, verify_offline
@@ -16,16 +15,16 @@ from clayseal.identity.diagnostics import (
     preflight_endpoint,
     scan_mcp_config,
 )
+from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
+from clayseal.identity.integrations.langchain import identity_config, with_agent_identity
+from clayseal.identity.integrations.mcp import authorization_header, identity_metadata
+from clayseal.identity.profile import AgentIdentityClaims, lint_summary
 from clayseal.identity.usability import (
     diff_token_payload,
     generate_integration,
     replay_lab_payload,
     whoami_payload,
 )
-from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
-from clayseal.identity.integrations.langchain import identity_config, with_agent_identity
-from clayseal.identity.integrations.mcp import authorization_header, identity_metadata
-from clayseal.identity.profile import AgentIdentityClaims, lint_summary
 
 
 def _rsa_keypair():

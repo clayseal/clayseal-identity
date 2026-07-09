@@ -34,7 +34,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .errors import AttestationDeniedError
-from .models import AttestationUse, Customer, NodeAttestor, utcnow
+from .models import AttestationUse, Customer, NodeAttestor
 
 SUPPORTED_ATTESTOR_TYPES = {"k8s_psat", "aws_iid", "gcp_iit"}
 

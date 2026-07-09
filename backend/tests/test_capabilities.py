@@ -13,7 +13,6 @@ import uuid
 from clayseal.backend import capabilities as cap_service
 from clayseal.backend.db import SessionLocal
 from clayseal.backend.models import Agent, BiscuitRevocation, CapabilityChallenge
-
 from tests.attest import (
     ROGUE_WORKLOAD_PRIVATE_PEM,
     WORKLOAD_PRIVATE_PEM,

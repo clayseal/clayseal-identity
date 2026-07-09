@@ -4,24 +4,43 @@ Quickstart::
 
     from clayseal.identity import ClaySeal
 
-    auth = ClaySeal(api_key="aa_...", dev_attestation=True)  # localhost demos/tests
+    # Point at your Clay Seal identity service. In production the workload's
+    # platform (e.g. a SPIRE agent) supplies the attestation document.
+    auth = ClaySeal(api_key="aa_...", base_url="https://identity.example.com")
     agent = auth.identify(agent_type="researcher", owner="alice@acme.ai",
                           scopes=["db:read"])
 
     print(agent.token)                 # signed JWT to carry on outbound calls
+    assert agent.validate().valid
 
-    result = agent.validate()
-    assert result.valid
+For a self-contained local demo (no platform attestation), run against a
+localhost backend with ``ClaySeal(..., dev_attestation=True)`` — see ``examples/``
+and the README. Dev attestation is refused in production.
 """
 from __future__ import annotations
 
+from .adapters import (
+    IdentityAdapter,
+    IdentityBinding,
+    get_identity_adapter,
+    list_identity_adapters,
+    register_identity_adapter,
+)
 from .client import ClaySeal
+from .diagnostics import (
+    DiagnosticFinding,
+    doctor_agent_identity_document,
+    doctor_token,
+    findings_payload,
+    preflight_endpoint,
+    scan_mcp_config,
+)
 from .errors import (
-    ClaySealError,
     AgentNotFoundError,
     AgentRevokedError,
     BiscuitError,
     CapabilityDeniedError,
+    ClaySealError,
     InvalidAPIKeyError,
     InvalidTokenError,
     ProofOfPossessionError,
@@ -32,28 +51,13 @@ from .errors import (
 from .models import AgentInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims, explain_token, lint_token
 from .session import AgentSession
-from .verifier import verify_offline
-from .diagnostics import (
-    DiagnosticFinding,
-    doctor_agent_identity_document,
-    doctor_token,
-    findings_payload,
-    preflight_endpoint,
-    scan_mcp_config,
-)
 from .usability import (
     diff_token_payload,
     generate_integration,
     replay_lab_payload,
     whoami_payload,
 )
-from .adapters import (
-    IdentityAdapter,
-    IdentityBinding,
-    get_identity_adapter,
-    list_identity_adapters,
-    register_identity_adapter,
-)
+from .verifier import verify_offline
 
 __version__ = "0.5.0"
 

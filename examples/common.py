@@ -16,8 +16,8 @@ The SDK and backend are imported straight from this repo (no install needed).
 """
 from __future__ import annotations
 
-import os
 import logging
+import os
 import socket
 import sys
 import tempfile
@@ -99,7 +99,7 @@ _server_started = False
 
 
 def _is_clayseal(base_url: str, timeout: float = 1.0) -> bool:
-    """Confirm the URL is actually an ClaySeal backend (not just any server)."""
+    """Confirm the URL is actually a Clay Seal backend (not just any server)."""
     import httpx
 
     try:
@@ -141,21 +141,21 @@ def _boot_embedded() -> str:
     while not server.started and time.time() < deadline:
         time.sleep(0.05)
     if not server.started:
-        raise RuntimeError("Embedded ClaySeal backend failed to start.")
+        raise RuntimeError("Embedded Clay Seal backend failed to start.")
     _server_started = True
     return f"http://127.0.0.1:{port}"
 
 
 def ensure_backend() -> str:
-    """Return a base URL for an ClaySeal backend.
+    """Return a base URL for a Clay Seal backend.
 
-    Uses CLAYSEAL_BASE_URL if it is set and points at a real ClaySeal backend;
+    Uses CLAYSEAL_BASE_URL if it is set and points at a real Clay Seal backend;
     otherwise boots a throwaway one in-process (the default, zero-config path).
     """
     if _EXPLICIT_URL:
         if _is_clayseal(_EXPLICIT_URL):
             return _EXPLICIT_URL
-        warn(f"CLAYSEAL_BASE_URL={_EXPLICIT_URL} is not a reachable ClaySeal backend; "
+        warn(f"CLAYSEAL_BASE_URL={_EXPLICIT_URL} is not a reachable Clay Seal backend; "
              "starting an embedded one instead.")
     return _boot_embedded()
 
@@ -170,7 +170,7 @@ def bootstrap(org_name: str = "Acme AI"):
     if _server_started:
         detail(f"Started an embedded backend at {base_url} (throwaway data).")
     else:
-        detail(f"Using the ClaySeal backend at {base_url}.")  # external, explicit
+        detail(f"Using the Clay Seal backend at {base_url}.")  # external, explicit
 
     tenant = ClaySeal.create_tenant(org_name, base_url=base_url)
     api_key = tenant["api_key"]

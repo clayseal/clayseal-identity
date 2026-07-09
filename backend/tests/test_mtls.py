@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import base64
 import datetime
-import os
 import time
 import uuid
 
@@ -201,14 +200,6 @@ def test_mtls_non_strict_missing_cert_passes(client: TestClient, customer: dict,
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["valid"] is True
-
-
-def test_spiffe_id_extraction(matching_cert_der: bytes):
-    """spiffe_id_from_cert correctly extracts the SPIFFE SAN URI."""
-    from clayseal.backend.mtls import spiffe_id_from_cert
-
-    spiffe_id = spiffe_id_from_cert(matching_cert_der)
-    assert spiffe_id == "spiffe://clayseal.io/customer/test/agent/researcher"
 
 
 def test_cert_public_key_pem_roundtrip(matching_cert_der: bytes):

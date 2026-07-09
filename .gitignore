@@ -1,9 +1,3 @@
-# Rust
-/target/
-# Detached zkVM crate builds into its own target dir (RISC Zero toolchain output)
-crates/agent-receipts-zkvm/target/
-**/*.rs.bk
-
 # Python
 __pycache__/
 *.py[cod]
@@ -11,13 +5,18 @@ __pycache__/
 .eggs/
 dist/
 build/
-.venv/
-.venv-audit/
-venv/
 .python-version
+
+# Virtual environments
+.venv/
+.venv-*/
+venv/
+
+# Test / type / lint caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.cache/
 
 # Coverage
 .coverage
@@ -26,60 +25,16 @@ coverage.json
 coverage.xml
 htmlcov/
 lcov.info
-target/llvm-cov/
-dashboard/coverage/
 
-# Backend identity service
-backend/.venv/
-backend/.venv-test/
-backend/agents.db
-backend/audit.jsonl
-backend/.env
-
-# Node / dashboard
-dashboard/node_modules/
-dashboard/dist/
-
-# Local dev
+# Local dev data (SQLite dev store, env files)
 .env
 *.db
 *.sqlite
-.audit/
-/receipts/
-*.redacted.json
-config/partner.yaml
+
+# TLS / signing key material — never commit
 certs/*.pem
 certs/*.json
 !certs/.gitkeep
-
-# IDE / misc
-.idea/
-.vscode/
-.cursor/mcp.json
-*.swp
-*.log
-.DS_Store
-
-# Local experiment outputs (Devin red-team runs, gate JSON, clones)
-artifacts/
-
-# Proving artifacts and generated key caches (large)
-/proofs/
-/keys/*.bin
-/keys/**/*.bin
-/keys/*.sha256
-/keys/**/*.sha256
-!/keys/.gitkeep
-
-# Generated compliance scratch fixtures
-/compliance/fixtures/*.generated.json
-/compliance/fixtures/*.tmp.json
-
-# Local caches
-.cache/
-.vendor/
-
-# Signing private keys — never commit
 keys/signing/
 *.key
 **/keys/*.pem
@@ -87,6 +42,13 @@ keys/signing/
 *.ed25519.pem
 *_private.pem
 
+# IDE / OS / misc
+.idea/
+.vscode/
+.cursor/mcp.json
+*.swp
+*.log
+.DS_Store
+
 # Claude Code session/tooling
 .claude/
-SECURITY_AUDIT.md

@@ -246,7 +246,6 @@ class Agent(Base):
     jti: Mapped[str] = mapped_column(String, index=True, nullable=False)
     issued_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    action_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     @property

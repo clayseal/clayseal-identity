@@ -29,6 +29,13 @@ Implemented today:
 - SQLite-by-default development storage and Postgres-ready production storage.
 - Alembic migrations, API-key hardening, and optional KMS envelope encryption.
 
+> **Attestation model — please read.** The node/workload attestation in this repo
+> is a *prototype stand-in for SPIRE*: the backend trusts an RSA anchor an
+> operator registers out-of-band and does **not** yet verify live
+> Kubernetes/AWS/GCP node evidence. Treat it as bring-your-own-attestation and
+> front issuance with a real SPIRE agent in production. Details:
+> [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md#attestation-model--read-this-first).
+
 Layer 1 deliberately does not issue action-scoped commit tokens or write
 execution receipts. Those live in the sibling layers:
 
@@ -41,29 +48,38 @@ execution receipts. Those live in the sibling layers:
 
 ## Install
 
-Standalone editable development:
+The client SDK (`clayseal.identity`) is intentionally lightweight:
+
+```bash
+pip install clayseal-identity
+```
+
+To also run the bundled FastAPI identity service, add the `server` extra (pulls
+in FastAPI, SQLAlchemy, the Postgres driver, and Alembic); `kms` adds the AWS KMS
+provider:
+
+```bash
+pip install "clayseal-identity[server]"
+pip install "clayseal-identity[server,kms]"
+```
+
+> `clayseal-identity` depends on `agentauth-core` (the shared contracts package).
+> Until both are published to PyPI, install from source (below).
+
+### From source (development)
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-identity.git
 cd clay-seal-identity
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+# agentauth-core: from PyPI once published, or the sibling checkout for now:
+pip install -e ../clay-seal-core        # if you have the clay-seal-core checkout
+pip install -e ".[dev]"                 # client + server + test/lint/type tooling
 pytest backend/tests sdk/python/tests -q
 python examples/01_quickstart.py
 ```
 
-Pinned partner install:
-
-```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
-```
-
-Production KMS support is optional:
-
-```bash
-pip install "clayseal-identity[kms] @ git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
-```
+Or run `scripts/bootstrap.sh`, which performs the steps above.
 
 ## Quickstart
 

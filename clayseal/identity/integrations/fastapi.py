@@ -26,7 +26,7 @@ class AgentIdentityVerifier:
 
     def __call__(self, authorization: str = "") -> AgentIdentityClaims:
         try:
-            from fastapi import Header, HTTPException
+            from fastapi import HTTPException
         except ImportError as exc:  # pragma: no cover - fastapi is installed here
             raise RuntimeError("Install fastapi to use AgentIdentityVerifier") from exc
 

@@ -83,6 +83,3 @@ Documents** (Dynamic Client Registration is deprecated):
   `CLAYSEAL_MCP_AUTHORIZATION_SERVERS` at a tenant issuer
   (`https://YOUR_HOST/t/TENANT`) so clients resolve this backend's discovery
   and JWKS documents.
-- `clayseal.backend.cimd.fetch_client_metadata(client_id_url)` fetches and
-  validates URL-shaped client IDs (https-only, size-capped, `client_id`
-  echo check, redirect-URI hygiene) for brokering MCP clients.

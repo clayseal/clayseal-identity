@@ -682,7 +682,7 @@ def validate_token(
         )
     if header.get("typ") not in SUPPORTED_JWT_TYPES:
         raise InvalidTokenError(
-            "Token type is not an ClaySeal SVID.",
+            "Token type is not a Clay Seal SVID.",
             suggestion="Pass the credential JWT returned by identify(), not another JWT type.",
         )
 
@@ -690,6 +690,8 @@ def validate_token(
         claims = _decode(token, key.public_pem, customer.id)
     except jwt.ExpiredSignatureError as exc:
         # Best-effort: mark the agent expired so the dashboard reflects reality.
+        # (Authoritative expiry is the JWT `exp` claim enforced above; this only
+        # keeps the stored status/retention view eventually consistent.)
         try:
             unverified = jwt.decode(token, options={"verify_signature": False})
             agent = db.get(Agent, unverified.get("agent_id"))

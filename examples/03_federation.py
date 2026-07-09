@@ -1,4 +1,4 @@
-"""Federation walk-through: verify an ClaySeal JWT-SVID like an outsider would.
+"""Federation walk-through: verify a Clay Seal JWT-SVID like an outsider would.
 
 1. identify() an agent against the (embedded) backend
 2. fetch the tenant's PUBLIC discovery documents (no API key)

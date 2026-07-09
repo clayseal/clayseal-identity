@@ -11,7 +11,7 @@ from typing import Any
 def _token(session_or_token: Any) -> str:
     if isinstance(session_or_token, str):
         return session_or_token
-    return str(getattr(session_or_token, "token"))
+    return str(session_or_token.token)
 
 
 def authorization_header(session_or_token: Any) -> dict[str, str]:

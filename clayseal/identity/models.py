@@ -8,7 +8,7 @@ SDK keeps working if the backend adds fields.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -27,12 +27,12 @@ class Credential:
     # customer's root public key so it can be authorized offline. ``biscuit`` is
     # None when the workload presented no public key (JWT-only fallback).
     capabilities: list[dict] = field(default_factory=list)
-    biscuit: Optional[str] = None
-    biscuit_root_public_key: Optional[str] = None
-    bound_keyhash: Optional[str] = None
+    biscuit: str | None = None
+    biscuit_root_public_key: str | None = None
+    bound_keyhash: str | None = None
 
     @classmethod
-    def from_api(cls, d: dict) -> "Credential":
+    def from_api(cls, d: dict) -> Credential:
         return cls(
             agent_id=d["agent_id"],
             token=d["token"],
@@ -48,24 +48,6 @@ class Credential:
             bound_keyhash=d.get("bound_keyhash"),
         )
 
-    def to_binding_dict(self) -> dict[str, Any]:
-        """The L1/L2 authority facts, in the shape the receipts runtime's
-        ``AuthorityBinding.from_agentauth_credential`` consumes. This is the
-        seam that binds an attested identity into every execution receipt."""
-        return {
-            "agent_id": self.agent_id,
-            "spiffe_id": self.spiffe_id,
-            "agent_type": self.agent_type,
-            "owner": self.owner,
-            "scopes": list(self.scopes),
-            "selectors": list(self.selectors),
-            "expires_at": self.expires_at,
-            "capabilities": list(self.capabilities),
-            "biscuit": self.biscuit,
-            "has_biscuit": bool(self.biscuit),
-            "bound_keyhash": self.bound_keyhash,
-        }
-
 
 @dataclass
 class AgentInfo:
@@ -78,15 +60,14 @@ class AgentInfo:
     spiffe_id: str
     selectors: list[str]
     status: str
-    action_count: int
     issued_at: str
     expires_at: str
     capabilities: list[dict] = field(default_factory=list)
-    bound_keyhash: Optional[str] = None
+    bound_keyhash: str | None = None
     has_biscuit: bool = False
 
     @classmethod
-    def from_api(cls, d: dict) -> "AgentInfo":
+    def from_api(cls, d: dict) -> AgentInfo:
         return cls(
             id=d["id"],
             agent_type=d["agent_type"],
@@ -95,7 +76,6 @@ class AgentInfo:
             spiffe_id=d.get("spiffe_id", ""),
             selectors=list(d.get("selectors", [])),
             status=d["status"],
-            action_count=d.get("action_count", 0),
             issued_at=d.get("issued_at", ""),
             expires_at=d.get("expires_at", ""),
             capabilities=list(d.get("capabilities", [])),
@@ -107,8 +87,8 @@ class AgentInfo:
 @dataclass
 class ValidationResult:
     valid: bool
-    claims: Optional[dict[str, Any]] = None
+    claims: dict[str, Any] | None = None
 
     @classmethod
-    def from_api(cls, d: dict) -> "ValidationResult":
+    def from_api(cls, d: dict) -> ValidationResult:
         return cls(valid=d.get("valid", False), claims=d.get("claims"))

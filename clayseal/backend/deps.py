@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 
 from fastapi import Depends, Header, Request
 from sqlalchemy import select
@@ -14,6 +15,8 @@ from .config import get_settings
 from .db import get_db
 from .errors import InvalidAPIKeyError, InvalidTokenError
 from .models import Customer
+
+_logger = logging.getLogger("clayseal.backend.auth")
 
 # Verified-API-key cache: sha256(api_key) -> (customer_id, verified_api_key_hash).
 # Authenticating a request runs PBKDF2 (200k iterations) against the stored hash,
@@ -53,8 +56,14 @@ def _authenticate_customer(db: Session, x_api_key: str) -> Customer:
             if legacy.api_key_hash:
                 raise InvalidAPIKeyError(
                     "API key is not recognised.",
-                    suggestion="Double-check the key from your ClaySeal dashboard.",
+                    suggestion="Double-check the key from your Clay Seal dashboard.",
                 )
+            _logger.warning(
+                "Accepting a legacy plaintext API key for customer %s and "
+                "upgrading it to a PBKDF2 hash. Run scripts/migrate_api_keys.py to "
+                "migrate all tenants before production traffic.",
+                legacy.id,
+            )
             legacy.api_key_hash = hash_api_key(x_api_key)
             legacy.api_key = lookup or legacy.id[:16]
             db.add(legacy)
@@ -122,6 +131,11 @@ def require_admin(
                     "operations such as tenant creation."
                 ),
             )
+        _logger.warning(
+            "Admin-gated endpoint reached with no CLAYSEAL_ADMIN_API_KEY configured; "
+            "allowing because CLAYSEAL_ENV is not 'production'. Set CLAYSEAL_ADMIN_API_KEY "
+            "to require an X-Admin-Key header (fails closed automatically in production)."
+        )
         return
     if not x_admin_key or not hmac.compare_digest(x_admin_key, admin_key):
         raise InvalidAPIKeyError(
@@ -152,8 +166,9 @@ def verify_mtls_binding(request: Request, claims: dict | None = None) -> None:
             )
         return
 
-    from .mtls import cert_public_key_pem
     from clayseal.workload_keys import keyhash_for_pem
+
+    from .mtls import cert_public_key_pem
 
     try:
         cert_keyhash = keyhash_for_pem(cert_public_key_pem(cert_der))
@@ -164,6 +179,14 @@ def verify_mtls_binding(request: Request, claims: dict | None = None) -> None:
         ) from exc
 
     expected = (claims or {}).get("cnf", {}).get("jkt")
+    if claims is not None and not expected and settings.mtls_strict:
+        # Clay Seal credentials are always sender-constrained (cnf.jkt). Under
+        # strict mTLS, a token with no bound key would let a presented cert go
+        # unchecked — fail closed instead of silently accepting it.
+        raise InvalidTokenError(
+            "Token is not sender-constrained (missing cnf.jkt) but strict mTLS is enabled.",
+            suggestion="Present a Clay Seal credential whose cnf.jkt binds the workload key.",
+        )
     if expected and cert_keyhash != expected:
         raise InvalidTokenError(
             "mTLS client certificate public key does not match the token's bound key (cnf.jkt).",

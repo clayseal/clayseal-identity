@@ -20,7 +20,6 @@ DEFAULT_ALGORITHMS = ("RS256",)
 
 def _keys_from_jwks(jwks: Mapping[str, Any] | Iterable[Mapping[str, Any]]) -> list[dict]:
     if isinstance(jwks, Mapping):
-        keys = None
         keys = jwks.get("keys")
         if keys is None and jwks.get("kty"):
             keys = [jwks]

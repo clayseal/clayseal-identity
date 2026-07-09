@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from .profile import explain_token, lint_summary, lint_token
 from .verifier import verify_offline
 
-
 AUTHORITY_FIELDS = (
     "iss",
     "sub",
