@@ -1,0 +1,16 @@
+{
+  "algorithms": ["RS256"],
+  "token_types": ["agentauth-svid+jwt", "wit+jwt"],
+  "required_claims": ["iss", "sub", "aud", "exp", "iat", "jti", "cnf"],
+  "required_cnf_claims": ["jkt"],
+  "public_key_discovery": [
+    "/t/{tenant}/.well-known/openid-configuration",
+    "/t/{tenant}/jwks.json",
+    "/t/{tenant}/spiffe-bundle.json"
+  ],
+  "reference_tests": [
+    "backend/tests/test_federation.py::test_offline_verifier_accepts_public_jwks",
+    "backend/tests/test_federation.py::test_offline_verifier_rejects_wrong_audience",
+    "backend/tests/test_federation.py::test_offline_verifier_rejects_stale_jwks"
+  ]
+}

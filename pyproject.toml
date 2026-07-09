@@ -33,6 +33,10 @@ Repository = "https://github.com/pberlizov/clay-seal-identity"
 Issues = "https://github.com/pberlizov/clay-seal-identity/issues"
 Changelog = "https://github.com/pberlizov/clay-seal-identity/blob/main/CHANGELOG.md"
 
+[project.scripts]
+clayseal-identity = "agentauth.identity.cli:main"
+agentauth-identity = "agentauth.identity.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
 # AWS KMS envelope-encryption provider for signing/Biscuit keys at rest

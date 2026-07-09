@@ -2,7 +2,7 @@
 
 Quickstart::
 
-    from agentauth import AgentAuth
+    from agentauth.identity import AgentAuth
 
     auth = AgentAuth(api_key="aa_...", dev_attestation=True)  # localhost demos/tests
     agent = auth.identify(agent_type="researcher", owner="alice@acme.ai",
@@ -10,7 +10,7 @@ Quickstart::
 
     print(agent.token)                 # signed JWT to carry on outbound calls
 
-    result = auth.validate(agent.token)
+    result = agent.validate()
     assert result.valid
 """
 from __future__ import annotations
@@ -30,7 +30,9 @@ from .errors import (
     TTLOutOfRangeError,
 )
 from .models import AgentInfo, Credential, ValidationResult
+from .profile import AgentIdentityClaims, explain_token, lint_token
 from .session import AgentSession
+from .verifier import verify_offline
 from .adapters import (
     IdentityAdapter,
     IdentityBinding,
@@ -39,7 +41,7 @@ from .adapters import (
     register_identity_adapter,
 )
 
-__version__ = "0.2.1"
+__version__ = "0.5.0"
 
 __all__ = [
     "AgentAuth",
@@ -47,6 +49,10 @@ __all__ = [
     "Credential",
     "AgentInfo",
     "ValidationResult",
+    "AgentIdentityClaims",
+    "explain_token",
+    "lint_token",
+    "verify_offline",
     "IdentityAdapter",
     "IdentityBinding",
     "get_identity_adapter",

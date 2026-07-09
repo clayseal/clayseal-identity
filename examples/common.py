@@ -17,6 +17,7 @@ The SDK and backend are imported straight from this repo (no install needed).
 from __future__ import annotations
 
 import os
+import logging
 import socket
 import sys
 import tempfile
@@ -121,6 +122,11 @@ def _boot_embedded() -> str:
     global _server_started
     tmp = tempfile.mkdtemp(prefix="agentauth-examples-")
     os.environ.setdefault("AGENTAUTH_DATABASE_URL", f"sqlite:///{tmp}/agents.db")
+    os.environ.setdefault("AGENTAUTH_LOG_LEVEL", "WARNING")
+    logging.getLogger("agentauth").setLevel(logging.WARNING)
+    logging.getLogger("agentauth.access").setLevel(logging.CRITICAL)
+    logging.getLogger("uvicorn").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
     import uvicorn
 
@@ -185,5 +191,6 @@ def bootstrap(org_name: str = "Acme AI"):
     # because constructing it configures the logger.)
     if not os.getenv("AGENTAUTH_EXAMPLES_VERBOSE"):
         logging.getLogger("agentauth").setLevel(logging.WARNING)
+        logging.getLogger("agentauth.access").setLevel(logging.CRITICAL)
 
     return client, tenant["api_key"], base_url
