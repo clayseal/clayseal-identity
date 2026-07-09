@@ -16,6 +16,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `doctor`, `preflight`, and `scan-mcp` diagnostics for token metadata,
   endpoint behavior, and MCP configs.
 - `/.well-known/agent-identity.json` discovery and a bad-token zoo.
+- Friendly CLI workflows: `status`, `whoami`, `diff-token`, `generate`, and
+  `replay-lab`.
 
 ### Changed
 

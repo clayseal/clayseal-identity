@@ -82,9 +82,13 @@ Inspect and lint agent tokens from the terminal:
 ```bash
 clayseal-identity explain token.jwt
 clayseal-identity lint token.jwt
+clayseal-identity whoami token.jwt
+clayseal-identity diff-token before.jwt after.jwt
 clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
 clayseal-identity preflight http://localhost:8000/tool
 clayseal-identity scan-mcp mcp-config.json
+clayseal-identity generate fastapi
+clayseal-identity replay-lab
 ```
 
 The current SDK flow is service-backed: create or point at a tenant, then call
