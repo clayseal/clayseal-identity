@@ -10,6 +10,13 @@ from typing import Any
 import httpx
 
 from .client import AgentAuth
+from .diagnostics import (
+    doctor_agent_identity_document,
+    doctor_token,
+    findings_payload,
+    preflight_endpoint,
+    scan_mcp_config,
+)
 from .profile import explain_token, lint_summary, lint_token
 from .verifier import verify_offline
 
@@ -23,7 +30,7 @@ def _read_token(value: str) -> str:
     return value.strip()
 
 
-def _load_jwks(path_or_url: str) -> dict[str, Any]:
+def _load_json(path_or_url: str) -> dict[str, Any]:
     if path_or_url.startswith(("https://", "http://")):
         return httpx.get(path_or_url, timeout=10.0).json()
     return json.loads(Path(path_or_url).read_text())
@@ -56,7 +63,7 @@ def cmd_lint(args: argparse.Namespace) -> int:
 def cmd_verify(args: argparse.Namespace) -> int:
     claims = verify_offline(
         _read_token(args.token),
-        jwks=_load_jwks(args.jwks),
+        jwks=_load_json(args.jwks),
         issuer=args.issuer,
         audience=args.audience,
         require_cnf=not args.allow_bearer,
@@ -102,7 +109,7 @@ def cmd_conformance(args: argparse.Namespace) -> int:
     findings = lint_token(token)
     claims = verify_offline(
         token,
-        jwks=_load_jwks(args.jwks),
+        jwks=_load_json(args.jwks),
         issuer=args.issuer,
         audience=args.audience,
     )
@@ -116,6 +123,45 @@ def cmd_conformance(args: argparse.Namespace) -> int:
         }
     )
     return 1 if summary["fail"] else 0
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    findings = []
+    if args.agent_identity:
+        findings.extend(doctor_agent_identity_document(_load_json(args.agent_identity)))
+    if args.token:
+        findings.extend(
+            doctor_token(
+                _read_token(args.token),
+                jwks=_load_json(args.jwks) if args.jwks else None,
+                issuer=args.issuer,
+                audience=args.audience,
+            )
+        )
+    if not findings:
+        raise ValueError("doctor needs --token and/or --agent-identity")
+    payload = findings_payload(findings)
+    _print_json(payload)
+    return 1 if payload["summary"]["fail"] else 0
+
+
+def cmd_preflight(args: argparse.Namespace) -> int:
+    findings = preflight_endpoint(
+        args.url,
+        method=args.method,
+        token=_read_token(args.token) if args.token else None,
+    )
+    payload = findings_payload(findings)
+    _print_json(payload)
+    return 1 if payload["summary"]["fail"] else 0
+
+
+def cmd_scan_mcp(args: argparse.Namespace) -> int:
+    config = _load_json(args.config)
+    findings = scan_mcp_config(config)
+    payload = findings_payload(findings)
+    _print_json(payload)
+    return 1 if payload["summary"]["fail"] else 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -157,6 +203,24 @@ def build_parser() -> argparse.ArgumentParser:
     conformance.add_argument("--issuer", required=True)
     conformance.add_argument("--audience")
     conformance.set_defaults(func=cmd_conformance)
+
+    doctor = sub.add_parser("doctor", help="Diagnose token and agent-identity metadata")
+    doctor.add_argument("--token", help="JWT string, path, or '-' for stdin")
+    doctor.add_argument("--jwks", help="JWKS JSON file or URL")
+    doctor.add_argument("--issuer")
+    doctor.add_argument("--audience")
+    doctor.add_argument("--agent-identity", help="/.well-known/agent-identity.json file or URL")
+    doctor.set_defaults(func=cmd_doctor)
+
+    preflight = sub.add_parser("preflight", help="Probe whether an endpoint rejects unsafe identity")
+    preflight.add_argument("url")
+    preflight.add_argument("--method", default="GET")
+    preflight.add_argument("--token", help="Optional valid token string/path for the happy path")
+    preflight.set_defaults(func=cmd_preflight)
+
+    scan_mcp = sub.add_parser("scan-mcp", help="Scan an MCP config for identity/auth risks")
+    scan_mcp.add_argument("config", help="MCP JSON config file")
+    scan_mcp.set_defaults(func=cmd_scan_mcp)
     return parser
 
 

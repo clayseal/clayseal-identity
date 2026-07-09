@@ -77,6 +77,16 @@ python examples/01_quickstart.py
 python examples/02_capabilities.py
 ```
 
+Inspect and lint agent tokens from the terminal:
+
+```bash
+clayseal-identity explain token.jwt
+clayseal-identity lint token.jwt
+clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+clayseal-identity preflight http://localhost:8000/tool
+clayseal-identity scan-mcp mcp-config.json
+```
+
 The current SDK flow is service-backed: create or point at a tenant, then call
 `identify`. `dev_attestation=True` is only for localhost demos/tests; production
 callers pass a platform-issued attestation document.
@@ -134,6 +144,7 @@ or employee data.
 - [Conformance guide](docs/CONFORMANCE.md)
 - [Identity profiles](docs/IDENTITY_PROFILES.md)
 - [Privacy and data handling](docs/PRIVACY.md)
+- [Bad token zoo](bad-token-zoo/README.md)
 
 ## Compatibility Note
 

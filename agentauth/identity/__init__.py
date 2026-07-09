@@ -33,6 +33,14 @@ from .models import AgentInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims, explain_token, lint_token
 from .session import AgentSession
 from .verifier import verify_offline
+from .diagnostics import (
+    DiagnosticFinding,
+    doctor_agent_identity_document,
+    doctor_token,
+    findings_payload,
+    preflight_endpoint,
+    scan_mcp_config,
+)
 from .adapters import (
     IdentityAdapter,
     IdentityBinding,
@@ -53,6 +61,12 @@ __all__ = [
     "explain_token",
     "lint_token",
     "verify_offline",
+    "DiagnosticFinding",
+    "doctor_agent_identity_document",
+    "doctor_token",
+    "findings_payload",
+    "preflight_endpoint",
+    "scan_mcp_config",
     "IdentityAdapter",
     "IdentityBinding",
     "get_identity_adapter",

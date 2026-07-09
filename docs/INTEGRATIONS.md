@@ -65,3 +65,25 @@ secure_runnable.invoke({"question": "What changed?"})
 
 The helpers do not import LangChain or LangGraph directly. They work with
 runnable-like objects that accept a `config` argument.
+
+## Endpoint Preflight
+
+Before wiring a tool server into an agent, run:
+
+```bash
+clayseal-identity preflight http://localhost:8000/tool
+```
+
+The preflight command checks whether missing and malformed identity are rejected.
+
+## MCP Config Scan
+
+For MCP client configs:
+
+```bash
+clayseal-identity scan-mcp mcp-config.json
+```
+
+This does not replace a security review, but it catches common identity smells:
+plain HTTP remote servers, missing Authorization headers, local command servers,
+and secrets passed through environment variables.

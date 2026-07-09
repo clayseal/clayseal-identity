@@ -1,0 +1,72 @@
+{
+  "no-audience": {
+    "header": {"alg": "RS256", "kid": "kid-1", "typ": "agentauth-svid+jwt"},
+    "claims": {
+      "iss": "agentauth.io",
+      "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+      "iat": 1783575000,
+      "exp": 1783575900,
+      "jti": "bad-no-audience",
+      "agent_id": "agent-bad",
+      "agent_type": "researcher",
+      "owner": "alice@example.com",
+      "cnf": {"jkt": "thumbprint"}
+    }
+  },
+  "no-cnf": {
+    "header": {"alg": "RS256", "kid": "kid-1", "typ": "agentauth-svid+jwt"},
+    "claims": {
+      "iss": "agentauth.io",
+      "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+      "aud": "tools-api",
+      "iat": 1783575000,
+      "exp": 1783575900,
+      "jti": "bad-no-cnf",
+      "agent_id": "agent-bad",
+      "agent_type": "researcher",
+      "owner": "alice@example.com"
+    }
+  },
+  "long-ttl": {
+    "header": {"alg": "RS256", "kid": "kid-1", "typ": "agentauth-svid+jwt"},
+    "claims": {
+      "iss": "agentauth.io",
+      "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+      "aud": "tools-api",
+      "iat": 1783575000,
+      "exp": 1783661400,
+      "jti": "bad-long-ttl",
+      "agent_id": "agent-bad",
+      "agent_type": "researcher",
+      "owner": "alice@example.com",
+      "cnf": {"jkt": "thumbprint"}
+    }
+  },
+  "wrong-typ": {
+    "header": {"alg": "RS256", "kid": "kid-1", "typ": "JWT"},
+    "claims": {
+      "iss": "agentauth.io",
+      "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+      "aud": "tools-api",
+      "iat": 1783575000,
+      "exp": 1783575900,
+      "jti": "bad-wrong-typ",
+      "agent_id": "agent-bad",
+      "agent_type": "researcher",
+      "owner": "alice@example.com",
+      "cnf": {"jkt": "thumbprint"}
+    }
+  },
+  "missing-agent-metadata": {
+    "header": {"alg": "RS256", "kid": "kid-1", "typ": "agentauth-svid+jwt"},
+    "claims": {
+      "iss": "agentauth.io",
+      "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+      "aud": "tools-api",
+      "iat": 1783575000,
+      "exp": 1783575900,
+      "jti": "bad-missing-agent-metadata",
+      "cnf": {"jkt": "thumbprint"}
+    }
+  }
+}
