@@ -4,6 +4,26 @@ All notable changes to **agentauth-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] - 2026-07-08
+
+### Added
+
+- `agentauth.identity.verify_offline` for local JWT-SVID verification from a
+  tenant JWKS.
+- Threat model, conformance guide, and identity profile documentation.
+- Agent identity profile linter/explainer and `clayseal-identity` CLI.
+- Identity-only FastAPI, MCP, LangChain, and LangGraph-style helpers.
+
+### Changed
+
+- README and developer guide now describe the current attestation-backed SDK
+  flow and RS256/Ed25519 split accurately.
+- Example bootstrap quiets embedded-backend logs for cleaner first-run output.
+
+### Fixed
+
+- SDK/backend `__version__` now matches `pyproject.toml`.
+
 ## [0.4.0] - 2026-07-05
 
 ### Added

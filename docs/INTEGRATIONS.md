@@ -1,0 +1,67 @@
+# Identity-Only Integrations
+
+These helpers make Clay Seal Identity easy to use without adopting the rest of
+the stack.
+
+## FastAPI
+
+Protect a tool endpoint with offline JWT/JWKS verification:
+
+```python
+from fastapi import Depends, FastAPI
+from agentauth.identity.integrations.fastapi import AgentIdentityVerifier
+
+app = FastAPI()
+require_agent = AgentIdentityVerifier.dependency(
+    jwks=tenant_jwks,
+    issuer="agentauth.io",
+    audience="tools-api",
+)
+
+@app.post("/tool")
+def tool(identity = Depends(require_agent)):
+    return {"agent_id": identity.agent_id, "agent_type": identity.agent_type}
+```
+
+## MCP HTTP Transports
+
+Attach a Clay Seal identity token as a bearer credential:
+
+```python
+from agentauth.identity.integrations.mcp import tool_headers
+
+headers = tool_headers(session)
+```
+
+Log structured identity metadata:
+
+```python
+from agentauth.identity.integrations.mcp import identity_metadata
+
+metadata = identity_metadata(session)
+```
+
+## LangChain / LangGraph
+
+Carry identity through framework metadata and HTTP headers:
+
+```python
+from agentauth.identity.integrations.langchain import identity_config
+
+result = runnable.invoke(
+    {"question": "What changed?"},
+    config=identity_config(session),
+)
+```
+
+Or wrap a runnable-like object:
+
+```python
+from agentauth.identity.integrations.langchain import with_agent_identity
+
+secure_runnable = with_agent_identity(runnable, session)
+secure_runnable.invoke({"question": "What changed?"})
+```
+
+The helpers do not import LangChain or LangGraph directly. They work with
+runnable-like objects that accept a `config` argument.

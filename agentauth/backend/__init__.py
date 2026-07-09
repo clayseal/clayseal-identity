@@ -6,4 +6,4 @@ Backend components:
 - Identity event log (app.audit)        -- append-only log of credential lifecycle events
 """
 
-__version__ = "0.2.1"
+__version__ = "0.5.0"

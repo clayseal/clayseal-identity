@@ -15,7 +15,8 @@ offline.
 
 Concretely, this repo provides:
 
-- A Python SDK (`AgentAuth`) that mints and verifies **JWT-SVID-style credentials** (Ed25519-signed, short-lived, SPIFFE-shaped).
+- A Python SDK (`AgentAuth`) that mints and verifies **JWT-SVID-style credentials** (RS256-signed, short-lived, SPIFFE-shaped).
+- Ed25519 workload keys used for sender-constraining (`cnf.jkt`) and local proof-of-possession.
 - **Biscuit capability tokens** for offline, attenuatable authorization facts.
 - **Proof-of-possession** binding so a stolen bearer token cannot be replayed from another machine.
 - An optional **hosted FastAPI identity service** (`agentauth.backend`) for teams that want issuance and validation as a network endpoint rather than an in-process library.
@@ -45,7 +46,7 @@ Import convention matters: **in this repo**, always import from the identity nam
 
 ```python
 from agentauth.identity import AgentAuth
-from agentauth.identity.session import Session
+from agentauth.identity.session import AgentSession
 ```
 
 There is intentionally **no** top-level `from agentauth import Identity` here. That unified export lives only in the receipts repo, which owns the public `agentauth` package surface for full-stack users.
@@ -95,14 +96,14 @@ Supported: **3.10 through 3.13** (see `pyproject.toml`). Biscuit’s native whee
 
 ### Clay Seal client
 
-`AgentAuth` is the compatibility API class and the Clay Seal identity entry point. You configure a trust domain (SPIFFE-style), signing keys, and optional persistence for agent certificates.
+`AgentAuth` is the compatibility API class and the Clay Seal identity entry point. It talks to a tenant-scoped identity service, or to the embedded throwaway service used by the examples.
 
 Typical flow:
 
-1. **Register or load** an agent identity (SPIFFE ID + key pair).
-2. **Identify** — mint a short-lived credential bound to the agent and optionally a human principal.
-3. **Wrap** — turn the credential into a session object that layer 2/3 can consume.
-4. **Verify** — offline validation of a peer’s credential.
+1. **Register trust** — create a tenant, node attestor, and registration entry.
+2. **Identify** — present attestation evidence and mint a short-lived credential.
+3. **Use** — carry the credential on outbound calls and authorize local capabilities.
+4. **Verify** — validate online with PoP or offline with issuer + JWKS.
 
 ### Credentials and JWT-SVID shape
 
@@ -134,27 +135,81 @@ The fastest sanity check:
 python examples/01_quickstart.py
 ```
 
-This exercises identify → wrap → basic verification without a network service.
+This exercises identify → validate → revoke against an embedded throwaway local service, so no external service or dashboard is required.
 
-### Minimal in-process usage
+### Minimal SDK usage
 
 ```python
 from agentauth.identity import AgentAuth
 
-auth = AgentAuth(trust_domain="example.org")
-agent = auth.register_agent("engineering/devin-1")
-
-# Mint a credential for this agent acting under a human principal
-credential = auth.identify(
-    agent,
-    principal="alice@example.org",
-    ttl_seconds=300,
+tenant = AgentAuth.create_tenant("Acme AI", base_url="http://localhost:8000")
+auth = AgentAuth(
+    api_key=tenant["api_key"],
+    base_url="http://localhost:8000",
+    dev_attestation=True,  # localhost demos/tests only
 )
 
-# Verify someone else's credential (offline)
-claims = auth.verify_credential(credential.to_jwt())
-assert claims["sub"] == agent.spiffe_id
+# Mint a credential for this attested workload.
+session = auth.identify(
+    agent_type="researcher",
+    owner="alice@example.org",
+    capabilities=[{"resource": "repo", "action": "read"}],
+)
+
+# Online validation signs a one-time proof-of-possession challenge.
+claims = session.validate().claims
+assert claims["sub"].startswith("spiffe://")
 ```
+
+For production, do not enable dev attestation. Register a node attestor and
+registration entry, then call `identify_with_attestation(attestation_document)`
+with evidence issued by your workload environment.
+
+### Offline resource-server verification
+
+Resource servers can verify a Clay Seal JWT-SVID without calling the identity
+service if they have the tenant issuer and JWKS:
+
+```python
+from agentauth.identity import verify_offline
+
+claims = verify_offline(
+    token,
+    jwks=tenant_jwks,
+    issuer="agentauth.io",
+    audience=tenant_id,
+)
+assert claims["cnf"]["jkt"]  # sender-constrained; not a plain bearer token
+```
+
+### CLI and linter
+
+Installed packages expose both `clayseal-identity` and `agentauth-identity`:
+
+```bash
+clayseal-identity explain token.jwt
+clayseal-identity lint token.jwt
+clayseal-identity verify token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+```
+
+The linter checks the public [Agent Identity Profile](AGENT_IDENTITY_PROFILE.md):
+token type, algorithm, required claims, `cnf.jkt`, TTL, and recommended agent
+metadata.
+
+### Framework helpers
+
+Identity-only helpers live under `agentauth.identity.integrations`:
+
+```python
+from agentauth.identity.integrations.langchain import identity_config
+from agentauth.identity.integrations.mcp import tool_headers
+
+runnable.invoke(input, config=identity_config(session))
+headers = tool_headers(session)
+```
+
+FastAPI services can use `AgentIdentityVerifier.dependency(...)` to protect tool
+endpoints with offline JWKS verification. See [INTEGRATIONS.md](INTEGRATIONS.md).
 
 ### Sessions and downstream layers
 
@@ -165,21 +220,19 @@ receipting convenience lives in `agentauth`, not here:
 ```python
 import agentauth
 
-session = auth.session(credential)
+session = auth.identify(agent_type="researcher", owner="alice@example.org")
 agent = agentauth.wrap(session, my_model, policy=policy)  # receipts bound to this identity
 ```
 
 Do not hand-roll claim dicts for upper layers unless you are implementing a custom identity adapter in capabilities (see that repo's cross-provider guide).
 
-### Persisting agent certificates
+### Production attestation
 
-For long-running agents (e.g. a Devin instance that restarts), persist the agent key material:
-
-```python
-auth.register_agent("engineering/devin-1", persist_path="certs/devin-1.json")
-```
-
-On restart, load instead of re-registering. **Treat persisted cert files as secrets** — they are agent private keys.
+The dev attestor exists to make examples runnable. Production deployments should
+derive selectors from real platform evidence: Kubernetes projected service
+account tokens, SPIRE, AWS instance identity, GCP identity tokens, or a node
+agent that signs workload evidence. The caller does not choose its own
+`agent_type` or rights; the matched registration entry does.
 
 ---
 
@@ -322,6 +375,8 @@ pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 - **Scope and commit tokens** → [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
 - **Receipts, audit, MCP gateway** → [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/cross_layer_integration.md)
+- **Agent identity profile** → [docs/AGENT_IDENTITY_PROFILE.md](AGENT_IDENTITY_PROFILE.md)
+- **CLI and framework helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)
 - **Privacy and data handling** → [docs/PRIVACY.md](PRIVACY.md)
 
 If something in this guide does not match the code you checked out, prefer the tagged release you installed and file an issue with the tag name and command you ran.

@@ -18,7 +18,10 @@ Use this repo when you need to answer:
 
 Implemented today:
 
-- JWT-SVID-style agent credentials signed with Ed25519.
+- JWT-SVID-style agent credentials signed with RS256 for broad federation
+  compatibility.
+- Ed25519 workload keys for sender-constraining (`cnf.jkt`) and offline
+  proof-of-possession.
 - SPIFFE-shaped agent identifiers and trust domains.
 - Proof-of-possession confirmation claims for replay resistance.
 - Biscuit primitives for native Clay Seal capability facts.
@@ -65,20 +68,37 @@ pip install "agentauth-identity[kms] @ git+https://github.com/pberlizov/clay-sea
 
 ## Quickstart
 
+The fastest path is the zero-config embedded demo. It starts a throwaway local
+identity service, creates a tenant, identifies an agent, validates the token,
+and revokes it:
+
+```bash
+python examples/01_quickstart.py
+python examples/02_capabilities.py
+```
+
+The current SDK flow is service-backed: create or point at a tenant, then call
+`identify`. `dev_attestation=True` is only for localhost demos/tests; production
+callers pass a platform-issued attestation document.
+
 ```python
 from agentauth.identity import AgentAuth
 
-auth = AgentAuth(trust_domain="example.org")
-agent = auth.register_agent("engineering/review-bot")
-
-credential = auth.identify(
-    agent,
-    principal="alice@example.org",
-    ttl_seconds=300,
+tenant = AgentAuth.create_tenant("Acme AI", base_url="http://localhost:8000")
+auth = AgentAuth(
+    api_key=tenant["api_key"],
+    base_url="http://localhost:8000",
+    dev_attestation=True,  # localhost demos/tests only
 )
 
-claims = auth.verify_credential(credential.to_jwt())
-assert claims["sub"] == agent.spiffe_id
+session = auth.identify(
+    agent_type="researcher",
+    owner="alice@example.org",
+    capabilities=[{"resource": "repo", "action": "read"}],
+)
+
+claims = session.validate().claims
+assert claims["sub"].startswith("spiffe://")
 ```
 
 ## Hosted Service
@@ -106,7 +126,13 @@ or employee data.
 ## Documentation
 
 - [Developer guide](docs/DEV_GUIDE.md)
+- [Agent identity profile](docs/AGENT_IDENTITY_PROFILE.md)
+- [CLI](docs/CLI.md)
+- [Identity-only integrations](docs/INTEGRATIONS.md)
 - [Federation notes](docs/FEDERATION.md)
+- [Threat model](docs/THREAT_MODEL.md)
+- [Conformance guide](docs/CONFORMANCE.md)
+- [Identity profiles](docs/IDENTITY_PROFILES.md)
 - [Privacy and data handling](docs/PRIVACY.md)
 
 ## Compatibility Note

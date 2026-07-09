@@ -10,6 +10,9 @@ from __future__ import annotations
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from agentauth.identity import verify_offline
+from agentauth.identity.errors import InvalidTokenError
+
 from .attest import register_and_identify
 
 
@@ -71,6 +74,47 @@ def test_issued_token_verifies_with_stock_pyjwt_via_public_jwks(client, customer
     )
     assert claims["sub"].startswith("spiffe://")
     assert "cnf" in claims  # sender-constrained: the PoP thumbprint travels
+
+
+def test_offline_verifier_accepts_public_jwks(client, customer):
+    cid = customer["customer_id"]
+    token = register_and_identify(client, customer["headers"]).json()["token"]
+    jwks = client.get(f"/t/{cid}/jwks.json").json()
+    issuer = client.get(f"/t/{cid}/.well-known/openid-configuration").json()["issuer"]
+
+    claims = verify_offline(token, jwks=jwks, issuer=issuer, audience=cid)
+
+    assert claims["aud"] == cid
+    assert claims["sub"].startswith("spiffe://")
+    assert claims["cnf"]["jkt"]
+
+
+def test_offline_verifier_rejects_wrong_audience(client, customer):
+    cid = customer["customer_id"]
+    token = register_and_identify(client, customer["headers"]).json()["token"]
+    jwks = client.get(f"/t/{cid}/jwks.json").json()
+    issuer = client.get(f"/t/{cid}/.well-known/openid-configuration").json()["issuer"]
+
+    try:
+        verify_offline(token, jwks=jwks, issuer=issuer, audience="other-service")
+    except InvalidTokenError as exc:
+        assert exc.code == "invalid_token"
+        assert "audience" in exc.message.lower()
+    else:  # pragma: no cover - explicit failure path is clearer in assertion output
+        raise AssertionError("wrong audience was accepted")
+
+
+def test_offline_verifier_rejects_stale_jwks(client, customer):
+    cid = customer["customer_id"]
+    token = register_and_identify(client, customer["headers"]).json()["token"]
+    issuer = client.get(f"/t/{cid}/.well-known/openid-configuration").json()["issuer"]
+
+    try:
+        verify_offline(token, jwks={"keys": []}, issuer=issuer, audience=cid)
+    except InvalidTokenError as exc:
+        assert exc.details["kid"]
+    else:  # pragma: no cover
+        raise AssertionError("empty JWKS was accepted")
 
 
 def test_default_token_typ_unchanged(client, customer):
