@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.backend.config import get_settings
+from clayseal.backend.config import get_settings
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +19,7 @@ def test_customer_creation_open_in_dev_without_admin_key(client):
 
 
 def test_customer_creation_requires_admin_key_when_configured(client, monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_ADMIN_API_KEY", "s3cret-bootstrap")
+    monkeypatch.setenv("CLAYSEAL_ADMIN_API_KEY", "s3cret-bootstrap")
     get_settings.cache_clear()
 
     missing = client.post("/v1/customers", json={"name": "No Key"})
@@ -39,8 +39,8 @@ def test_customer_creation_requires_admin_key_when_configured(client, monkeypatc
 
 
 def test_customer_creation_refused_in_production_without_admin_key(client, monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
-    monkeypatch.delenv("AGENTAUTH_ADMIN_API_KEY", raising=False)
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
+    monkeypatch.delenv("CLAYSEAL_ADMIN_API_KEY", raising=False)
     get_settings.cache_clear()
 
     resp = client.post("/v1/customers", json={"name": "Prod No Admin"})

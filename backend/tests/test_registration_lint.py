@@ -32,7 +32,7 @@ def test_registration_lint_flags_equal_specificity_overlap(client, customer):
     selectors = [
         "k8s:ns:customer-acme",
         "k8s:sa:researcher",
-        "k8s:pod-label:agentauth.io/agent-type:researcher",
+        "k8s:pod-label:clayseal.io/agent-type:researcher",
     ]
     client.post(
         "/v1/registration-entries",

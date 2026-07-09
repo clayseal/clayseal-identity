@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agentauth.backend.secret_encryption import (
+from clayseal.backend.secret_encryption import (
     LOCAL_ENC_PREFIX,
     AwsKmsProvider,
     GcpKmsProvider,
@@ -42,16 +42,16 @@ def test_decrypt_secret_refuses_plaintext_when_provider_enabled():
         decrypt_secret("plain", context="test-context")
 
 
-@patch.dict("os.environ", {"AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
+@patch.dict("os.environ", {"CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
 def test_encrypt_secret_passthrough_when_provider_disabled():
     assert encrypt_secret("plain", context="ctx") == "plain"
     assert decrypt_secret("plain", context="ctx") == "plain"
 
 
-@patch.dict("os.environ", {"AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
+@patch.dict("os.environ", {"CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
 def test_decrypt_encrypted_secret_requires_provider():
     stored = f"{LOCAL_ENC_PREFIX}{'00' * 12}$deadbeef"
-    with pytest.raises(ValueError, match="requires AGENTAUTH_SECRET_ENCRYPTION_PROVIDER"):
+    with pytest.raises(ValueError, match="requires CLAYSEAL_SECRET_ENCRYPTION_PROVIDER"):
         decrypt_secret(stored, context="ctx")
 
 
@@ -66,8 +66,8 @@ def test_local_master_key_validation(raw_key, message):
     with patch.dict(
         "os.environ",
         {
-            "AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "local",
-            "AGENTAUTH_SIGNING_KEY_ENCRYPTION_KEY": raw_key,
+            "CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "local",
+            "CLAYSEAL_SIGNING_KEY_ENCRYPTION_KEY": raw_key,
         },
         clear=False,
     ):
@@ -75,34 +75,34 @@ def test_local_master_key_validation(raw_key, message):
             get_encryption_provider()
 
 
-@patch.dict("os.environ", {"AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "magic"}, clear=False)
+@patch.dict("os.environ", {"CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "magic"}, clear=False)
 def test_get_encryption_provider_rejects_unknown_provider():
     with pytest.raises(ValueError, match="unsupported"):
         get_encryption_provider()
 
 
 def test_secret_encryption_required_for_non_sqlite(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_REQUIRE_SECRET_ENCRYPTION", raising=False)
+    monkeypatch.delenv("CLAYSEAL_REQUIRE_SECRET_ENCRYPTION", raising=False)
     assert secret_encryption_required("sqlite:///local.db") is False
-    assert secret_encryption_required("postgresql://db/agentauth") is True
+    assert secret_encryption_required("postgresql://db/clayseal") is True
 
 
 def test_validate_secret_encryption_config_fails_without_provider(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_SECRET_ENCRYPTION_PROVIDER", raising=False)
-    monkeypatch.delenv("AGENTAUTH_SIGNING_KEY_ENCRYPTION_KEY", raising=False)
+    monkeypatch.delenv("CLAYSEAL_SECRET_ENCRYPTION_PROVIDER", raising=False)
+    monkeypatch.delenv("CLAYSEAL_SIGNING_KEY_ENCRYPTION_KEY", raising=False)
     with pytest.raises(RuntimeError, match="secret encryption is required"):
-        validate_secret_encryption_config("postgresql://db/agentauth")
+        validate_secret_encryption_config("postgresql://db/clayseal")
 
 
 @pytest.mark.parametrize(
     ("provider", "env"),
     [
-        ("aws_kms", "AGENTAUTH_AWS_KMS_KEY_ID"),
-        ("gcp_kms", "AGENTAUTH_GCP_KMS_KEY_NAME"),
+        ("aws_kms", "CLAYSEAL_AWS_KMS_KEY_ID"),
+        ("gcp_kms", "CLAYSEAL_GCP_KMS_KEY_NAME"),
     ],
 )
 def test_kms_provider_requires_key_configuration(provider, env, monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_SECRET_ENCRYPTION_PROVIDER", provider)
+    monkeypatch.setenv("CLAYSEAL_SECRET_ENCRYPTION_PROVIDER", provider)
     monkeypatch.delenv(env, raising=False)
     with pytest.raises(ValueError, match=env):
         get_encryption_provider()
@@ -111,8 +111,8 @@ def test_kms_provider_requires_key_configuration(provider, env, monkeypatch):
 @patch.dict(
     "os.environ",
     {
-        "AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "aws_kms",
-        "AGENTAUTH_AWS_KMS_KEY_ID": "arn:aws:kms:us-east-1:1:key/abc",
+        "CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "aws_kms",
+        "CLAYSEAL_AWS_KMS_KEY_ID": "arn:aws:kms:us-east-1:1:key/abc",
     },
     clear=False,
 )
@@ -163,6 +163,6 @@ def test_gcp_kms_rejects_wrong_prefix():
         GcpKmsProvider("key").decrypt("kms_aws_v1$blob", context="ctx")
 
 
-@patch.dict("os.environ", {"AGENTAUTH_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
+@patch.dict("os.environ", {"CLAYSEAL_SECRET_ENCRYPTION_PROVIDER": "none"}, clear=False)
 def test_get_encryption_provider_none_when_disabled():
     assert get_encryption_provider() is None

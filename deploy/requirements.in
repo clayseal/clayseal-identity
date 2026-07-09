@@ -1,4 +1,4 @@
-# AgentAuth identity backend -- DEPLOYABLE third-party runtime dependency inputs.
+# ClaySeal identity backend -- DEPLOYABLE third-party runtime dependency inputs.
 #
 # The internal `agentauth-core` distribution is installed from its built wheel in
 # the deploy image (it is not published to PyPI), so it is intentionally NOT in
@@ -13,7 +13,7 @@
 # Install in the image with:
 #   pip install --require-hashes -r deploy/requirements.lock
 
-# --- runtime deps mirrored from agentauth-identity/pyproject.toml ---
+# --- runtime deps mirrored from clayseal-identity/pyproject.toml ---
 httpx>=0.27
 biscuit-python>=0.4,<0.5
 PyJWT>=2.8,<3.0
@@ -27,8 +27,8 @@ alembic>=1.13,<2.0
 
 # --- deploy-only addition (NOT declared in pyproject.toml) ---
 # boto3 is imported lazily by AwsKmsProvider when
-# AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms (the production setting). It is NOT
-# a declared dependency of agentauth-identity and the identity Dockerfile installs
+# CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms (the production setting). It is NOT
+# a declared dependency of clayseal-identity and the identity Dockerfile installs
 # from pyproject, so the deploy image MUST add boto3 separately (or install from
 # this lock) for the aws_kms provider to work.
 boto3>=1.34

@@ -86,7 +86,7 @@ def selectors_for(agent_type: str) -> list[str]:
     return [
         "k8s:ns:customer-acme",
         f"k8s:sa:{agent_type}",
-        f"k8s:pod-label:agentauth.io/agent-type:{agent_type}",
+        f"k8s:pod-label:clayseal.io/agent-type:{agent_type}",
     ]
 
 
@@ -102,7 +102,7 @@ def workload_for(
     workload = {
         "k8s_ns": "customer-acme",
         "k8s_sa": agent_type,
-        "pod_labels": {"agentauth.io/agent-type": pod_label or agent_type},
+        "pod_labels": {"clayseal.io/agent-type": pod_label or agent_type},
     }
     if with_pubkey:
         workload["workload_pubkey_pem"] = WORKLOAD_PUBLIC_PEM

@@ -9,18 +9,18 @@ from __future__ import annotations
 import os
 import tempfile
 
-_TMPDIR = tempfile.mkdtemp(prefix="agentauth-test-")
-os.environ.setdefault("AGENTAUTH_DATABASE_URL", f"sqlite:///{_TMPDIR}/agents.db")
+_TMPDIR = tempfile.mkdtemp(prefix="clayseal-test-")
+os.environ.setdefault("CLAYSEAL_DATABASE_URL", f"sqlite:///{_TMPDIR}/agents.db")
 os.environ.setdefault(
-    "AGENTAUTH_SIGNING_KEY_ENCRYPTION_KEY",
+    "CLAYSEAL_SIGNING_KEY_ENCRYPTION_KEY",
     "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
 )
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from agentauth.backend.db import init_db  # noqa: E402
-from agentauth.backend.main import app  # noqa: E402
+from clayseal.backend.db import init_db  # noqa: E402
+from clayseal.backend.main import app  # noqa: E402
 from tests.attest import bind_customer_api_key  # noqa: E402
 
 

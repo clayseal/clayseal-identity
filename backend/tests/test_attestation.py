@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.backend.attestation import derive_workload_selectors, verify_node_attestation
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.errors import AttestationDeniedError
-from agentauth.backend.models import Customer, NodeAttestor, new_id
+from clayseal.backend.attestation import derive_workload_selectors, verify_node_attestation
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.errors import AttestationDeniedError
+from clayseal.backend.models import Customer, NodeAttestor, new_id
 from tests.attest import NODE_PUBLIC_PEM, sign_attestation
 
 

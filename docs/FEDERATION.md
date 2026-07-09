@@ -58,7 +58,7 @@ Exchange:
 curl -s https://api.anthropic.com/v1/oauth/token \
   -H 'content-type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer' \
-  --data-urlencode "assertion=${AGENTAUTH_JWT_SVID}"
+  --data-urlencode "assertion=${CLAYSEAL_JWT_SVID}"
 ```
 
 Runnable walk-through: `python examples/03_federation.py` (verifies the
@@ -70,7 +70,7 @@ public-surface flow locally; performs the live Anthropic exchange only when
 Clay Seal JWT-SVIDs are already WIT-shaped — `cnf` is always present
 (sender-constrained, never bearer). Pass `"token_typ": "wit+jwt"` on
 `POST /v1/identify` to mint with the WIMSE JOSE header so WIT-aware relying
-parties recognize the contract; the default `agentauth-svid+jwt` is unchanged.
+parties recognize the contract; the default `clayseal-svid+jwt` is unchanged.
 
 ## MCP authorization (PRM + CIMD, no DCR)
 
@@ -80,9 +80,9 @@ Documents** (Dynamic Client Registration is deprecated):
 
 - Clay Seal's receipted MCP server serves
   `/.well-known/oauth-protected-resource`; point its
-  `AGENTAUTH_MCP_AUTHORIZATION_SERVERS` at a tenant issuer
+  `CLAYSEAL_MCP_AUTHORIZATION_SERVERS` at a tenant issuer
   (`https://YOUR_HOST/t/TENANT`) so clients resolve this backend's discovery
   and JWKS documents.
-- `agentauth.backend.cimd.fetch_client_metadata(client_id_url)` fetches and
+- `clayseal.backend.cimd.fetch_client_metadata(client_id_url)` fetches and
   validates URL-shaped client IDs (https-only, size-capped, `client_id`
   echo check, redirect-URI hygiene) for brokering MCP clients.

@@ -8,11 +8,11 @@ from datetime import timedelta
 
 import pytest
 
-from agentauth.backend import capabilities as cap
-from agentauth.backend.attestation import record_attestation_use
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.errors import AttestationDeniedError
-from agentauth.backend.models import utcnow
+from clayseal.backend import capabilities as cap
+from clayseal.backend.attestation import record_attestation_use
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.errors import AttestationDeniedError
+from clayseal.backend.models import utcnow
 
 
 def test_attestation_use_is_one_time(customer):
@@ -61,7 +61,7 @@ def test_unknown_challenge_reports_reason(customer):
 
 def test_expired_challenge_reports_reason(customer):
     cid = customer["customer_id"]
-    from agentauth.backend.models import CapabilityChallenge, new_id
+    from clayseal.backend.models import CapabilityChallenge, new_id
 
     challenge = "expired-" + uuid.uuid4().hex
     with SessionLocal() as db:

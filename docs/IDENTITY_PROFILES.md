@@ -8,7 +8,7 @@ capability facts.
 
 Use for demos and tests only.
 
-- SDK: `AgentAuth(..., dev_attestation=True)`
+- SDK: `ClaySeal(..., dev_attestation=True)`
 - Backend: embedded or localhost FastAPI service
 - Evidence: SDK-generated dev attestation document
 - Guardrail: refused for remote services unless explicitly overridden

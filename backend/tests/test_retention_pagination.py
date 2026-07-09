@@ -5,9 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import timedelta
 
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.models import AttestationUse, CapabilityChallenge, new_id, utcnow
-from agentauth.backend.retention import prune_expired
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.models import AttestationUse, CapabilityChallenge, new_id, utcnow
+from clayseal.backend.retention import prune_expired
 from tests.attest import register_and_identify
 
 

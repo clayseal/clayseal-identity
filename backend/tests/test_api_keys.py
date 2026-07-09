@@ -1,8 +1,8 @@
 """Focused tests for API key storage and migration behavior."""
 from __future__ import annotations
 
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.models import Customer
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.models import Customer
 
 
 def test_create_customer_stores_only_api_key_hash(client):

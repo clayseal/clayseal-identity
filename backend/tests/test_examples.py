@@ -11,10 +11,10 @@ REPO = Path(__file__).resolve().parents[2]
 
 def _run_example(script: str, tmp_path: Path) -> str:
     env = os.environ.copy()
-    env.pop("AGENTAUTH_BASE_URL", None)
-    env.pop("AGENTAUTH_API_KEY", None)
-    env["AGENTAUTH_DATABASE_URL"] = f"sqlite:///{tmp_path / f'{script}.db'}"
-    env["AGENTAUTH_SIGNING_KEY_ENCRYPTION_KEY"] = (
+    env.pop("CLAYSEAL_BASE_URL", None)
+    env.pop("CLAYSEAL_API_KEY", None)
+    env["CLAYSEAL_DATABASE_URL"] = f"sqlite:///{tmp_path / f'{script}.db'}"
+    env["CLAYSEAL_SIGNING_KEY_ENCRYPTION_KEY"] = (
         "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
     )
     env["PYTHONDONTWRITEBYTECODE"] = "1"

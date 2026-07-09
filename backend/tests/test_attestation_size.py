@@ -5,7 +5,7 @@ request body-size limit still belongs at the edge (documented in schemas).
 """
 from __future__ import annotations
 
-from agentauth.backend.schemas import MAX_ATTESTATION_DOCUMENT_CHARS
+from clayseal.backend.schemas import MAX_ATTESTATION_DOCUMENT_CHARS
 
 
 def test_oversized_attestation_document_rejected(client, customer):

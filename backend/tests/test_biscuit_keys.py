@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.backend import capabilities as cap_service
-from agentauth.backend.biscuit_keys import (
+from clayseal.backend import capabilities as cap_service
+from clayseal.backend.biscuit_keys import (
     decrypt_private_hex,
     encrypt_private_hex,
     is_encrypted_private_hex,
     maybe_reencrypt_biscuit_root_key,
 )
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.models import BiscuitRootKey, Customer
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.models import BiscuitRootKey, Customer
 
 
 def test_create_root_key_stores_encrypted_private_hex(customer):

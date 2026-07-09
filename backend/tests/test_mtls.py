@@ -1,6 +1,6 @@
 """Tests for mTLS client certificate extraction and token binding.
 
-Uses proxy header mode (AGENTAUTH_MTLS_CLIENT_CERT_HEADER=X-Client-Cert) to
+Uses proxy header mode (CLAYSEAL_MTLS_CLIENT_CERT_HEADER=X-Client-Cert) to
 inject cert DER as base64 without a real TLS handshake, then verifies that the
 binding check in verify_mtls_binding accepts matching certs and rejects mismatched
 or absent ones.
@@ -20,8 +20,8 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.x509.oid import NameOID
 from fastapi.testclient import TestClient
 
-from agentauth.backend import capabilities as cap_service
-from agentauth.backend.config import get_settings
+from clayseal.backend import capabilities as cap_service
+from clayseal.backend.config import get_settings
 from tests.attest import (
     WORKLOAD_PRIVATE_PEM,
     WORKLOAD_PUBLIC_PEM,
@@ -35,7 +35,7 @@ def _make_cert(private_key) -> bytes:
     """Return DER bytes for a self-signed Ed25519 cert with a SPIFFE SAN."""
     subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "test-agent")])
     spiffe_san = x509.UniformResourceIdentifier(
-        "spiffe://agentauth.io/customer/test/agent/researcher"
+        "spiffe://clayseal.io/customer/test/agent/researcher"
     )
     cert = (
         x509.CertificateBuilder()
@@ -104,9 +104,9 @@ def test_mtls_matching_cert_passes(client: TestClient, customer: dict, matching_
     token = id_resp.json()["token"]
     pop = _pop(client, customer["headers"], token)
 
-    monkeypatch.setenv("AGENTAUTH_MTLS_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
-    monkeypatch.setenv("AGENTAUTH_MTLS_STRICT", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
+    monkeypatch.setenv("CLAYSEAL_MTLS_STRICT", "1")
     get_settings.cache_clear()
 
     cert_b64 = base64.b64encode(matching_cert_der).decode()
@@ -128,9 +128,9 @@ def test_mtls_mismatched_cert_returns_401(
     token = id_resp.json()["token"]
     pop = _pop(client, customer["headers"], token)
 
-    monkeypatch.setenv("AGENTAUTH_MTLS_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
-    monkeypatch.setenv("AGENTAUTH_MTLS_STRICT", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
+    monkeypatch.setenv("CLAYSEAL_MTLS_STRICT", "1")
     get_settings.cache_clear()
 
     cert_b64 = base64.b64encode(mismatched_cert_der).decode()
@@ -149,9 +149,9 @@ def test_mtls_strict_missing_cert_returns_401(client: TestClient, customer: dict
     token = id_resp.json()["token"]
     pop = _pop(client, customer["headers"], token)
 
-    monkeypatch.setenv("AGENTAUTH_MTLS_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
-    monkeypatch.setenv("AGENTAUTH_MTLS_STRICT", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
+    monkeypatch.setenv("CLAYSEAL_MTLS_STRICT", "1")
     get_settings.cache_clear()
 
     resp = client.post(
@@ -170,7 +170,7 @@ def test_mtls_disabled_no_cert_passes(client: TestClient, customer: dict, monkey
     token = id_resp.json()["token"]
     pop = _pop(client, customer["headers"], token)
 
-    monkeypatch.setenv("AGENTAUTH_MTLS_ENABLED", "0")
+    monkeypatch.setenv("CLAYSEAL_MTLS_ENABLED", "0")
     get_settings.cache_clear()
 
     resp = client.post(
@@ -189,9 +189,9 @@ def test_mtls_non_strict_missing_cert_passes(client: TestClient, customer: dict,
     token = id_resp.json()["token"]
     pop = _pop(client, customer["headers"], token)
 
-    monkeypatch.setenv("AGENTAUTH_MTLS_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
-    monkeypatch.setenv("AGENTAUTH_MTLS_STRICT", "0")
+    monkeypatch.setenv("CLAYSEAL_MTLS_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_MTLS_CLIENT_CERT_HEADER", MTLS_HEADER)
+    monkeypatch.setenv("CLAYSEAL_MTLS_STRICT", "0")
     get_settings.cache_clear()
 
     resp = client.post(
@@ -205,16 +205,16 @@ def test_mtls_non_strict_missing_cert_passes(client: TestClient, customer: dict,
 
 def test_spiffe_id_extraction(matching_cert_der: bytes):
     """spiffe_id_from_cert correctly extracts the SPIFFE SAN URI."""
-    from agentauth.backend.mtls import spiffe_id_from_cert
+    from clayseal.backend.mtls import spiffe_id_from_cert
 
     spiffe_id = spiffe_id_from_cert(matching_cert_der)
-    assert spiffe_id == "spiffe://agentauth.io/customer/test/agent/researcher"
+    assert spiffe_id == "spiffe://clayseal.io/customer/test/agent/researcher"
 
 
 def test_cert_public_key_pem_roundtrip(matching_cert_der: bytes):
     """cert_public_key_pem extracts a PEM whose keyhash matches WORKLOAD_PUBLIC_PEM's keyhash."""
-    from agentauth.backend.mtls import cert_public_key_pem
-    from agentauth.workload_keys import keyhash_for_pem
+    from clayseal.backend.mtls import cert_public_key_pem
+    from clayseal.workload_keys import keyhash_for_pem
 
     extracted_pem = cert_public_key_pem(matching_cert_der)
     assert keyhash_for_pem(extracted_pem) == keyhash_for_pem(WORKLOAD_PUBLIC_PEM)

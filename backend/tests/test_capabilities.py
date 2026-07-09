@@ -10,9 +10,9 @@ from __future__ import annotations
 import time
 import uuid
 
-from agentauth.backend import capabilities as cap_service
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.models import Agent, BiscuitRevocation, CapabilityChallenge
+from clayseal.backend import capabilities as cap_service
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.models import Agent, BiscuitRevocation, CapabilityChallenge
 
 from tests.attest import (
     ROGUE_WORKLOAD_PRIVATE_PEM,

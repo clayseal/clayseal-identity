@@ -15,10 +15,10 @@ from datetime import timedelta
 
 import jwt
 
-from agentauth.backend import capabilities as cap_service
-from agentauth.backend.audit import read_events, verify_event_log
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.models import Customer
+from clayseal.backend import capabilities as cap_service
+from clayseal.backend.audit import read_events, verify_event_log
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.models import Customer
 from tests.attest import (
     NODE_PUBLIC_PEM,
     ROGUE_PRIVATE_PEM,
@@ -194,14 +194,14 @@ def test_attestation_issues_jwt_svid(client, customer):
     assert data["agent_id"]
     assert data["scopes"] == ["db:read", "web:search"]
     assert data["spiffe_id"] == (
-        f"spiffe://agentauth.io/customer/{customer['customer_id']}/agent/researcher"
+        f"spiffe://clayseal.io/customer/{customer['customer_id']}/agent/researcher"
     )
 
     # The credential is a JWT-SVID: three segments + a kid header.
     assert data["token"].count(".") == 2
     header = jwt.get_unverified_header(data["token"])
     assert header["alg"] == "RS256"
-    assert header["typ"] == "agentauth-svid+jwt"
+    assert header["typ"] == "clayseal-svid+jwt"
     assert header["kid"]
 
 
@@ -210,7 +210,7 @@ def test_jwt_svid_claims_are_correct(client, customer):
         client, customer["headers"], scopes=["db:read", "web:search"]
     ).json()
     claims = jwt.decode(data["token"], options={"verify_signature": False})
-    sid = f"spiffe://agentauth.io/customer/{customer['customer_id']}/agent/researcher"
+    sid = f"spiffe://clayseal.io/customer/{customer['customer_id']}/agent/researcher"
     assert claims["sub"] == sid
     assert claims["spiffe_id"] == sid
     assert claims["agent_id"] == data["agent_id"]
@@ -218,7 +218,7 @@ def test_jwt_svid_claims_are_correct(client, customer):
     assert claims["owner"] == "alice@acme.ai"
     assert claims["scope"] == ["db:read", "web:search"]
     assert claims["cnf"]["jkt"] == data["bound_keyhash"]
-    assert claims["iss"] == "agentauth.io"  # trust domain
+    assert claims["iss"] == "clayseal.io"  # trust domain
     assert claims["aud"] == customer["customer_id"]
 
 
@@ -244,7 +244,7 @@ def test_ambiguous_registration_entries_are_denied(client, customer):
     selectors = [
         "k8s:ns:customer-acme",
         "k8s:sa:researcher",
-        "k8s:pod-label:agentauth.io/agent-type:researcher",
+        "k8s:pod-label:clayseal.io/agent-type:researcher",
     ]
     first = client.post(
         "/v1/registration-entries",
@@ -555,16 +555,16 @@ def test_expired_token_rejected_and_marks_agent_expired(client, customer):
     Exercises the expiry branch deterministically (valid signature, expired
     claim) and verifies the agent row is flipped to 'expired'.
     """
-    from agentauth.backend.db import SessionLocal
-    from agentauth.backend.identity import get_active_key
-    from agentauth.backend.models import Agent, Customer, new_id, spiffe_id, to_epoch, utcnow
-    from agentauth.backend.signing_keys import decrypt_private_pem
+    from clayseal.backend.db import SessionLocal
+    from clayseal.backend.identity import get_active_key
+    from clayseal.backend.models import Agent, Customer, new_id, spiffe_id, to_epoch, utcnow
+    from clayseal.backend.signing_keys import decrypt_private_pem
 
     with SessionLocal() as db:
         cust = db.get(Customer, customer["customer_id"])
         key = get_active_key(db, cust.id)
         agent_id = new_id()
-        sid = spiffe_id("agentauth.io", cust.id, "ghost")
+        sid = spiffe_id("clayseal.io", cust.id, "ghost")
         now = utcnow()
         agent = Agent(
             id=agent_id,
@@ -584,7 +584,7 @@ def test_expired_token_rejected_and_marks_agent_expired(client, customer):
         past = to_epoch(now - timedelta(hours=1))
         token = jwt.encode(
             {
-                "iss": "agentauth.io",
+                "iss": "clayseal.io",
                 "sub": sid,
                 "aud": cust.id,
                 "iat": past - 60,
@@ -601,7 +601,7 @@ def test_expired_token_rejected_and_marks_agent_expired(client, customer):
             },
             decrypt_private_pem(key.private_pem),
             algorithm="RS256",
-            headers={"kid": key.kid, "typ": "agentauth-svid+jwt"},
+            headers={"kid": key.kid, "typ": "clayseal-svid+jwt"},
         )
 
     resp = client.post("/v1/validate", json={"token": token}, headers=customer["headers"])
@@ -732,7 +732,7 @@ def test_audit_log_is_hash_chained(client, customer):
 
     events = read_events()
     assert events
-    assert events[0]["schema"] == "agentauth.audit.v1"
+    assert events[0]["schema"] == "clayseal.audit.v1"
     assert events[0]["sequence"] == 1
     assert "entry_hash" in events[0]
     assert "prev_hash" in events[0]
@@ -740,7 +740,7 @@ def test_audit_log_is_hash_chained(client, customer):
 
 def test_audit_log_appends_from_multiple_processes(client):
     script = """
-from agentauth.backend.audit import record_event
+from clayseal.backend.audit import record_event
 for i in range(6):
     record_event("process.event", "parallel-review", worker=WORKER, index=i)
 """
@@ -774,8 +774,8 @@ for i in range(6):
 def test_audit_log_tampering_is_detected(client, customer):
     from sqlalchemy import select
 
-    from agentauth.backend.db import SessionLocal
-    from agentauth.backend.models import AuditEvent
+    from clayseal.backend.db import SessionLocal
+    from clayseal.backend.models import AuditEvent
 
     h = customer["headers"]
     ensure_node_attestor(client, h)

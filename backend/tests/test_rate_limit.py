@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.backend import rate_limit
-from agentauth.backend.config import get_settings
-from agentauth.backend.rate_limit import FixedWindowRateLimiter
+from clayseal.backend import rate_limit
+from clayseal.backend.config import get_settings
+from clayseal.backend.rate_limit import FixedWindowRateLimiter
 
 
 @pytest.fixture(autouse=True)
@@ -37,8 +37,8 @@ def test_disabled_by_default(client, customer):
 
 def test_reads_are_rate_limited_when_enabled(client, customer, monkeypatch):
     h = customer["headers"]
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_DEFAULT", "3")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_DEFAULT", "3")
     get_settings.cache_clear()
     rate_limit.reset_rate_limiter()
 
@@ -49,9 +49,9 @@ def test_reads_are_rate_limited_when_enabled(client, customer, monkeypatch):
 
 def test_mutating_endpoints_use_stricter_bucket(client, customer, monkeypatch):
     h = customer["headers"]
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_MUTATING", "2")
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_DEFAULT", "1000")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_MUTATING", "2")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_DEFAULT", "1000")
     get_settings.cache_clear()
     rate_limit.reset_rate_limiter()
 
@@ -65,8 +65,8 @@ def test_mutating_endpoints_use_stricter_bucket(client, customer, monkeypatch):
 
 
 def test_health_and_ready_are_exempt(client, monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_ENABLED", "1")
-    monkeypatch.setenv("AGENTAUTH_RATE_LIMIT_DEFAULT", "1")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("CLAYSEAL_RATE_LIMIT_DEFAULT", "1")
     get_settings.cache_clear()
     rate_limit.reset_rate_limiter()
 

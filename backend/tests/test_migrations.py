@@ -13,10 +13,10 @@ import sys
 import tempfile
 from pathlib import Path
 
-from agentauth.backend.db import Base
+from clayseal.backend.db import Base
 
-from agentauth.backend import db as db_module
-from agentauth.backend.config import get_settings
+from clayseal.backend import db as db_module
+from clayseal.backend.config import get_settings
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ _EXPECTED_TABLES = {t.name for t in Base.metadata.tables.values()}
 def test_alembic_upgrade_head_creates_full_schema():
     with tempfile.TemporaryDirectory() as tmp:
         db_path = os.path.join(tmp, "migrated.db")
-        env = {**os.environ, "AGENTAUTH_DATABASE_URL": f"sqlite:///{db_path}"}
+        env = {**os.environ, "CLAYSEAL_DATABASE_URL": f"sqlite:///{db_path}"}
         result = subprocess.run(
             [sys.executable, "-m", "alembic", "upgrade", "head"],
             cwd=REPO_ROOT,
@@ -55,7 +55,7 @@ def test_alembic_upgrade_head_creates_full_schema():
 def test_attestation_use_unique_constraint_present():
     with tempfile.TemporaryDirectory() as tmp:
         db_path = os.path.join(tmp, "migrated.db")
-        env = {**os.environ, "AGENTAUTH_DATABASE_URL": f"sqlite:///{db_path}"}
+        env = {**os.environ, "CLAYSEAL_DATABASE_URL": f"sqlite:///{db_path}"}
         subprocess.run(
             [sys.executable, "-m", "alembic", "upgrade", "head"],
             cwd=REPO_ROOT,
@@ -76,7 +76,7 @@ def test_attestation_use_unique_constraint_present():
 
 
 def test_init_db_is_noop_under_alembic_management(monkeypatch):
-    """When AGENTAUTH_MANAGE_SCHEMA=alembic, startup must not create/alter tables
+    """When CLAYSEAL_MANAGE_SCHEMA=alembic, startup must not create/alter tables
     (migrations own DDL); the default keeps the dev create_all path."""
     calls = {"create_all": 0}
     monkeypatch.setattr(
@@ -85,12 +85,12 @@ def test_init_db_is_noop_under_alembic_management(monkeypatch):
         lambda **_kwargs: calls.__setitem__("create_all", calls["create_all"] + 1),
     )
     try:
-        monkeypatch.setenv("AGENTAUTH_MANAGE_SCHEMA", "alembic")
+        monkeypatch.setenv("CLAYSEAL_MANAGE_SCHEMA", "alembic")
         get_settings.cache_clear()
         db_module.init_db()
         assert calls["create_all"] == 0
 
-        monkeypatch.setenv("AGENTAUTH_MANAGE_SCHEMA", "auto")
+        monkeypatch.setenv("CLAYSEAL_MANAGE_SCHEMA", "auto")
         get_settings.cache_clear()
         db_module.init_db()
         assert calls["create_all"] == 1

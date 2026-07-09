@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentauth-identity"
+name = "clayseal-identity"
 version = "0.5.0"
 description = "Clay Seal layer 1 — attested agent identity and Biscuit capability tokens"
 readme = "README.md"
@@ -34,26 +34,25 @@ Issues = "https://github.com/pberlizov/clay-seal-identity/issues"
 Changelog = "https://github.com/pberlizov/clay-seal-identity/blob/main/CHANGELOG.md"
 
 [project.scripts]
-clayseal-identity = "agentauth.identity.cli:main"
-agentauth-identity = "agentauth.identity.cli:main"
+clayseal-identity = "clayseal.identity.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
 # AWS KMS envelope-encryption provider for signing/Biscuit keys at rest
-# (AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms). boto3 is lazy-imported by
+# (CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms). boto3 is lazy-imported by
 # secret_encryption.AwsKmsProvider, so it is only required when that provider
-# is selected — install `agentauth-identity[kms]` (or the umbrella) in prod.
+# is selected — install `clayseal-identity[kms]` (or the umbrella) in prod.
 kms = ["boto3>=1.34"]
 
-# Ship ONLY the identity-owned paths in the shared `agentauth` namespace.
-# `agentauth.core` comes from the agentauth-core wheel; claiming the whole
-# namespace root would overlap sibling wheels' RECORDs on a clean install.
+# Ship only the paths this distribution owns. `clayseal` is this package's own
+# top-level namespace — it no longer overlaps the sibling `agentauth.core`
+# wheel's namespace, so there is no cross-wheel RECORD collision to avoid.
 [tool.hatch.build.targets.wheel]
 only-include = [
-  "agentauth/identity",
-  "agentauth/backend",
-  "agentauth/workload_keys.py",
-  "agentauth/biscuit_scope.py",
+  "clayseal/identity",
+  "clayseal/backend",
+  "clayseal/workload_keys.py",
+  "clayseal/biscuit_scope.py",
 ]
 
 [tool.pytest.ini_options]

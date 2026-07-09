@@ -8,7 +8,7 @@ Try:
 
 ```bash
 clayseal-identity lint token.jwt
-clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
 ```
 
 ## Cases

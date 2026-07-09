@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 
-from agentauth.backend.observability import JsonFormatter, configure_logging
+from clayseal.backend.observability import JsonFormatter, configure_logging
 
 
 def test_health_is_liveness(client):
@@ -35,7 +35,7 @@ def test_supplied_request_id_is_echoed(client):
 
 def test_json_formatter_emits_structured_fields():
     record = logging.LogRecord(
-        name="agentauth.access",
+        name="clayseal.access",
         level=logging.INFO,
         pathname="f.py",
         lineno=1,
@@ -51,7 +51,7 @@ def test_json_formatter_emits_structured_fields():
     parsed = json.loads(JsonFormatter().format(record))
     assert parsed["message"] == "request"
     assert parsed["level"] == "INFO"
-    assert parsed["logger"] == "agentauth.access"
+    assert parsed["logger"] == "clayseal.access"
     assert parsed["status"] == 200
     assert parsed["method"] == "GET"
     assert parsed["path"] == "/health"
@@ -59,6 +59,6 @@ def test_json_formatter_emits_structured_fields():
 
 def test_configure_logging_installs_json_handler():
     configure_logging()
-    logger = logging.getLogger("agentauth.access")
+    logger = logging.getLogger("clayseal.access")
     assert logger.handlers
     assert isinstance(logger.handlers[0].formatter, JsonFormatter)

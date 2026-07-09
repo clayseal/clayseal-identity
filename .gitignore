@@ -83,7 +83,7 @@ artifacts/
 keys/signing/
 *.key
 **/keys/*.pem
-**/.agentauth/keys/
+**/.clayseal/keys/
 *.ed25519.pem
 *_private.pem
 

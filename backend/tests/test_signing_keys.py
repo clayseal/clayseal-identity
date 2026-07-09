@@ -6,10 +6,10 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from agentauth.backend.db import SessionLocal
-from agentauth.backend.identity import create_signing_key, get_active_key
-from agentauth.backend.models import Customer, SigningKey
-from agentauth.backend.signing_keys import (
+from clayseal.backend.db import SessionLocal
+from clayseal.backend.identity import create_signing_key, get_active_key
+from clayseal.backend.models import Customer, SigningKey
+from clayseal.backend.signing_keys import (
     decrypt_private_pem,
     encrypt_private_pem,
     is_encrypted_private_pem,

@@ -1,4 +1,4 @@
-# Production image for the AgentAuth Identity Service.
+# Production image for the ClaySeal Identity Service.
 #
 # Layer note: this package depends on `agentauth-core`, which is published as a
 # separate wheel. Make it resolvable at build time via a wheelhouse or a private
@@ -21,13 +21,13 @@ WORKDIR /app
 
 # Install dependencies first (better layer caching) then the package itself.
 COPY pyproject.toml README.md ./
-COPY agentauth ./agentauth
+COPY clayseal ./clayseal
 COPY migrations ./migrations
 COPY alembic.ini ./alembic.ini
 
 # The service plus its psycopg[binary] + SQLAlchemy deps, the ASGI server, and
 # boto3 (the [kms] extra) for the AWS KMS envelope-encryption provider that
-# production selects via AGENTAUTH_SECRET_ENCRYPTION_PROVIDER=aws_kms.
+# production selects via CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms.
 RUN pip install --upgrade pip \
     && pip install ".[kms]" "uvicorn[standard]>=0.27" "psycopg[binary]>=3.1"
 
@@ -43,5 +43,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 
 # Pre-deploy step (run separately, once per release, before rolling instances):
 #   alembic upgrade head
-# with AGENTAUTH_MANAGE_SCHEMA=alembic so the app never races on DDL.
-CMD ["uvicorn", "agentauth.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# with CLAYSEAL_MANAGE_SCHEMA=alembic so the app never races on DDL.
+CMD ["uvicorn", "clayseal.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

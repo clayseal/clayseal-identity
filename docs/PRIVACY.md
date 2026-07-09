@@ -65,8 +65,3 @@ Recommended defaults:
 - Store signing keys in KMS or HSM where policy requires it.
 - Restrict CORS and admin endpoints.
 - Monitor credential issuance volume and failed verification rates.
-
-## Compatibility and Branding
-
-The product brand is Clay Seal. Package names and import paths currently remain
-`agentauth-identity` and `agentauth.identity` for compatibility.
