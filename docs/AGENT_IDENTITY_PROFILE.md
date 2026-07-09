@@ -76,3 +76,26 @@ Verifiers should:
 6. Prefer TTLs of 5 to 15 minutes.
 
 Use `agentauth.identity.verify_offline` as the reference verifier.
+
+## Discovery
+
+Clay Seal Identity services publish the profile at:
+
+```text
+/t/{tenant}/.well-known/agent-identity.json
+```
+
+Example:
+
+```json
+{
+  "profile": "clayseal-agent-identity-v1",
+  "issuer": "agentauth.io",
+  "jwks_uri": "https://identity.example.com/t/acme/jwks.json",
+  "openid_configuration_uri": "https://identity.example.com/t/acme/.well-known/openid-configuration",
+  "spiffe_bundle_uri": "https://identity.example.com/t/acme/spiffe-bundle.json",
+  "supported_token_types": ["agentauth-svid+jwt", "wit+jwt"],
+  "proof_of_possession_required": true,
+  "recommended_ttl_seconds": 900
+}
+```

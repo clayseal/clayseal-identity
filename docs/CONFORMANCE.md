@@ -52,3 +52,7 @@ You can also run profile linting plus offline verification from the CLI:
 ```bash
 clayseal-identity conformance token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
 ```
+
+Intentionally unsafe profile examples live in `bad-token-zoo/`. They are JSON
+templates instead of signed JWTs so they do not age into misleading static
+credentials.

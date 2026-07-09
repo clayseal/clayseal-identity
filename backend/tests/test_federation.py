@@ -26,6 +26,17 @@ def test_openid_configuration_is_public_and_points_at_jwks(client, customer):
     assert doc["id_token_signing_alg_values_supported"] == ["RS256"]
 
 
+def test_agent_identity_configuration_is_public(client, customer):
+    cid = customer["customer_id"]
+    resp = client.get(f"/t/{cid}/.well-known/agent-identity.json")
+    assert resp.status_code == 200
+    doc = resp.json()
+    assert doc["profile"] == "clayseal-agent-identity-v1"
+    assert doc["jwks_uri"].endswith(f"/t/{cid}/jwks.json")
+    assert doc["proof_of_possession_required"] is True
+    assert "agentauth-svid+jwt" in doc["supported_token_types"]
+
+
 def test_public_jwks_requires_no_api_key(client, customer):
     cid = customer["customer_id"]
     register_and_identify(client, customer["headers"])  # forces key creation

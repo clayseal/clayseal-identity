@@ -9,6 +9,13 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from agentauth.identity import explain_token, lint_token, verify_offline
 from agentauth.identity.cli import main as cli_main
+from agentauth.identity.diagnostics import (
+    doctor_agent_identity_document,
+    doctor_token,
+    findings_payload,
+    preflight_endpoint,
+    scan_mcp_config,
+)
 from agentauth.identity.integrations.fastapi import AgentIdentityVerifier
 from agentauth.identity.integrations.langchain import identity_config, with_agent_identity
 from agentauth.identity.integrations.mcp import authorization_header, identity_metadata
@@ -94,6 +101,87 @@ def test_cli_lint_and_verify(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "claim.cnf.jkt" in out
     assert '"valid": true' in out
+
+
+def test_doctor_and_scan_mcp_diagnostics():
+    token, jwks = _token_and_jwks()
+    findings = doctor_token(token, jwks=jwks, issuer="agentauth.io", audience="acme")
+    payload = findings_payload(findings)
+    assert payload["summary"]["fail"] == 0
+
+    doc_findings = doctor_agent_identity_document(
+        {
+            "profile": "clayseal-agent-identity-v1",
+            "issuer": "agentauth.io",
+            "jwks_uri": "https://example.com/jwks.json",
+            "proof_of_possession_required": True,
+            "recommended_ttl_seconds": 300,
+        }
+    )
+    assert findings_payload(doc_findings)["summary"]["fail"] == 0
+
+    mcp_findings = scan_mcp_config(
+        {
+            "mcpServers": {
+                "remote": {
+                    "url": "http://example.com/mcp",
+                    "headers": {},
+                    "env": {"API_TOKEN": "secret"},
+                }
+            }
+        }
+    )
+    codes = {f.code for f in mcp_findings}
+    assert "mcp.remote.transport" in codes
+    assert "mcp.remote.env_secrets" in codes
+
+
+def test_cli_doctor_and_scan_mcp(tmp_path, capsys):
+    token, jwks = _token_and_jwks()
+    token_path = tmp_path / "token.jwt"
+    jwks_path = tmp_path / "jwks.json"
+    metadata_path = tmp_path / "agent-identity.json"
+    mcp_path = tmp_path / "mcp.json"
+    token_path.write_text(token)
+    jwks_path.write_text(json.dumps(jwks))
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "profile": "clayseal-agent-identity-v1",
+                "issuer": "agentauth.io",
+                "jwks_uri": "https://example.com/jwks.json",
+                "proof_of_possession_required": True,
+                "recommended_ttl_seconds": 300,
+            }
+        )
+    )
+    mcp_path.write_text(json.dumps({"mcpServers": {"local": {"command": "python"}}}))
+
+    assert cli_main(
+        [
+            "doctor",
+            "--token",
+            str(token_path),
+            "--jwks",
+            str(jwks_path),
+            "--issuer",
+            "agentauth.io",
+            "--audience",
+            "acme",
+            "--agent-identity",
+            str(metadata_path),
+        ]
+    ) == 0
+    assert cli_main(["scan-mcp", str(mcp_path)]) == 0
+    out = capsys.readouterr().out
+    assert "verify.offline" in out
+    assert "mcp.local.transport" in out
+
+
+def test_preflight_endpoint_is_importable():
+    # Direct network preflight is intentionally covered by CLI behavior in real
+    # use. Keep the pure function importable and failure-shaped without network.
+    assert callable(preflight_endpoint)
 
 
 def test_fastapi_dependency_verifies_bearer_token():
