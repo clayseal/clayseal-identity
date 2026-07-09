@@ -7,19 +7,19 @@ This document is written for engineers who need to **run, integrate, or extend**
 ## What this repository is for
 
 **Clay Seal Identity** is layer 1 of the Clay Seal stack. Its package name is
-still `agentauth-identity`, and its Python namespace is still
-`agentauth.identity`, but the product name developers and customers should see
+still `clayseal-identity`, and its Python namespace is still
+`clayseal.identity`, but the product name developers and customers should see
 is Clay Seal. Its job is narrow and important: give every autonomous agent a
 **cryptographically attested identity** that downstream systems can verify
 offline.
 
 Concretely, this repo provides:
 
-- A Python SDK (`AgentAuth`) that mints and verifies **JWT-SVID-style credentials** (RS256-signed, short-lived, SPIFFE-shaped).
+- A Python SDK (`ClaySeal`) that mints and verifies **JWT-SVID-style credentials** (RS256-signed, short-lived, SPIFFE-shaped).
 - Ed25519 workload keys used for sender-constraining (`cnf.jkt`) and local proof-of-possession.
 - **Biscuit capability tokens** for offline, attenuatable authorization facts.
 - **Proof-of-possession** binding so a stolen bearer token cannot be replayed from another machine.
-- An optional **hosted FastAPI identity service** (`agentauth.backend`) for teams that want issuance and validation as a network endpoint rather than an in-process library.
+- An optional **hosted FastAPI identity service** (`clayseal.backend`) for teams that want issuance and validation as a network endpoint rather than an in-process library.
 
 What this repo deliberately does **not** include:
 
@@ -45,11 +45,11 @@ Layer 1 exports facts. Layer 2 narrows them into action-scoped tokens. Layer 3 r
 Import convention matters: **in this repo**, always import from the identity namespace:
 
 ```python
-from agentauth.identity import AgentAuth
-from agentauth.identity.session import AgentSession
+from clayseal.identity import ClaySeal
+from clayseal.identity.session import AgentSession
 ```
 
-There is intentionally **no** top-level `from agentauth import Identity` here. That unified export lives only in the receipts repo, which owns the public `agentauth` package surface for full-stack users.
+There is intentionally **no** top-level `from clayseal import Identity` here. That unified export lives only in the receipts repo, which owns the public `clayseal` package surface for full-stack users.
 
 ---
 
@@ -96,7 +96,7 @@ Supported: **3.10 through 3.13** (see `pyproject.toml`). Biscuit’s native whee
 
 ### Clay Seal client
 
-`AgentAuth` is the compatibility API class and the Clay Seal identity entry point. It talks to a tenant-scoped identity service, or to the embedded throwaway service used by the examples.
+`ClaySeal` is the Clay Seal identity entry point. It talks to a tenant-scoped identity service, or to the embedded throwaway service used by the examples.
 
 Typical flow:
 
@@ -140,10 +140,10 @@ This exercises identify → validate → revoke against an embedded throwaway lo
 ### Minimal SDK usage
 
 ```python
-from agentauth.identity import AgentAuth
+from clayseal.identity import ClaySeal
 
-tenant = AgentAuth.create_tenant("Acme AI", base_url="http://localhost:8000")
-auth = AgentAuth(
+tenant = ClaySeal.create_tenant("Acme AI", base_url="http://localhost:8000")
+auth = ClaySeal(
     api_key=tenant["api_key"],
     base_url="http://localhost:8000",
     dev_attestation=True,  # localhost demos/tests only
@@ -171,12 +171,12 @@ Resource servers can verify a Clay Seal JWT-SVID without calling the identity
 service if they have the tenant issuer and JWKS:
 
 ```python
-from agentauth.identity import verify_offline
+from clayseal.identity import verify_offline
 
 claims = verify_offline(
     token,
     jwks=tenant_jwks,
-    issuer="agentauth.io",
+    issuer="clayseal.io",
     audience=tenant_id,
 )
 assert claims["cnf"]["jkt"]  # sender-constrained; not a plain bearer token
@@ -184,12 +184,12 @@ assert claims["cnf"]["jkt"]  # sender-constrained; not a plain bearer token
 
 ### CLI and linter
 
-Installed packages expose both `clayseal-identity` and `agentauth-identity`:
+Installed packages expose both `clayseal-identity` and `clayseal-identity`:
 
 ```bash
 clayseal-identity explain token.jwt
 clayseal-identity lint token.jwt
-clayseal-identity verify token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+clayseal-identity verify token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
 ```
 
 The linter checks the public [Agent Identity Profile](AGENT_IDENTITY_PROFILE.md):
@@ -198,11 +198,11 @@ metadata.
 
 ### Framework helpers
 
-Identity-only helpers live under `agentauth.identity.integrations`:
+Identity-only helpers live under `clayseal.identity.integrations`:
 
 ```python
-from agentauth.identity.integrations.langchain import identity_config
-from agentauth.identity.integrations.mcp import tool_headers
+from clayseal.identity.integrations.langchain import identity_config
+from clayseal.identity.integrations.mcp import tool_headers
 
 runnable.invoke(input, config=identity_config(session))
 headers = tool_headers(session)
@@ -215,13 +215,13 @@ endpoints with offline JWKS verification. See [INTEGRATIONS.md](INTEGRATIONS.md)
 
 After identification, pass authority into layer 2 or 3 through the umbrella
 package's cross-layer wiring — a lower layer never imports a higher one, so the
-receipting convenience lives in `agentauth`, not here:
+receipting convenience lives in `clayseal`, not here:
 
 ```python
-import agentauth
+import clayseal
 
 session = auth.identify(agent_type="researcher", owner="alice@example.org")
-agent = agentauth.wrap(session, my_model, policy=policy)  # receipts bound to this identity
+agent = clayseal.wrap(session, my_model, policy=policy)  # receipts bound to this identity
 ```
 
 Do not hand-roll claim dicts for upper layers unless you are implementing a custom identity adapter in capabilities (see that repo's cross-provider guide).
@@ -241,7 +241,7 @@ agent that signs workload evidence. The caller does not choose its own
 For deployments where agents call a central issuer:
 
 ```bash
-uvicorn agentauth.backend.main:app --host 0.0.0.0 --port 8080
+uvicorn clayseal.backend.main:app --host 0.0.0.0 --port 8080
 ```
 
 The FastAPI app exposes issuance and validation routes used by larger integrations. Configuration is environment-driven; see `backend/` and example env files if present in your checkout.
@@ -271,16 +271,16 @@ CI runs the same suites on Python 3.11 and 3.13.
 
 | Path | Purpose |
 |------|---------|
-| `agentauth/identity/` | Public SDK — start here |
-| `agentauth/backend/` | FastAPI identity service |
-| `agentauth/core/` | Shared types (`AuthorityBinding`, signing helpers) |
+| `clayseal/identity/` | Public SDK — start here |
+| `clayseal/backend/` | FastAPI identity service |
+| `clayseal/core/` | Shared types (`AuthorityBinding`, signing helpers) |
 | `backend/tests/` | Service-level tests |
 | `sdk/python/tests/` | SDK unit tests |
 | `examples/` | Runnable scripts |
 
 ### Editable installs and namespace gotchas
 
-Python merges all directories named `agentauth` on `sys.path`. If you clone multiple layers into sibling folders and run tests **from inside** one repo without installing the others, you can accidentally pick up stale or partial namespace merges via the current working directory.
+Python merges all directories named `clayseal` on `sys.path`. If you clone multiple layers into sibling folders and run tests **from inside** one repo without installing the others, you can accidentally pick up stale or partial namespace merges via the current working directory.
 
 **Recommended practice:**
 
@@ -288,7 +288,7 @@ Python merges all directories named `agentauth` on `sys.path`. If you clone mult
 - `pip install -e` only the repos you need.
 - Run tests from the repo root after install, or from a neutral directory like `/tmp` with packages installed into the venv.
 
-If imports fail with “cannot import name X from agentauth”, you almost always have a path pollution issue, not a missing release.
+If imports fail with “cannot import name X from clayseal”, you almost always have a path pollution issue, not a missing release.
 
 ---
 
@@ -341,7 +341,7 @@ employee, customer, or regulated data.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `ModuleNotFoundError: agentauth.identity` | Package not installed | `pip install -e ".[dev]"` in this repo |
+| `ModuleNotFoundError: clayseal.identity` | Package not installed | `pip install -e ".[dev]"` in this repo |
 | Wrong code imported | CWD namespace merge | Install via pip; avoid running from monorepo parent |
 | Verification fails immediately | Expired credential or clock skew | Re-identify; check system time |
 | Biscuit errors on 3.14+ | Unsupported Python | Use 3.10–3.13 |

@@ -1,4 +1,4 @@
-from agentauth.identity.adapters import get_identity_adapter, list_identity_adapters
+from clayseal.identity.adapters import get_identity_adapter, list_identity_adapters
 
 
 def test_l1_identity_adapters_are_standalone():

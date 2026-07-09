@@ -13,9 +13,9 @@ if str(_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from agentauth.backend.api_keys import api_key_lookup_prefix, hash_api_key
-from agentauth.backend.db import SessionLocal, init_db
-from agentauth.backend.models import Customer
+from clayseal.backend.api_keys import api_key_lookup_prefix, hash_api_key
+from clayseal.backend.db import SessionLocal, init_db
+from clayseal.backend.models import Customer
 
 
 def migrate(*, dry_run: bool) -> int:

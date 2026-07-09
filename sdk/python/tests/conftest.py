@@ -24,14 +24,14 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 # --- isolate backend state BEFORE importing the app ------------------------- #
-_TMPDIR = tempfile.mkdtemp(prefix="agentauth-sdk-test-")
-os.environ.setdefault("AGENTAUTH_DATABASE_URL", f"sqlite:///{_TMPDIR}/agents.db")
+_TMPDIR = tempfile.mkdtemp(prefix="clayseal-sdk-test-")
+os.environ.setdefault("CLAYSEAL_DATABASE_URL", f"sqlite:///{_TMPDIR}/agents.db")
 
 import pytest  # noqa: E402
 import uvicorn  # noqa: E402
 
-from agentauth.identity import AgentAuth  # noqa: E402
-from agentauth.backend.main import app  # noqa: E402
+from clayseal.identity import ClaySeal  # noqa: E402
+from clayseal.backend.main import app  # noqa: E402
 
 
 def _free_port() -> int:
@@ -62,13 +62,13 @@ def base_url() -> str:
 @pytest.fixture
 def api_key(base_url: str) -> str:
     """Create a fresh tenant (no API key needed) and return its key."""
-    tenant = AgentAuth.create_tenant("SDK Test Co", base_url=base_url)
+    tenant = ClaySeal.create_tenant("SDK Test Co", base_url=base_url)
     return tenant["api_key"]
 
 
 @pytest.fixture
-def auth(api_key: str, base_url: str) -> AgentAuth:
-    client = AgentAuth(api_key=api_key, base_url=base_url, dev_attestation=True)
+def auth(api_key: str, base_url: str) -> ClaySeal:
+    client = ClaySeal(api_key=api_key, base_url=base_url, dev_attestation=True)
     yield client
     client.close()
 

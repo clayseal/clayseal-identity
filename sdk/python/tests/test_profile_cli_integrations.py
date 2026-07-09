@@ -7,25 +7,25 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from agentauth.identity import explain_token, lint_token, verify_offline
-from agentauth.identity.cli import main as cli_main
-from agentauth.identity.diagnostics import (
+from clayseal.identity import explain_token, lint_token, verify_offline
+from clayseal.identity.cli import main as cli_main
+from clayseal.identity.diagnostics import (
     doctor_agent_identity_document,
     doctor_token,
     findings_payload,
     preflight_endpoint,
     scan_mcp_config,
 )
-from agentauth.identity.usability import (
+from clayseal.identity.usability import (
     diff_token_payload,
     generate_integration,
     replay_lab_payload,
     whoami_payload,
 )
-from agentauth.identity.integrations.fastapi import AgentIdentityVerifier
-from agentauth.identity.integrations.langchain import identity_config, with_agent_identity
-from agentauth.identity.integrations.mcp import authorization_header, identity_metadata
-from agentauth.identity.profile import AgentIdentityClaims, lint_summary
+from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
+from clayseal.identity.integrations.langchain import identity_config, with_agent_identity
+from clayseal.identity.integrations.mcp import authorization_header, identity_metadata
+from clayseal.identity.profile import AgentIdentityClaims, lint_summary
 
 
 def _rsa_keypair():
@@ -37,8 +37,8 @@ def _token_and_jwks(claim_overrides=None):
     private, public = _rsa_keypair()
     now = int(time.time())
     claims = {
-        "iss": "agentauth.io",
-        "sub": "spiffe://agentauth.io/customer/acme/agent/researcher",
+        "iss": "clayseal.io",
+        "sub": "spiffe://clayseal.io/customer/acme/agent/researcher",
         "aud": "acme",
         "iat": now,
         "nbf": now,
@@ -57,7 +57,7 @@ def _token_and_jwks(claim_overrides=None):
         claims,
         private,
         algorithm="RS256",
-        headers={"kid": "kid-1", "typ": "agentauth-svid+jwt"},
+        headers={"kid": "kid-1", "typ": "clayseal-svid+jwt"},
     )
     jwk = json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(public))
     jwk.update({"kid": "kid-1", "alg": "RS256", "use": "sig"})
@@ -79,7 +79,7 @@ def test_profile_lint_and_explain_accept_good_agent_token():
 def test_verify_offline_normalizes_to_agent_claims():
     token, jwks = _token_and_jwks()
 
-    claims = verify_offline(token, jwks=jwks, issuer="agentauth.io", audience="acme")
+    claims = verify_offline(token, jwks=jwks, issuer="clayseal.io", audience="acme")
     identity = AgentIdentityClaims.from_claims(claims)
 
     assert identity.agent_id == "agent-1"
@@ -102,7 +102,7 @@ def test_cli_lint_and_verify(tmp_path, capsys):
             "--jwks",
             str(jwks_path),
             "--issuer",
-            "agentauth.io",
+            "clayseal.io",
             "--audience",
             "acme",
         ]
@@ -114,14 +114,14 @@ def test_cli_lint_and_verify(tmp_path, capsys):
 
 def test_doctor_and_scan_mcp_diagnostics():
     token, jwks = _token_and_jwks()
-    findings = doctor_token(token, jwks=jwks, issuer="agentauth.io", audience="acme")
+    findings = doctor_token(token, jwks=jwks, issuer="clayseal.io", audience="acme")
     payload = findings_payload(findings)
     assert payload["summary"]["fail"] == 0
 
     doc_findings = doctor_agent_identity_document(
         {
             "profile": "clayseal-agent-identity-v1",
-            "issuer": "agentauth.io",
+            "issuer": "clayseal.io",
             "jwks_uri": "https://example.com/jwks.json",
             "proof_of_possession_required": True,
             "recommended_ttl_seconds": 300,
@@ -157,7 +157,7 @@ def test_cli_doctor_and_scan_mcp(tmp_path, capsys):
         json.dumps(
             {
                 "profile": "clayseal-agent-identity-v1",
-                "issuer": "agentauth.io",
+                "issuer": "clayseal.io",
                 "jwks_uri": "https://example.com/jwks.json",
                 "proof_of_possession_required": True,
                 "recommended_ttl_seconds": 300,
@@ -174,7 +174,7 @@ def test_cli_doctor_and_scan_mcp(tmp_path, capsys):
             "--jwks",
             str(jwks_path),
             "--issuer",
-            "agentauth.io",
+            "clayseal.io",
             "--audience",
             "acme",
             "--agent-identity",
@@ -241,7 +241,7 @@ def test_preflight_endpoint_is_importable():
 
 def test_fastapi_dependency_verifies_bearer_token():
     token, jwks = _token_and_jwks()
-    verifier = AgentIdentityVerifier(jwks=jwks, issuer="agentauth.io", audience="acme")
+    verifier = AgentIdentityVerifier(jwks=jwks, issuer="clayseal.io", audience="acme")
 
     identity = verifier(f"Bearer {token}")
 

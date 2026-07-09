@@ -1,6 +1,6 @@
 {
   "algorithms": ["RS256"],
-  "token_types": ["agentauth-svid+jwt", "wit+jwt"],
+  "token_types": ["clayseal-svid+jwt", "wit+jwt"],
   "required_claims": ["iss", "sub", "aud", "exp", "iat", "jti", "cnf"],
   "required_cnf_claims": ["jkt"],
   "public_key_discovery": [

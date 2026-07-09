@@ -21,7 +21,7 @@ Give every agent a token that answers:
 | --- | --- |
 | `alg` | `RS256` |
 | `kid` | Key ID present in the tenant JWKS |
-| `typ` | `agentauth-svid+jwt` or `wit+jwt` |
+| `typ` | `clayseal-svid+jwt` or `wit+jwt` |
 
 ## Required Claims
 
@@ -49,8 +49,8 @@ Give every agent a token that answers:
 
 ```json
 {
-  "iss": "agentauth.io",
-  "sub": "spiffe://agentauth.io/customer/acme/agent/code-reviewer",
+  "iss": "clayseal.io",
+  "sub": "spiffe://clayseal.io/customer/acme/agent/code-reviewer",
   "aud": "tools-api",
   "iat": 1783575000,
   "exp": 1783575900,
@@ -75,7 +75,7 @@ Verifiers should:
 5. Reject unexpected token types.
 6. Prefer TTLs of 5 to 15 minutes.
 
-Use `agentauth.identity.verify_offline` as the reference verifier.
+Use `clayseal.identity.verify_offline` as the reference verifier.
 
 ## Discovery
 
@@ -90,11 +90,11 @@ Example:
 ```json
 {
   "profile": "clayseal-agent-identity-v1",
-  "issuer": "agentauth.io",
+  "issuer": "clayseal.io",
   "jwks_uri": "https://identity.example.com/t/acme/jwks.json",
   "openid_configuration_uri": "https://identity.example.com/t/acme/.well-known/openid-configuration",
   "spiffe_bundle_uri": "https://identity.example.com/t/acme/spiffe-bundle.json",
-  "supported_token_types": ["agentauth-svid+jwt", "wit+jwt"],
+  "supported_token_types": ["clayseal-svid+jwt", "wit+jwt"],
   "proof_of_possession_required": true,
   "recommended_ttl_seconds": 900
 }

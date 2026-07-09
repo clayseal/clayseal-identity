@@ -1,8 +1,8 @@
-"""Federation walk-through: verify an AgentAuth JWT-SVID like an outsider would.
+"""Federation walk-through: verify an ClaySeal JWT-SVID like an outsider would.
 
 1. identify() an agent against the (embedded) backend
 2. fetch the tenant's PUBLIC discovery documents (no API key)
-3. verify the JWT-SVID with stock PyJWT — zero AgentAuth code on the verifier side
+3. verify the JWT-SVID with stock PyJWT — zero ClaySeal code on the verifier side
 4. print the RFC 7523 exchange for Anthropic Workload Identity Federation
    (executed live only when ANTHROPIC_FEDERATION_URL is set)
 

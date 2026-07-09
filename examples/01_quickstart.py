@@ -14,11 +14,11 @@ from __future__ import annotations
 
 import common
 
-from agentauth.identity.errors import AgentRevokedError
+from clayseal.identity.errors import AgentRevokedError
 
 
 def main() -> None:
-    common.title("AgentAuth Quickstart - Identity")
+    common.title("ClaySeal Quickstart - Identity")
     auth, _api_key, _url = common.bootstrap("Acme AI")
 
     # 1. Give the agent a real, signed identity (a short-lived JWT-SVID).

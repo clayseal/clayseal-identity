@@ -18,11 +18,11 @@ import uuid
 
 import common
 
-from agentauth.identity import _capabilities as caps
+from clayseal.identity import _capabilities as caps
 
 
 def main() -> None:
-    common.title("AgentAuth - Capability-Based Authorization")
+    common.title("ClaySeal - Capability-Based Authorization")
     auth, _api_key, _url = common.bootstrap("Acme AI")
 
     # 1. Issue an identity with fine-grained capabilities (not flat scopes).
@@ -100,7 +100,7 @@ def main() -> None:
             attacker_keyhash,
             challenge,
             htm="OFFLINE",
-            htu="agentauth:authorize",
+            htu="clayseal:authorize",
             ath=ath,
             iat=iat,
             jti=jti,
@@ -108,7 +108,7 @@ def main() -> None:
         ),
         pubkey_pem=attacker_pub,
         htm="OFFLINE",
-        htu="agentauth:authorize",
+        htu="clayseal:authorize",
         ath=ath,
         iat=iat,
         jti=jti,
@@ -119,7 +119,7 @@ def main() -> None:
         operation=("db", "read"),
         pop=forged,
         expected_htm="OFFLINE",
-        expected_htu="agentauth:authorize",
+        expected_htu="clayseal:authorize",
     )
     common.deny(f"forged proof-of-possession -> allowed={result['allowed']}")
     common.detail(f"reason: {result['reason']}")

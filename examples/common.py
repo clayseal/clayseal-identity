@@ -1,12 +1,12 @@
-"""Shared bootstrap + console helpers for the AgentAuth examples.
+"""Shared bootstrap + console helpers for the ClaySeal examples.
 
 Every example is a single, zero-config command:
 
     python examples/01_quickstart.py
 
-`bootstrap()` gives you a ready-to-use `AgentAuth` bound to a fresh tenant. It
+`bootstrap()` gives you a ready-to-use `ClaySeal` bound to a fresh tenant. It
 will:
-  - use an already-running backend at AGENTAUTH_BASE_URL (or http://localhost:8000)
+  - use an already-running backend at CLAYSEAL_BASE_URL (or http://localhost:8000)
     if one is reachable, otherwise
   - boot the FastAPI backend in-process on a random port against a throwaway
     SQLite DB + audit log (so nothing touches your real data),
@@ -94,12 +94,12 @@ def code(text: str) -> str:
 # --------------------------------------------------------------------------- #
 # backend bootstrap
 # --------------------------------------------------------------------------- #
-_EXPLICIT_URL = os.getenv("AGENTAUTH_BASE_URL")
+_EXPLICIT_URL = os.getenv("CLAYSEAL_BASE_URL")
 _server_started = False
 
 
-def _is_agentauth(base_url: str, timeout: float = 1.0) -> bool:
-    """Confirm the URL is actually an AgentAuth backend (not just any server)."""
+def _is_clayseal(base_url: str, timeout: float = 1.0) -> bool:
+    """Confirm the URL is actually an ClaySeal backend (not just any server)."""
     import httpx
 
     try:
@@ -120,17 +120,17 @@ def _free_port() -> int:
 def _boot_embedded() -> str:
     """Start the backend in-process against a throwaway DB; return its URL."""
     global _server_started
-    tmp = tempfile.mkdtemp(prefix="agentauth-examples-")
-    os.environ.setdefault("AGENTAUTH_DATABASE_URL", f"sqlite:///{tmp}/agents.db")
-    os.environ.setdefault("AGENTAUTH_LOG_LEVEL", "WARNING")
-    logging.getLogger("agentauth").setLevel(logging.WARNING)
-    logging.getLogger("agentauth.access").setLevel(logging.CRITICAL)
+    tmp = tempfile.mkdtemp(prefix="clayseal-examples-")
+    os.environ.setdefault("CLAYSEAL_DATABASE_URL", f"sqlite:///{tmp}/agents.db")
+    os.environ.setdefault("CLAYSEAL_LOG_LEVEL", "WARNING")
+    logging.getLogger("clayseal").setLevel(logging.WARNING)
+    logging.getLogger("clayseal.access").setLevel(logging.CRITICAL)
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
     import uvicorn
 
-    from agentauth.backend.main import app  # noqa: WPS433 - imported after env is set
+    from clayseal.backend.main import app  # noqa: WPS433 - imported after env is set
 
     port = _free_port()
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
@@ -141,56 +141,56 @@ def _boot_embedded() -> str:
     while not server.started and time.time() < deadline:
         time.sleep(0.05)
     if not server.started:
-        raise RuntimeError("Embedded AgentAuth backend failed to start.")
+        raise RuntimeError("Embedded ClaySeal backend failed to start.")
     _server_started = True
     return f"http://127.0.0.1:{port}"
 
 
 def ensure_backend() -> str:
-    """Return a base URL for an AgentAuth backend.
+    """Return a base URL for an ClaySeal backend.
 
-    Uses AGENTAUTH_BASE_URL if it is set and points at a real AgentAuth backend;
+    Uses CLAYSEAL_BASE_URL if it is set and points at a real ClaySeal backend;
     otherwise boots a throwaway one in-process (the default, zero-config path).
     """
     if _EXPLICIT_URL:
-        if _is_agentauth(_EXPLICIT_URL):
+        if _is_clayseal(_EXPLICIT_URL):
             return _EXPLICIT_URL
-        warn(f"AGENTAUTH_BASE_URL={_EXPLICIT_URL} is not a reachable AgentAuth backend; "
+        warn(f"CLAYSEAL_BASE_URL={_EXPLICIT_URL} is not a reachable ClaySeal backend; "
              "starting an embedded one instead.")
     return _boot_embedded()
 
 
 def bootstrap(org_name: str = "Acme AI"):
-    """Return (AgentAuth client bound to a fresh tenant, api_key, base_url)."""
+    """Return (ClaySeal client bound to a fresh tenant, api_key, base_url)."""
     import logging
 
-    from agentauth.identity import AgentAuth
+    from clayseal.identity import ClaySeal
 
     base_url = ensure_backend()
     if _server_started:
         detail(f"Started an embedded backend at {base_url} (throwaway data).")
     else:
-        detail(f"Using the AgentAuth backend at {base_url}.")  # external, explicit
+        detail(f"Using the ClaySeal backend at {base_url}.")  # external, explicit
 
-    tenant = AgentAuth.create_tenant(org_name, base_url=base_url)
+    tenant = ClaySeal.create_tenant(org_name, base_url=base_url)
     api_key = tenant["api_key"]
     detail(f"Created tenant {org_name!r}.")
     info(f"API key: {code(api_key)}")
     detail(f"API base URL: {base_url}")
     if _server_started:
         warn("Embedded backend — the dashboard won't see this data unless you set "
-             "AGENTAUTH_BASE_URL to your running backend.")
+             "CLAYSEAL_BASE_URL to your running backend.")
     else:
         detail("Paste the API key into the dashboard Connect screen to view results.")
-    client = AgentAuth(api_key=api_key, base_url=base_url, dev_attestation=True)
+    client = ClaySeal(api_key=api_key, base_url=base_url, dev_attestation=True)
 
     # The SDK logs one structured line per identity operation (great in
     # production for Datadog/Grafana correlation). Quiet it here so the demo
     # narration is clean;
-    # set AGENTAUTH_EXAMPLES_VERBOSE=1 to see it. (Done after the client is built
+    # set CLAYSEAL_EXAMPLES_VERBOSE=1 to see it. (Done after the client is built
     # because constructing it configures the logger.)
-    if not os.getenv("AGENTAUTH_EXAMPLES_VERBOSE"):
-        logging.getLogger("agentauth").setLevel(logging.WARNING)
-        logging.getLogger("agentauth.access").setLevel(logging.CRITICAL)
+    if not os.getenv("CLAYSEAL_EXAMPLES_VERBOSE"):
+        logging.getLogger("clayseal").setLevel(logging.WARNING)
+        logging.getLogger("clayseal.access").setLevel(logging.CRITICAL)
 
     return client, tenant["api_key"], base_url

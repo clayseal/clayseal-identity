@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.identity.errors import BiscuitError, CapabilityDeniedError
+from clayseal.identity.errors import BiscuitError, CapabilityDeniedError
 
 DB_READ_WEB_ALL = [
     {"resource": "db", "action": "read"},
@@ -108,8 +108,8 @@ def test_pop_signing_matches_backend():
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import ed25519
 
-    from agentauth.backend import capabilities as backend_caps
-    from agentauth.identity import _capabilities as sdk_caps
+    from clayseal.backend import capabilities as backend_caps
+    from clayseal.identity import _capabilities as sdk_caps
 
     ed = ed25519.Ed25519PrivateKey.generate()
     ed_priv = ed.private_bytes(

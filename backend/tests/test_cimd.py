@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from agentauth.backend.cimd import (
+from clayseal.backend.cimd import (
     MAX_DOCUMENT_BYTES,
     ClientMetadataError,
     fetch_client_metadata,

@@ -8,16 +8,16 @@ clayseal-identity lint token.jwt
 clayseal-identity status
 clayseal-identity whoami token.jwt
 clayseal-identity diff-token before.jwt after.jwt
-clayseal-identity verify token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
-clayseal-identity conformance token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
-clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+clayseal-identity verify token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
+clayseal-identity conformance token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
+clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
 clayseal-identity preflight http://localhost:8000/tool
 clayseal-identity scan-mcp mcp-config.json
 clayseal-identity generate fastapi
 clayseal-identity replay-lab
 ```
 
-`agentauth-identity` is an alias for the same command.
+`clayseal-identity` is an alias for the same command.
 
 ## Explain
 
@@ -84,7 +84,7 @@ Verify signature and claims offline from a JWKS file or URL:
 ```bash
 clayseal-identity verify token.jwt \
   --jwks https://identity.example.com/t/acme/jwks.json \
-  --issuer agentauth.io \
+  --issuer clayseal.io \
   --audience acme
 ```
 
@@ -112,7 +112,7 @@ Run profile linting and offline verification together:
 ```bash
 clayseal-identity conformance token.jwt \
   --jwks jwks.json \
-  --issuer agentauth.io \
+  --issuer clayseal.io \
   --audience acme
 ```
 
@@ -124,7 +124,7 @@ Diagnose a token and/or an agent identity discovery document:
 clayseal-identity doctor \
   --token token.jwt \
   --jwks jwks.json \
-  --issuer agentauth.io \
+  --issuer clayseal.io \
   --audience acme \
   --agent-identity https://identity.example.com/t/acme/.well-known/agent-identity.json
 ```

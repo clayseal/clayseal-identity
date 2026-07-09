@@ -8,9 +8,9 @@ import types
 
 import pytest
 
-from agentauth.backend import deps, secret_encryption
-from agentauth.backend import signing_keys as sk
-from agentauth.backend.cache import TTLCache
+from clayseal.backend import deps, secret_encryption
+from clayseal.backend import signing_keys as sk
+from clayseal.backend.cache import TTLCache
 
 
 # --- TTLCache -------------------------------------------------------------- #
@@ -75,8 +75,8 @@ def test_cache_invalidated_when_stored_hash_changes(client, customer, monkeypatc
     assert client.get("/v1/agents", headers=h).status_code == 200  # populate cache
 
     # Simulate rotation: change the customer's stored hash out from under the cache.
-    from agentauth.backend.db import SessionLocal
-    from agentauth.backend.models import Customer
+    from clayseal.backend.db import SessionLocal
+    from clayseal.backend.models import Customer
 
     with SessionLocal() as db:
         row = db.get(Customer, customer["customer_id"])

@@ -1,6 +1,6 @@
-"""Alembic migration environment for agentauth-identity.
+"""Alembic migration environment for clayseal-identity.
 
-The database URL comes from ``AGENTAUTH_DATABASE_URL`` (the same setting the app
+The database URL comes from ``CLAYSEAL_DATABASE_URL`` (the same setting the app
 uses), normalized to the psycopg driver for Postgres, so ``alembic upgrade head``
 always targets the deployment's real database. ``target_metadata`` is the app's
 declarative ``Base.metadata`` with every model imported, so autogenerate sees the
@@ -13,9 +13,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from agentauth.backend import models  # noqa: F401  (register models on Base)
-from agentauth.backend.config import get_settings
-from agentauth.backend.db import Base, normalize_database_url
+from clayseal.backend import models  # noqa: F401  (register models on Base)
+from clayseal.backend.config import get_settings
+from clayseal.backend.db import Base, normalize_database_url
 
 config = context.config
 

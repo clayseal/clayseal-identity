@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **agentauth-identity** are documented here.
+All notable changes to **clayseal-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
@@ -8,7 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `agentauth.identity.verify_offline` for local JWT-SVID verification from a
+- `clayseal.identity.verify_offline` for local JWT-SVID verification from a
   tenant JWKS.
 - Threat model, conformance guide, and identity profile documentation.
 - Agent identity profile linter/explainer and `clayseal-identity` CLI.
@@ -21,6 +21,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** renamed the package from `agentauth` to `clayseal` throughout —
+  import paths (`clayseal.identity`, `clayseal.backend`, `clayseal.workload_keys`,
+  `clayseal.biscuit_scope`), the `ClaySeal`/`ClaySealError` SDK classes, the
+  `CLAYSEAL_*` environment variables, the `clayseal-identity` distribution name
+  (the `agentauth-identity` console script alias is removed), and the default
+  `clayseal-svid+jwt`/`clayseal-pop+jwt` token types and `clayseal.io` trust
+  domain. The sibling `agentauth-core` dependency and its `agentauth.core.*`
+  namespace are unaffected by this rename.
 - README and developer guide now describe the current attestation-backed SDK
   flow and RS256/Ed25519 split accurately.
 - Example bootstrap quiets embedded-backend logs for cleaner first-run output.
@@ -41,7 +49,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `session.wrap()` imports `AuthorityBinding` from shared `agentauth.core.authority_binding` (used by L2/L3 cross-provider integration).
-- Import convention: use `from agentauth.identity import AgentAuth` (no top-level `agentauth` package in this repo).
+- Import convention: use `from clayseal.identity import ClaySeal` (no top-level `clayseal` package in this repo).
 
 ### Fixed
 

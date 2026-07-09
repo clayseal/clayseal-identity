@@ -9,12 +9,12 @@ Protect a tool endpoint with offline JWT/JWKS verification:
 
 ```python
 from fastapi import Depends, FastAPI
-from agentauth.identity.integrations.fastapi import AgentIdentityVerifier
+from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
 
 app = FastAPI()
 require_agent = AgentIdentityVerifier.dependency(
     jwks=tenant_jwks,
-    issuer="agentauth.io",
+    issuer="clayseal.io",
     audience="tools-api",
 )
 
@@ -28,7 +28,7 @@ def tool(identity = Depends(require_agent)):
 Attach a Clay Seal identity token as a bearer credential:
 
 ```python
-from agentauth.identity.integrations.mcp import tool_headers
+from clayseal.identity.integrations.mcp import tool_headers
 
 headers = tool_headers(session)
 ```
@@ -36,7 +36,7 @@ headers = tool_headers(session)
 Log structured identity metadata:
 
 ```python
-from agentauth.identity.integrations.mcp import identity_metadata
+from clayseal.identity.integrations.mcp import identity_metadata
 
 metadata = identity_metadata(session)
 ```
@@ -46,7 +46,7 @@ metadata = identity_metadata(session)
 Carry identity through framework metadata and HTTP headers:
 
 ```python
-from agentauth.identity.integrations.langchain import identity_config
+from clayseal.identity.integrations.langchain import identity_config
 
 result = runnable.invoke(
     {"question": "What changed?"},
@@ -57,7 +57,7 @@ result = runnable.invoke(
 Or wrap a runnable-like object:
 
 ```python
-from agentauth.identity.integrations.langchain import with_agent_identity
+from clayseal.identity.integrations.langchain import with_agent_identity
 
 secure_runnable = with_agent_identity(runnable, session)
 secure_runnable.invoke({"question": "What changed?"})

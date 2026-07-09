@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.identity import AgentSession
-from agentauth.identity.errors import AgentRevokedError
+from clayseal.identity import AgentSession
+from clayseal.identity.errors import AgentRevokedError
 
 
 # --------------------------------------------------------------------------- #

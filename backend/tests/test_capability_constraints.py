@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import pytest
-from agentauth.backend import capabilities as cap_service
-from agentauth.backend.errors import RegistrationEntryError
-from agentauth.backend.models import utcnow
+from clayseal.backend import capabilities as cap_service
+from clayseal.backend.errors import RegistrationEntryError
+from clayseal.backend.models import utcnow
 
 
 def test_normalize_capabilities_rejects_constraints():
@@ -34,7 +34,7 @@ def test_registration_entry_rejects_unsupported_capability_constraints(client, c
             "selectors": [
                 "k8s:ns:customer-acme",
                 "k8s:sa:researcher",
-                "k8s:pod-label:agentauth.io/agent-type:researcher",
+                "k8s:pod-label:clayseal.io/agent-type:researcher",
             ],
             "capabilities": [
                 {

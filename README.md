@@ -3,9 +3,8 @@
 <img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
 Clay Seal Identity is layer 1 of Clay Seal: cryptographically attested identity
-for autonomous agents. The package is still published as `agentauth-identity`
-and imports from `agentauth.identity` for compatibility while the product brand
-is Clay Seal.
+for autonomous agents. The package is published as `clayseal-identity` and
+imports from `clayseal.identity`.
 
 Use this repo when you need to answer:
 
@@ -25,7 +24,7 @@ Implemented today:
 - SPIFFE-shaped agent identifiers and trust domains.
 - Proof-of-possession confirmation claims for replay resistance.
 - Biscuit primitives for native Clay Seal capability facts.
-- A Python SDK centered on `AgentAuth`.
+- A Python SDK centered on `ClaySeal`.
 - An optional FastAPI identity service for centralized issuance and validation.
 - SQLite-by-default development storage and Postgres-ready production storage.
 - Alembic migrations, API-key hardening, and optional KMS envelope encryption.
@@ -63,7 +62,7 @@ pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 Production KMS support is optional:
 
 ```bash
-pip install "agentauth-identity[kms] @ git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "clayseal-identity[kms] @ git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 
 ## Quickstart
@@ -84,7 +83,7 @@ clayseal-identity explain token.jwt
 clayseal-identity lint token.jwt
 clayseal-identity whoami token.jwt
 clayseal-identity diff-token before.jwt after.jwt
-clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer agentauth.io --audience acme
+clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
 clayseal-identity preflight http://localhost:8000/tool
 clayseal-identity scan-mcp mcp-config.json
 clayseal-identity generate fastapi
@@ -96,10 +95,10 @@ The current SDK flow is service-backed: create or point at a tenant, then call
 callers pass a platform-issued attestation document.
 
 ```python
-from agentauth.identity import AgentAuth
+from clayseal.identity import ClaySeal
 
-tenant = AgentAuth.create_tenant("Acme AI", base_url="http://localhost:8000")
-auth = AgentAuth(
+tenant = ClaySeal.create_tenant("Acme AI", base_url="http://localhost:8000")
+auth = ClaySeal(
     api_key=tenant["api_key"],
     base_url="http://localhost:8000",
     dev_attestation=True,  # localhost demos/tests only
@@ -120,7 +119,7 @@ assert claims["sub"].startswith("spiffe://")
 Run the local FastAPI service:
 
 ```bash
-uvicorn agentauth.backend.main:app --reload
+uvicorn clayseal.backend.main:app --reload
 ```
 
 Production deployments should run behind TLS, pin issuer and audience, use
@@ -153,5 +152,5 @@ or employee data.
 ## Compatibility Note
 
 The public brand is Clay Seal. The package names and import paths intentionally
-remain `agentauth-*` / `agentauth.*` for now so existing integrations keep
+remain `clayseal-*` / `clayseal.*` for now so existing integrations keep
 working.

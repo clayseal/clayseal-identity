@@ -1,8 +1,8 @@
 """Public federation surface: OIDC discovery, public JWKS, SPIFFE bundle.
 
-These endpoints are what makes AgentAuth-issued JWT-SVIDs verifiable by
+These endpoints are what makes ClaySeal-issued JWT-SVIDs verifiable by
 external systems (Bedrock AgentCore CustomJWTAuthorizer, Keycloak, generic
-RFC 7523 consumers, SPIFFE https_web federation) with NO AgentAuth code.
+RFC 7523 consumers, SPIFFE https_web federation) with NO ClaySeal code.
 """
 
 from __future__ import annotations
@@ -10,8 +10,8 @@ from __future__ import annotations
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from agentauth.identity import verify_offline
-from agentauth.identity.errors import InvalidTokenError
+from clayseal.identity import verify_offline
+from clayseal.identity.errors import InvalidTokenError
 
 from .attest import register_and_identify
 
@@ -34,7 +34,7 @@ def test_agent_identity_configuration_is_public(client, customer):
     assert doc["profile"] == "clayseal-agent-identity-v1"
     assert doc["jwks_uri"].endswith(f"/t/{cid}/jwks.json")
     assert doc["proof_of_possession_required"] is True
-    assert "agentauth-svid+jwt" in doc["supported_token_types"]
+    assert "clayseal-svid+jwt" in doc["supported_token_types"]
 
 
 def test_public_jwks_requires_no_api_key(client, customer):
@@ -65,7 +65,7 @@ def test_spiffe_bundle_shape(client, customer):
 
 def test_issued_token_verifies_with_stock_pyjwt_via_public_jwks(client, customer):
     """The end-to-end federation claim: an off-the-shelf validator, fed only the
-    public discovery documents, verifies an AgentAuth JWT-SVID."""
+    public discovery documents, verifies an ClaySeal JWT-SVID."""
     cid = customer["customer_id"]
     token = register_and_identify(client, customer["headers"]).json()["token"]
 
@@ -130,7 +130,7 @@ def test_offline_verifier_rejects_stale_jwks(client, customer):
 
 def test_default_token_typ_unchanged(client, customer):
     token = register_and_identify(client, customer["headers"]).json()["token"]
-    assert pyjwt.get_unverified_header(token)["typ"] == "agentauth-svid+jwt"
+    assert pyjwt.get_unverified_header(token)["typ"] == "clayseal-svid+jwt"
 
 
 def test_wit_typ_opt_in_mints_wit_shaped_token(client, customer):
