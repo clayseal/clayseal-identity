@@ -119,16 +119,12 @@ class Settings:
         ]
 
         # mTLS transport settings — paths to SPIRE-rotated X.509 SVID material in prod.
-        self.mtls_enabled: bool = os.getenv("CLAYSEAL_MTLS_ENABLED", "0").lower() in {
-            "1", "true", "yes"
-        }
+        self.mtls_enabled: bool = _env_flag("CLAYSEAL_MTLS_ENABLED", False)
         self.tls_cert_file: str | None = os.getenv("CLAYSEAL_TLS_CERT_FILE")
         self.tls_key_file: str | None = os.getenv("CLAYSEAL_TLS_KEY_FILE")
         self.tls_ca_bundle: str | None = os.getenv("CLAYSEAL_TLS_CA_BUNDLE")
         # When True, missing/mismatched cert → 401; False = extract if present, skip if absent.
-        self.mtls_strict: bool = os.getenv("CLAYSEAL_MTLS_STRICT", "1").lower() in {
-            "1", "true", "yes"
-        }
+        self.mtls_strict: bool = _env_flag("CLAYSEAL_MTLS_STRICT", True)
         # Proxy mode: DER cert forwarded as base64 in this header (e.g. by nginx/Envoy).
         # Also used by tests to inject certs without a real TLS handshake.
         self.mtls_client_cert_header: str | None = os.getenv("CLAYSEAL_MTLS_CLIENT_CERT_HEADER")

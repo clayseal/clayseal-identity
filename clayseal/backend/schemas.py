@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 # Upper bound on a single attestation document (a signed JWT of node + workload
 # evidence is a few KB at most). This is a per-field guard against a pathological
@@ -45,23 +45,16 @@ class NodeAttestorOut(BaseModel):
 class Capability(BaseModel):
     """A fine-grained ``(resource, action)`` right.
 
-    ``action`` may be ``"*"`` to grant every action on a resource.
-    Optional ``constraints`` are rejected until constraint-aware Biscuit rules exist.
+    ``action`` may be ``"*"`` to grant every action on a resource. Unknown fields
+    are rejected (``extra="forbid"``): constraint-aware capabilities are not
+    implemented yet, so a stray ``constraints`` key fails closed rather than being
+    silently accepted-but-ignored.
     """
+
+    model_config = {"extra": "forbid"}
 
     resource: str = Field(..., min_length=1, max_length=200)
     action: str = Field(..., min_length=1, max_length=200)
-    constraints: dict | None = Field(
-        default=None,
-        description="Rejected: not enforced by the authorizer yet.",
-    )
-
-    @field_validator("constraints")
-    @classmethod
-    def reject_unsupported_constraints(cls, value: dict | None) -> dict | None:
-        if value:
-            raise ValueError("Capability constraints are not supported yet")
-        return value
 
 
 # --- Registration entries (admin: pre-approve identities) ------------------ #
@@ -195,7 +188,6 @@ class AgentOut(BaseModel):
     bound_keyhash: str | None = None
     has_biscuit: bool = False
     status: str
-    action_count: int
     issued_at: datetime
     expires_at: datetime
 

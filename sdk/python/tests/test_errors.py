@@ -4,9 +4,9 @@ from __future__ import annotations
 import pytest
 
 from clayseal.identity import (
+    AgentNotFoundError,
     ClaySeal,
     ClaySealError,
-    AgentNotFoundError,
     InvalidAPIKeyError,
     InvalidTokenError,
 )

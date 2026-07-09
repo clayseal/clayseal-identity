@@ -25,6 +25,7 @@ from biscuit_auth import (
     PublicKey,
     Rule,
 )
+
 from clayseal.biscuit_scope import (
     FILE_RESOURCE,
     evaluate_path_scope,

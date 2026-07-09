@@ -1,0 +1,85 @@
+name: Bug report
+description: Report a reproducible bug in Clay Seal Identity
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report!
+
+        **Do not report security vulnerabilities here.** Clay Seal Identity is
+        security-critical software. Please report vulnerabilities privately via
+        the Security tab (see [SECURITY.md](../blob/main/SECURITY.md)).
+  - type: input
+    id: version
+    attributes:
+      label: clayseal-identity version
+      description: Output of `pip show clayseal-identity` or the git commit/tag.
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: "Output of `python --version` (supported: 3.10–3.13)."
+      placeholder: "3.13.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      description: How did you install the package?
+      options:
+        - PyPI (pip install clayseal-identity)
+        - Editable / from source (pip install -e .)
+        - git+https URL (pinned)
+        - Docker image
+        - Other (describe below)
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: A minimal, self-contained set of steps or code to reproduce the problem.
+      placeholder: |
+        1. Configure ...
+        2. Run ...
+        3. Call ...
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs and output
+      description: |
+        Paste any relevant logs, tracebacks, or error output. This will be
+        rendered as code. **Redact all secrets, private keys, and tokens.**
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that might help — OS, config (secrets redacted), signing algorithm, KMS provider, trust domain, etc.
+    validations:
+      required: false

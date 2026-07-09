@@ -14,13 +14,13 @@ from .config import get_settings
 from .db import SessionLocal, init_db
 from .errors import ClaySealError
 from .observability import RequestLoggingMiddleware, configure_logging, get_logger
+from .production import validate_production_startup
 from .rate_limit import RateLimitMiddleware
 from .routers import federation, identity
 from .secret_encryption import (
     encryption_enabled,
     secret_encryption_required,
 )
-from .production import validate_production_startup
 
 
 @asynccontextmanager

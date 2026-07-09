@@ -30,8 +30,8 @@ os.environ.setdefault("CLAYSEAL_DATABASE_URL", f"sqlite:///{_TMPDIR}/agents.db")
 import pytest  # noqa: E402
 import uvicorn  # noqa: E402
 
-from clayseal.identity import ClaySeal  # noqa: E402
 from clayseal.backend.main import app  # noqa: E402
+from clayseal.identity import ClaySeal  # noqa: E402
 
 
 def _free_port() -> int:

@@ -1,7 +1,3 @@
-#TODO Remove in production !!!
-# USE SPIRE server in production environment with real node-attestation
-# Requires cloud/kubernetes deployment
-
 """Local dev attestation — the SDK standing in for a SPIRE Agent.
 
 The backend issues identities only after attestation: a workload presents a
@@ -30,10 +26,9 @@ import time
 import uuid
 
 import jwt
+from agentauth.core.hash_util import canonical_json_bytes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
-
-from agentauth.core.hash_util import canonical_json_bytes
 
 
 def _rsa_keypair() -> tuple[str, str]:

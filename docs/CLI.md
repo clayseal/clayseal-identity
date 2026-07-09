@@ -17,8 +17,6 @@ clayseal-identity generate fastapi
 clayseal-identity replay-lab
 ```
 
-`clayseal-identity` is an alias for the same command.
-
 ## Explain
 
 Decode a token without verifying it:

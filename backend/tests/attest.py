@@ -182,8 +182,8 @@ def register_entry(
                 status_code = 200
                 text = "existing registration entry"
 
-                def json(self_nonlocal):
-                    return entry
+                def json(self_nonlocal, _entry=entry):
+                    return _entry
 
             return _Existing()
     return client.post("/v1/registration-entries", json=body, headers=headers)

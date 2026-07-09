@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+
 from clayseal.backend import capabilities as cap_service
 from clayseal.backend.errors import RegistrationEntryError
 from clayseal.backend.models import utcnow

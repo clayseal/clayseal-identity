@@ -5,6 +5,15 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
 
+def scopes_from_claims(raw: dict[str, Any]) -> list[str]:
+    """Normalize OAuth-style scopes: split the space-delimited ``scope`` string,
+    else fall back to a ``scopes`` list claim."""
+    scope = raw.get("scope")
+    if isinstance(scope, str):
+        return scope.split()
+    return list(raw.get("scopes", []))
+
+
 @dataclass
 class IdentityBinding:
     subject_id: str

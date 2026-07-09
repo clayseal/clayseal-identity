@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Optional
+from typing import Any
 
 _LOGGER_NAME = "clayseal"
 
@@ -48,7 +48,7 @@ class _JsonFormatter(logging.Formatter):
 
 def get_logger(
     *,
-    log_format: Optional[str] = None,
+    log_format: str | None = None,
     level: int = logging.INFO,
 ) -> logging.Logger:
     """Return a configured ``clayseal`` logger.

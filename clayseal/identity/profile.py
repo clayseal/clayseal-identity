@@ -38,7 +38,7 @@ class AgentIdentityClaims:
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_claims(cls, claims: dict[str, Any]) -> "AgentIdentityClaims":
+    def from_claims(cls, claims: dict[str, Any]) -> AgentIdentityClaims:
         cnf = claims.get("cnf") or {}
         return cls(
             subject=str(claims.get("sub") or ""),

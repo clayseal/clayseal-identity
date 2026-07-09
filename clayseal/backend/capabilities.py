@@ -54,17 +54,16 @@ from biscuit_auth import (
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from clayseal.biscuit_scope import (
+    FILE_RESOURCE,
+    evaluate_path_scope,
+    path_patterns_from_biscuit_blocks,
+)
 from clayseal.workload_keys import (
     keyhash_for_pem,
     sign_request_pop,
     token_hash,
     verify_request_pop,
-)
-
-from clayseal.biscuit_scope import (
-    FILE_RESOURCE,
-    evaluate_path_scope,
-    path_patterns_from_biscuit_blocks,
 )
 
 from .audit import record_event

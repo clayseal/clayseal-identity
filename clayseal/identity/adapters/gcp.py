@@ -4,14 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from clayseal.identity.adapters.base import IdentityBinding
-
-
-def _scopes(raw: dict[str, Any]) -> list[str]:
-    scope = raw.get("scope")
-    if isinstance(scope, str):
-        return scope.split()
-    return list(raw.get("scopes", []))
+from clayseal.identity.adapters.base import IdentityBinding, scopes_from_claims
 
 
 @dataclass
@@ -25,7 +18,7 @@ class GcpIdentityAdapter:
         return IdentityBinding(
             subject_id=str(subject or ""),
             issuer=str(raw.get("iss", "https://accounts.google.com")),
-            scopes=_scopes(raw),
+            scopes=scopes_from_claims(raw),
             tenant_id=raw.get("project_id") or raw.get("aud"),
             owner_ref=raw.get("email") or raw.get("service_account_email"),
             subject_type=raw.get("subject_type") or "gcp_service_account",

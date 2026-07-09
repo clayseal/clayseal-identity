@@ -11,11 +11,10 @@ import base64
 import hashlib
 import time
 
+from agentauth.core.hash_util import canonical_json_bytes
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
-
-from agentauth.core.hash_util import canonical_json_bytes
 
 
 def _b64u(data: bytes) -> str:

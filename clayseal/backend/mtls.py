@@ -1,8 +1,9 @@
 """mTLS client certificate extraction and utilities.
 
-Provides a Starlette middleware that extracts the client certificate from the
-TLS connection (direct mode) or a forwarded header (proxy mode), and two helpers
-used by the binding check in deps.py.
+Provides a Starlette middleware that extracts the client certificate from a
+forwarded proxy header (the deployment terminates TLS at a proxy/load balancer
+such as nginx/Envoy and forwards the client cert), plus a helper used by the
+binding check in deps.py.
 """
 from __future__ import annotations
 
@@ -13,7 +14,6 @@ from cryptography.hazmat.primitives import serialization
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
 
 from .config import get_settings
 
@@ -27,28 +27,16 @@ def cert_public_key_pem(cert_der: bytes) -> str:
     ).decode()
 
 
-def spiffe_id_from_cert(cert_der: bytes) -> str | None:
-    """Return the first SPIFFE URI SAN from a DER-encoded X.509 certificate, or None."""
-    cert = x509.load_der_x509_certificate(cert_der)
-    try:
-        san_ext = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
-    except x509.ExtensionNotFound:
-        return None
-    for uri in san_ext.value.get_values_for_type(x509.UniformResourceIdentifier):
-        if uri.startswith("spiffe://"):
-            return uri
-    return None
-
-
 class ClientCertMiddleware(BaseHTTPMiddleware):
     """Extract the mTLS client certificate and attach it to request.state.client_cert_der.
 
-    Supports two modes:
-    - Proxy mode: cert DER is base64-encoded in a configurable header (e.g. X-Client-Cert).
-    - Direct mode: cert DER is read from the asyncio transport's SSL object (uvicorn).
+    Proxy mode: the client cert DER is base64-encoded in a configurable header
+    (e.g. ``X-Client-Cert``) by a TLS-terminating proxy/load balancer. When no
+    header is configured, no cert is attached and ``client_cert_der`` is ``None``.
 
-    Settings are read per-request so tests can toggle env vars without restarting the app.
-    When mtls_strict is True and no cert is found, returns 401 immediately.
+    Settings are read per-request so tests can toggle env vars without restarting
+    the app. This middleware only *extracts* the cert; binding/strict enforcement
+    (returning 401) is performed by ``verify_mtls_binding`` in ``deps.py``.
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -75,13 +63,6 @@ class ClientCertMiddleware(BaseHTTPMiddleware):
                         },
                         status_code=400,
                     )
-        else:
-            # Direct uvicorn mode: extract from asyncio transport SSL object.
-            transport = request.scope.get("transport")
-            if transport is not None:
-                ssl_obj = transport.get_extra_info("ssl_object")
-                if ssl_obj is not None:
-                    cert_der = ssl_obj.getpeercert(binary_form=True)
 
         request.state.client_cert_der = cert_der
         return await call_next(request)

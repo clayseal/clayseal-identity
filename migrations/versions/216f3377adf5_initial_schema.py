@@ -65,7 +65,6 @@ def upgrade() -> None:
     sa.Column('jti', sa.String(), nullable=False),
     sa.Column('issued_at', sa.DateTime(), nullable=False),
     sa.Column('expires_at', sa.DateTime(), nullable=False),
-    sa.Column('action_count', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.PrimaryKeyConstraint('id')

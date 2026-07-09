@@ -1,24 +1,35 @@
 #!/usr/bin/env bash
-# One-time (or CI) setup for design partners: Python deps, Rust CLI, proving keys.
+# One-time developer setup for clay-seal-identity: create a virtualenv, install
+# the package (client + server) with dev tooling, and run the test suite.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> Python dependencies"
-pip install -e ".[mcp,dev]" -q
+PYTHON="${PYTHON:-python3.13}"
 
-echo "==> Rust prover CLI"
-export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target}"
-cargo build -p agent-receipts-cli --release
+echo "==> Creating virtual environment (.venv) with $PYTHON"
+"$PYTHON" -m venv .venv
+# shellcheck disable=SC1091
+source .venv/bin/activate
 
-echo "==> Policy proving keys (Halo2 setup)"
-"$CARGO_TARGET_DIR/release/agent-receipts" setup
+python -m pip install --upgrade pip
 
-echo "==> Diagnostics"
-arctl doctor --require-prover
+# agentauth-core is this project's contracts dependency. Once it is published to
+# PyPI, `pip install -e .[dev]` resolves it automatically. Until then, install it
+# from a sibling clay-seal-core checkout if one is present next to this repo.
+if [ -d "../clay-seal-core" ]; then
+  echo "==> Installing sibling agentauth-core (../clay-seal-core, editable)"
+  pip install -e ../clay-seal-core
+fi
+
+echo "==> Installing clayseal-identity[dev] (client + server + test/lint/type tooling)"
+pip install -e ".[dev]"
+
+echo "==> Running the test suite"
+pytest backend/tests sdk/python/tests -q
 
 echo ""
-echo "Bootstrap complete."
-echo "  arctl doctor"
-echo "  python3 examples/partner_pilot.py"
+echo "Bootstrap complete. Activate the environment with:  source .venv/bin/activate"
+echo "  clayseal-identity --help"
+echo "  python examples/01_quickstart.py"

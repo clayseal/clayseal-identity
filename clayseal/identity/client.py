@@ -61,7 +61,7 @@ class ClaySeal:
                 ssl_ctx.load_verify_locations(cafile=mtls_ca)
             else:
                 ssl_ctx.load_default_certs()
-            transport = httpx.HTTPTransport(ssl_context=ssl_ctx)
+            transport = httpx.HTTPTransport(verify=ssl_ctx)
 
         self._http = HttpClient(
             base_url, api_key, timeout=timeout, transport=transport
@@ -74,7 +74,6 @@ class ClaySeal:
 
         refuse_dev_attestation_client(dev_attestation_enabled=self._dev_attestation)
         self._dev_attestor = None  # created lazily when explicit dev attestation is enabled
-        self._biscuit_root_pub: str | None = None  # cached root public key
 
     # --- lifecycle --------------------------------------------------------- #
     def close(self) -> None:
@@ -206,17 +205,6 @@ class ClaySeal:
         if ttl_seconds is not None:
             body["ttl_seconds"] = ttl_seconds
         return self._http.post("/v1/identify", json=body)
-
-    def biscuit_root_public_key(self) -> str | None:
-        """Fetch (and cache) this customer's active Biscuit root public key, for
-        verifying capability tokens offline."""
-        if self._biscuit_root_pub is None:
-            data = self._http.get("/v1/biscuit-keys.json")
-            for key in data.get("keys", []):
-                if key.get("status") == "active":
-                    self._biscuit_root_pub = key["public_key"]
-                    break
-        return self._biscuit_root_pub
 
     def session_from_token(
         self, credential_data: dict, *, workload_private_pem: str | None = None

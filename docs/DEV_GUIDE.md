@@ -121,7 +121,7 @@ Biscuits provide **attenuation**: a parent token can derive child tokens that ca
 
 ### AuthorityBinding (shared with L2/L3)
 
-`AuthorityBinding` (`agentauth.core.authority_binding`, from the `agentauth-core` contract package) normalizes verified credential material into an `AuthorityContext` that upper layers understand. If you integrate with capabilities or receipts, you will see this type cross repo boundaries. Layer 1's `Credential.to_binding_dict()` produces the raw claims that `AuthorityBinding.from_agentauth_credential()` consumes.
+`AuthorityBinding` (`agentauth.core.authority_binding`, from the `agentauth-core` contract package) normalizes verified credential material into an `AuthorityContext` that upper layers understand. If you integrate with capabilities or receipts, you will see this type cross repo boundaries.
 
 ---
 
@@ -184,7 +184,7 @@ assert claims["cnf"]["jkt"]  # sender-constrained; not a plain bearer token
 
 ### CLI and linter
 
-Installed packages expose both `clayseal-identity` and `clayseal-identity`:
+The package installs the `clayseal-identity` console script:
 
 ```bash
 clayseal-identity explain token.jwt
@@ -213,18 +213,12 @@ endpoints with offline JWKS verification. See [INTEGRATIONS.md](INTEGRATIONS.md)
 
 ### Sessions and downstream layers
 
-After identification, pass authority into layer 2 or 3 through the umbrella
-package's cross-layer wiring — a lower layer never imports a higher one, so the
-receipting convenience lives in `clayseal`, not here:
-
-```python
-import clayseal
-
-session = auth.identify(agent_type="researcher", owner="alice@example.org")
-agent = clayseal.wrap(session, my_model, policy=policy)  # receipts bound to this identity
-```
-
-Do not hand-roll claim dicts for upper layers unless you are implementing a custom identity adapter in capabilities (see that repo's cross-provider guide).
+After identification, hand the issued credential to layer 2 (capabilities) or
+layer 3 (receipts). A lower layer never imports a higher one, so the cross-layer
+wiring lives in those repositories, not here — see
+[clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities) and
+[clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts). Use the
+identity adapters those layers provide rather than hand-rolling claim dicts.
 
 ### Production attestation
 
@@ -272,11 +266,13 @@ CI runs the same suites on Python 3.11 and 3.13.
 | Path | Purpose |
 |------|---------|
 | `clayseal/identity/` | Public SDK — start here |
-| `clayseal/backend/` | FastAPI identity service |
-| `clayseal/core/` | Shared types (`AuthorityBinding`, signing helpers) |
+| `clayseal/backend/` | FastAPI identity service (the `[server]` extra) |
 | `backend/tests/` | Service-level tests |
 | `sdk/python/tests/` | SDK unit tests |
 | `examples/` | Runnable scripts |
+
+Shared contract types such as `AuthorityBinding` live in the external
+`agentauth-core` package (`agentauth.core`), not in this repo.
 
 ### Editable installs and namespace gotchas
 
@@ -294,15 +290,13 @@ If imports fail with “cannot import name X from clayseal”, you almost always
 
 ## Integrating with layer 2 and 3
 
-Layer 2 accepts native Clay Seal credentials through the `agentauth` identity adapter:
-
-```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
-
-session = get_identity_provider("agentauth").build_session(credential.to_binding_dict())
-```
-
-You do not need to change layer 1 code for OIDC, Auth0, SPIRE, or AWS STS — those adapters live in capabilities. Layer 1 remains the **native** stack when you want the full Clay Seal attestation model.
+Layer 2 (capabilities) and layer 3 (receipts) consume the credential this layer
+issues through their own identity adapters — you do not change layer 1 code to
+integrate, nor for OIDC, Auth0, SPIRE, or AWS STS. Those adapters, and the
+cross-layer `IdentitySession` abstraction, live in the sibling repositories
+([clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities),
+[clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts)). Layer 1
+remains the **native** stack when you want the full Clay Seal attestation model.
 
 Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession` abstraction. See the capabilities doc `docs/cross_layer_integration.md` and the receipts `docs/DEV_GUIDE.md`.
 

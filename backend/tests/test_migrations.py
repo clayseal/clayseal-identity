@@ -13,10 +13,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from clayseal.backend.db import Base
-
 from clayseal.backend import db as db_module
 from clayseal.backend.config import get_settings
+from clayseal.backend.db import Base
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
