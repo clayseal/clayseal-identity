@@ -21,7 +21,9 @@ Give every agent a token that answers:
 | --- | --- |
 | `alg` | `RS256` |
 | `kid` | Key ID present in the tenant JWKS |
-| `typ` | `clayseal-svid+jwt` or `wit+jwt` |
+| `typ` | `JWT` by default; `wit+jwt` when the caller opts into WIMSE framing |
+
+New credentials use the standard SPIFFE JWT-SVID `typ` value, `JWT`. Verifiers may also accept `JOSE`, and Clay Seal keeps accepting `clayseal-svid+jwt` only for older pre-0.6 tokens.
 
 ## Required Claims
 
@@ -94,7 +96,7 @@ Example:
   "jwks_uri": "https://identity.example.com/t/acme/jwks.json",
   "openid_configuration_uri": "https://identity.example.com/t/acme/.well-known/openid-configuration",
   "spiffe_bundle_uri": "https://identity.example.com/t/acme/spiffe-bundle.json",
-  "supported_token_types": ["clayseal-svid+jwt", "wit+jwt"],
+  "supported_token_types": ["JWT", "wit+jwt"],
   "proof_of_possession_required": true,
   "recommended_ttl_seconds": 900
 }

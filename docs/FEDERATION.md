@@ -10,7 +10,8 @@ off-the-shelf tooling, no Clay Seal code required.
 |---|---|
 | `GET /t/{tenant}/.well-known/openid-configuration` | OIDC-style discovery: `issuer`, `jwks_uri`, `RS256` |
 | `GET /t/{tenant}/jwks.json` | RFC 7517 JWKS (RSA public keys) |
-| `GET /t/{tenant}/spiffe-bundle.json` | Same keys as a SPIFFE bundle (`use: jwt-svid`, `spiffe_sequence`, `spiffe_refresh_hint`) for `https_web` federation |
+| `GET /t/{tenant}/spiffe-bundle.json` | SPIFFE bundle for `https_web` federation. It includes JWT-SVID signing keys (`use: jwt-svid`) and, when present, X.509-SVID CA certs (`use: x509-svid`). |
+| `GET /t/{tenant}/x509-bundle` | PEM CA bundle for TLS stacks that verify Clay Seal X.509-SVIDs. |
 
 Why RS256: it is the one algorithm accepted by every federation target — the
 SPIFFE JWT-SVID allowlist (EdDSA is excluded), AWS, GCP, Azure (RS256-only),
@@ -36,7 +37,8 @@ discovery URL directly:
 the discovery URL, or import the JWKS as an external key source.
 
 **SPIFFE-aware peers** — configure `https_web` federation against
-`/t/{tenant}/spiffe-bundle.json`.
+`/t/{tenant}/spiffe-bundle.json`. For mTLS verifiers that expect a CA file, use
+`/t/{tenant}/x509-bundle`.
 
 ## Anthropic Workload Identity Federation
 
@@ -70,7 +72,7 @@ public-surface flow locally; performs the live Anthropic exchange only when
 Clay Seal JWT-SVIDs are already WIT-shaped — `cnf` is always present
 (sender-constrained, never bearer). Pass `"token_typ": "wit+jwt"` on
 `POST /v1/identify` to mint with the WIMSE JOSE header so WIT-aware relying
-parties recognize the contract; the default `clayseal-svid+jwt` is unchanged.
+parties recognize the contract; the default is the SPIFFE-standard `JWT`.
 
 ## MCP authorization (PRM + CIMD, no DCR)
 

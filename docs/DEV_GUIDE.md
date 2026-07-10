@@ -69,7 +69,7 @@ pip install -e ".[dev]"
 From a pinned tag (recommended for partners):
 
 ```bash
-pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.5.0"
+pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"
 ```
 
 This package stands alone — no other Clay Seal layer is required. The upper
@@ -315,13 +315,13 @@ employee, customer, or regulated data.
 | Wrong code imported | CWD namespace merge | Install via pip; avoid running from monorepo parent |
 | Verification fails immediately | Expired credential or clock skew | Re-identify; check system time |
 | Biscuit errors on 3.14+ | Unsupported Python | Use 3.11–3.13 |
-| Layer 2 import errors | Identity version mismatch | Pin matching tags (`v0.5.0` across stack) |
+| Layer 2 import errors | Identity version mismatch | Pin matching tags (`v0.6.0` across stack) |
 
 ---
 
 ## Releases and versioning
 
-This repo is tagged independently (`v0.5.0`, etc.). **Always tag identity before capabilities and receipts** — downstream `pyproject.toml` files pin this repo by git URL and tag.
+This repo is tagged independently (`v0.6.0`, etc.). **Always tag identity before capabilities and receipts** — downstream `pyproject.toml` files pin this repo by git URL and tag.
 
 Checklist for maintainers:
 
@@ -334,7 +334,7 @@ Checklist for maintainers:
 Partners should pin:
 
 ```bash
-pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.5.0"
+pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"
 ```
 
 ---

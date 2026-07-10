@@ -10,7 +10,7 @@ whether a token is acceptable.
 | --- | --- |
 | JOSE `alg` | `RS256` |
 | JOSE `kid` | Must match a tenant JWKS key |
-| JOSE `typ` | `clayseal-svid+jwt` or `wit+jwt` |
+| JOSE `typ` | `JWT` (SPIFFE JWT-SVID; default) or `wit+jwt` (WIMSE opt-in) |
 | `iss` | Expected issuer / trust domain |
 | `aud` | Expected tenant or resource audience |
 | `sub` | SPIFFE-shaped workload subject |
@@ -26,14 +26,18 @@ whether a token is acceptable.
 | SDK `verify_offline` verifies issuer, audience, JWKS, and `cnf` | Accept | `test_offline_verifier_accepts_public_jwks` |
 | Wrong audience | Reject | `test_offline_verifier_rejects_wrong_audience` |
 | Empty/stale JWKS | Reject | `test_offline_verifier_rejects_stale_jwks` |
-| Default token type | `clayseal-svid+jwt` | `test_default_token_typ_unchanged` |
+| Default token type | `JWT` (SPIFFE JWT-SVID) | `test_default_token_typ_is_spiffe_jwt` |
+| Legacy token type still validates | `clayseal-svid+jwt` accepted | `test_legacy_clayseal_typ_still_validates` |
 | WIMSE token type | `wit+jwt` with `cnf` | `test_wit_typ_opt_in_mints_wit_shaped_token` |
+| X.509-SVID trust bundle validates leaves | Accept | `test_trust_bundle_contains_the_ca_and_validates_the_leaf` |
+| X.509-SVID mTLS handshake works | Accept | `test_svid_completes_a_real_mtls_handshake` |
 | Unknown token type | Reject | `test_unknown_token_typ_rejected` |
 
 ## How To Run
 
 ```bash
-pytest backend/tests/test_federation.py -q
+pytest backend/tests/test_federation.py backend/tests/test_wit_jwt.py -q
+pytest backend/tests/test_x509_svid.py backend/tests/test_mtls.py -q
 pytest backend/tests/test_identity.py backend/tests/test_attestation.py -q
 ```
 
