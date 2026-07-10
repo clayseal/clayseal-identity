@@ -113,6 +113,13 @@ def search_web(query: str) -> str: ...
 
 Details in [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
 
+### Framework integrations
+
+Native on-ramps for the frameworks agents actually run in — a JavaScript
+verifier (`@clayseal/verify`) for Node MCP servers and OpenClaw tool plugins,
+and an [agentskills.io](https://agentskills.io) skill for Hermes Agent. See
+[integrations/](integrations).
+
 Inspect and lint agent tokens from the terminal:
 
 ```bash

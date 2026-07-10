@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Framework integrations for OpenClaw and Hermes Agent** (`integrations/`,
+  `js/`). `@clayseal/verify` is a JavaScript/TypeScript verifier (offline
+  JWT-SVID verification, Biscuit authorization, and Ed25519 proof-of-possession)
+  for Node MCP servers and OpenClaw tool plugins — byte-compatible with the
+  Python SDK, proven by a cross-language parity test that verifies a
+  Python-minted credential. Ships with an OpenClaw permission-hook recipe, an
+  agentskills.io skill for Hermes, and a draft proposal to back Hermes's gateway
+  permission tiers with Clay Seal capabilities.
 - **MCP server authorization** (`clayseal.identity.integrations.mcp_server`,
   behind the new `[mcp]` extra): `ClaySealTokenVerifier` plugs into the
   official MCP SDK's `FastMCP(token_verifier=...)` to verify agent JWT-SVIDs

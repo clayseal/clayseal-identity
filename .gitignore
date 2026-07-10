@@ -7,6 +7,11 @@ dist/
 build/
 .python-version
 
+# Node (js/ integration packages)
+node_modules/
+package-lock.json
+js/**/test/fixture.json
+
 # Virtual environments
 .venv/
 .venv-*/

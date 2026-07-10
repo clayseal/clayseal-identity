@@ -1,0 +1,42 @@
+{
+  "name": "@clayseal/verify",
+  "version": "0.1.0",
+  "description": "Server-side verification of Clay Seal agent credentials for JavaScript/TypeScript MCP servers and tool gateways: offline JWT-SVID verification, Biscuit capability authorization, and sender-constrained proof-of-possession.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --no-warnings --test test/"
+  },
+  "keywords": [
+    "clayseal",
+    "mcp",
+    "ai-agents",
+    "agent-identity",
+    "authorization",
+    "biscuit",
+    "capability-tokens",
+    "jwt",
+    "openclaw"
+  ],
+  "homepage": "https://clayseal.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clayseal/clayseal-identity.git",
+    "directory": "js/clayseal-verify"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@biscuit-auth/biscuit-wasm": "^0.6.0",
+    "jose": "^6.2.3"
+  }
+}
