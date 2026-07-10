@@ -13,10 +13,12 @@ Three headers travel together:
   tool call against this (possibly attenuated) capability token.
 - ``X-ClaySeal-PoP`` — proof the caller holds the workload key the tokens are
   bound to. Clay Seal capability tokens are sender-constrained, so a stolen
-  biscuit without the key authorizes nothing. The proof is signed over the
-  MCP endpoint URL, HTTP method, and the biscuit's hash, and carries a
-  freshness timestamp — rebuild headers (they are cheap) at least every few
-  minutes and whenever the endpoint changes.
+  biscuit without the key authorizes nothing. The proof is signed over the MCP
+  endpoint URL, HTTP method, and the biscuit's hash, so a proof presented to
+  one service cannot be replayed against another. It carries a freshness
+  timestamp; rebuild headers (they are cheap) at least every few minutes and
+  whenever the endpoint changes. To make each proof single-use as well, the
+  server can enable a replay cache (see ``mcp_server.ToolGuard``).
 """
 from __future__ import annotations
 

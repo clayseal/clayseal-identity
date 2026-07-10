@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clayseal-identity"
-version = "0.5.0"
+version = "0.6.0"
 description = "Clay Seal layer 1 — attested agent identity and Biscuit capability tokens"
 readme = "README.md"
 license = { text = "MIT" }

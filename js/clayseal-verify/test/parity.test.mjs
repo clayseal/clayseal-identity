@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
-import { authorizeTool, verifyToken } from "../src/index.js";
+import { authorizeTool, InMemoryReplayCache, verifyToken } from "../src/index.js";
 
 const fx = JSON.parse(
   readFileSync(new URL("./fixture.json", import.meta.url), "utf8"),
@@ -90,4 +90,13 @@ test("the wrong root key denies; rotation set with the right key allows", () => 
     }).allowed,
     true,
   );
+});
+
+test("a replay cache makes a proof single-use", () => {
+  const replayCache = new InMemoryReplayCache();
+  const first = call("search_web", fx.headers, { replayCache });
+  assert.equal(first.allowed, true);
+  const replay = call("search_web", fx.headers, { replayCache });
+  assert.equal(replay.allowed, false);
+  assert.match(replay.reason, /replay/);
 });

@@ -55,6 +55,17 @@ if (!decision.allowed) return forbidden(decision.reason);
 missing token, a missing or stale proof, a wrong endpoint, or an ungranted
 capability.
 
+The proof is bound to `serverUrl`, so a proof presented to one service can't be
+replayed against another. To make each proof **single-use** on the same endpoint
+too, pass a replay cache (clients then send a fresh proof per request):
+
+```js
+import { InMemoryReplayCache } from "@clayseal/verify";
+
+const replayCache = new InMemoryReplayCache(); // per-process; back with a shared store across workers
+authorizeTool({ tool, biscuit, pop, rootPublicKey, serverUrl, replayCache });
+```
+
 ## OpenClaw
 
 Call `authorizeTool` from a tool plugin's permission hook, so policy-approved

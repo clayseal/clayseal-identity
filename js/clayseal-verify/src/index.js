@@ -230,6 +230,8 @@ function authorizeAgainstRoot(biscuitB64, rootHex, operation) {
  * @param {string|string[]} opts.rootPublicKey  Tenant Biscuit root public key(s), hex.
  * @param {string} [opts.serverUrl]          This server's MCP endpoint (pins the proof).
  * @param {(name:string)=>[string,string]} [opts.capabilityForTool]
+ * @param {{storeIfNew:(jti:string,expiresAt:number)=>boolean}} [opts.replayCache]
+ *        Makes proofs single-use within their window (see InMemoryReplayCache).
  * @returns {{allowed: boolean, reason: string}}
  */
 export function authorizeTool(opts) {
@@ -241,6 +243,7 @@ export function authorizeTool(opts) {
     serverUrl,
     method = "POST",
     capabilityForTool = defaultToolCapability,
+    replayCache,
   } = opts;
   if (!biscuit) {
     return { allowed: false, reason: "no capability token presented" };
@@ -256,10 +259,19 @@ export function authorizeTool(opts) {
   for (const root of roots) {
     try {
       authorizeAgainstRoot(biscuit, root, operation);
-      return { allowed: true, reason: "authorized" };
-    } catch (err) {
+    } catch {
       lastReason = `capability ${operation[0]}:${operation[1]} not granted`;
+      continue;
     }
+    // Signature valid and call authorized. If single-use is on, reject a proof
+    // already seen (a replay) — only now, so unsigned jti values can't fill it.
+    if (
+      replayCache &&
+      !replayCache.storeIfNew(popObj.jti, Number(popObj.iat) + POP_MAX_AGE_SECONDS)
+    ) {
+      return { allowed: false, reason: "proof-of-possession already used (replay detected)" };
+    }
+    return { allowed: true, reason: "authorized" };
   }
   return { allowed: false, reason: lastReason };
 }
@@ -269,6 +281,30 @@ function safeParse(s) {
     return JSON.parse(s);
   } catch {
     return null;
+  }
+}
+
+/**
+ * Single-process replay cache: each proof-of-possession `jti` is accepted once
+ * within its freshness window (expired entries are pruned lazily). Pass an
+ * instance as `authorizeTool({ replayCache })` to make proofs single-use, which
+ * closes same-endpoint replay. Clients must then send a fresh proof per request
+ * (`tool_headers` mints a new one each call). Per-process only — back it with a
+ * shared store for multi-process deployments by implementing `storeIfNew`.
+ */
+export class InMemoryReplayCache {
+  constructor() {
+    this._seen = new Map();
+  }
+
+  storeIfNew(jti, expiresAt) {
+    const now = Math.floor(Date.now() / 1000);
+    for (const [key, exp] of this._seen) {
+      if (exp <= now) this._seen.delete(key);
+    }
+    if (this._seen.has(jti)) return false;
+    this._seen.set(jti, expiresAt);
+    return true;
   }
 }
 

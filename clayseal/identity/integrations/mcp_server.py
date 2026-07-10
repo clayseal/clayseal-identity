@@ -47,8 +47,10 @@ from __future__ import annotations
 import functools
 import inspect
 import json
+import threading
+import time
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any
+from typing import Any, Protocol
 
 try:
     from mcp.server.auth.provider import AccessToken
@@ -70,10 +72,53 @@ __all__ = [
     "BISCUIT_HEADER",
     "POP_HEADER",
     "ClaySealTokenVerifier",
+    "InMemoryReplayCache",
+    "ReplayCache",
     "ToolGuard",
     "build_auth_settings",
     "default_tool_capability",
 ]
+
+# Proof-of-possession freshness window; matches workload_keys.verify_request_pop.
+_POP_MAX_AGE_SECONDS = 300
+
+
+class ReplayCache(Protocol):
+    """Records proof-of-possession ``jti`` values so each proof is single-use.
+
+    ``store_if_new`` returns ``True`` the first time a ``jti`` is seen (and
+    records it until ``expires_at``, an epoch second) and ``False`` on any
+    repeat — a replay. Implement this over a shared store (Redis, memcached)
+    for multi-process deployments.
+    """
+
+    def store_if_new(self, jti: str, expires_at: int) -> bool: ...
+
+
+class InMemoryReplayCache:
+    """Single-process :class:`ReplayCache`. Each proof ``jti`` is accepted once
+    within its freshness window; expired entries are pruned lazily.
+
+    Per-process only — like the rate limiter, it does not span workers. For a
+    multi-process deployment, supply a shared-store cache with the same
+    interface.
+    """
+
+    def __init__(self) -> None:
+        self._seen: dict[str, int] = {}
+        self._lock = threading.Lock()
+
+    def store_if_new(self, jti: str, expires_at: int) -> bool:
+        now = int(time.time())
+        with self._lock:
+            if self._seen:
+                for key, exp in list(self._seen.items()):
+                    if exp <= now:
+                        del self._seen[key]
+            if jti in self._seen:
+                return False
+            self._seen[jti] = expires_at
+            return True
 
 
 def default_tool_capability(tool_name: str) -> tuple[str, str]:
@@ -142,8 +187,15 @@ class ToolGuard:
     Clay Seal capability tokens are sender-constrained: the tool call must
     carry a proof-of-possession (the ``X-ClaySeal-PoP`` header built by
     ``clayseal.identity.integrations.mcp.tool_headers``) signed by the
-    workload key the Biscuit is bound to. Set ``server_url`` to also pin the
-    proof to this server's public MCP endpoint.
+    workload key the Biscuit is bound to. Set ``server_url`` to pin the proof
+    to this server's public MCP endpoint, which is what stops a proof captured
+    by one service from being replayed against another.
+
+    Pass ``replay_cache`` (e.g. :class:`InMemoryReplayCache`) to also make each
+    proof **single-use** within its freshness window, closing same-endpoint
+    replay. This requires clients to send a fresh proof per request;
+    ``tool_headers`` mints a new one on every call, so rebuild headers per
+    request when replay protection is on.
     """
 
     def __init__(
@@ -154,6 +206,7 @@ class ToolGuard:
         biscuit_header: str = BISCUIT_HEADER,
         pop_header: str = POP_HEADER,
         server_url: str | None = None,
+        replay_cache: ReplayCache | None = None,
     ) -> None:
         keys = (
             [biscuit_root_public_key]
@@ -167,6 +220,7 @@ class ToolGuard:
         self._biscuit_header = biscuit_header
         self._pop_header = pop_header
         self._server_url = server_url
+        self._replay_cache = replay_cache
 
     # --- framework-agnostic core ------------------------------------------- #
     def authorize_call(
@@ -286,6 +340,14 @@ class ToolGuard:
             except Exception:  # noqa: BLE001
                 continue
             if decision.get("allowed"):
+                # The proof's signature is valid and it authorizes the call.
+                # If single-use is on, reject a proof we've already accepted
+                # (a replay) — checked only now so an attacker cannot fill the
+                # cache with unsigned jti values.
+                if self._replay_cache is not None and not self._replay_cache.store_if_new(
+                    pop.jti, int(pop.iat) + _POP_MAX_AGE_SECONDS
+                ):
+                    return False, "proof-of-possession already used (replay detected)"
                 return True, "authorized"
             last_reason = str(decision.get("reason", "denied"))
         return False, last_reason
