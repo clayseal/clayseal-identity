@@ -61,3 +61,27 @@ jobs:
         run: >
           pytest backend/tests sdk/python/tests -q
           --cov=clayseal --cov-report=term-missing --cov-report=xml
+
+  # Cross-language parity: prove @clayseal/verify (js/) accepts and rejects
+  # exactly what the Python SDK produces. The fixture is minted by the Python
+  # backend and its proof-of-possession is time-bound, so generate it and run
+  # the Node tests in the same job, back to back.
+  js-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install (Python service + JS deps)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[server]"
+          cd js/clayseal-verify && npm install
+      - name: Generate parity fixture from the Python backend
+        run: python js/clayseal-verify/test/gen_fixture.py js/clayseal-verify/test/fixture.json
+      - name: Run @clayseal/verify parity tests
+        run: cd js/clayseal-verify && node --no-warnings --test test/
