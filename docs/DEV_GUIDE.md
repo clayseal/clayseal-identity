@@ -23,8 +23,8 @@ Concretely, this repo provides:
 
 What this repo deliberately does **not** include:
 
-- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is [clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities) (layer 2).
-- Execution receipts, audit logs, MCP gateways, or policy proofs — that is [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts) (layer 3).
+- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is the Clay Seal Capabilities layer (layer 2, private preview).
+- Execution receipts, audit logs, MCP gateways, or policy proofs — that is the Clay Seal Receipts layer (layer 3, private preview).
 
 If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
 
@@ -37,8 +37,8 @@ Think of the stack as increasing specificity:
 | Layer | Repository | Question it answers |
 |-------|------------|---------------------|
 | L1 Identity | **this repo** | Who is acting, with what attested key? |
-| L2 Capabilities | clay-seal-capabilities | What are they allowed to do right now (scoped, attenuated)? |
-| L3 Receipts | clay-seal-receipts | What did they actually do, and can a third party verify it? |
+| L2 Capabilities | Clay Seal Capabilities (private preview) | What are they allowed to do right now (scoped, attenuated)? |
+| L3 Receipts | Clay Seal Receipts (private preview) | What did they actually do, and can a third party verify it? |
 
 Layer 1 exports facts. Layer 2 narrows them into action-scoped tokens. Layer 3 records decisions and builds tamper-evident proofs.
 
@@ -205,9 +205,7 @@ endpoints with offline JWKS verification. See [INTEGRATIONS.md](INTEGRATIONS.md)
 
 After identification, hand the issued credential to layer 2 (capabilities) or
 layer 3 (receipts). A lower layer never imports a higher one, so the cross-layer
-wiring lives in those repositories, not here — see
-[clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities) and
-[clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts). Use the
+wiring lives in those packages, not here. Partners with access should use the
 identity adapters those layers provide rather than hand-rolling claim dicts.
 
 ### Production attestation
@@ -284,12 +282,13 @@ If imports fail with “cannot import name X from clayseal”, you almost always
 Layer 2 (capabilities) and layer 3 (receipts) consume the credential this layer
 issues through their own identity adapters — you do not change layer 1 code to
 integrate, nor for OIDC, Auth0, SPIRE, or AWS STS. Those adapters, and the
-cross-layer `IdentitySession` abstraction, live in the sibling repositories
-([clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities),
-[clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts)). Layer 1
-remains the **native** stack when you want the full Clay Seal attestation model.
+cross-layer `IdentitySession` abstraction, live in the private-preview sibling
+packages. Layer 1 remains the **native** stack when you want the full Clay Seal
+attestation model.
 
-Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession` abstraction. See the capabilities doc `docs/cross_layer_integration.md` and the receipts `docs/DEV_GUIDE.md`.
+Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession`
+abstraction. Partners with access can use the capabilities cross-layer guide and
+receipts developer guide for full-stack wiring.
 
 ---
 
@@ -356,9 +355,9 @@ pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
 
 ## Where to go next
 
-- **Scope and commit tokens** → [clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
-- **Receipts, audit, MCP gateway** → [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
-- **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/cross_layer_integration.md)
+- **Scope and commit tokens** → Clay Seal Capabilities developer guide (private preview)
+- **Receipts, audit, MCP gateway** → Clay Seal Receipts developer guide (private preview)
+- **Cross-provider identity** → Capabilities cross-layer integration guide (private preview)
 - **Agent identity profile** → [docs/AGENT_IDENTITY_PROFILE.md](AGENT_IDENTITY_PROFILE.md)
 - **CLI and framework helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)
 - **Privacy and data handling** → [docs/PRIVACY.md](PRIVACY.md)

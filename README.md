@@ -42,8 +42,8 @@ execution receipts. Those live in the sibling layers:
 | Layer | Repository | Purpose |
 | --- | --- | --- |
 | L1 | this repo | Agent identity and credential issuance |
-| L2 | clay-seal-capabilities (private preview) | Commit tokens, mandates, leases, budgets |
-| L3 | clay-seal-receipts (private preview) | Verifiable execution receipts and audit |
+| L2 | Clay Seal Capabilities (private preview) | Commit tokens, mandates, leases, budgets |
+| L3 | Clay Seal Receipts (private preview) | Verifiable execution receipts and audit |
 
 This package stands alone: it has no dependency on the other layers, and every
 runtime dependency resolves from public PyPI.
