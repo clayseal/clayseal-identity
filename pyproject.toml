@@ -38,7 +38,7 @@ clayseal-identity = "clayseal.identity.cli:main"
 # Postgres driver; alembic runs migrations (`alembic upgrade head`) pre-deploy.
 server = [
   "fastapi>=0.110,<1.0",
-  "uvicorn[standard]>=0.27,<1.0",
+  "uvicorn[standard]>=0.51.0,<1.0",
   "SQLAlchemy>=2.0,<3.0",
   "pydantic>=2.6,<3.0",
   "psycopg[binary]>=3.1,<4.0",
