@@ -28,9 +28,6 @@ Repository = "https://github.com/clayseal/clayseal-identity"
 Issues = "https://github.com/clayseal/clayseal-identity/issues"
 Changelog = "https://github.com/clayseal/clayseal-identity/blob/main/CHANGELOG.md"
 
-[project.scripts]
-clayseal-identity = "clayseal.identity.cli:main"
-
 [project.optional-dependencies]
 # The bundled FastAPI identity service (clayseal.backend). The client SDK does
 # NOT need these; install [server] only to run or deploy the issuance/validation

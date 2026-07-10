@@ -46,13 +46,3 @@ The machine-readable profile summary lives at
 `conformance/token_profile.json`. Static JWT fixtures are deliberately not
 checked in because Clay Seal credentials are short-lived; the conformance tests
 mint fresh credentials from the real service.
-
-You can also run profile linting plus offline verification from the CLI:
-
-```bash
-clayseal-identity conformance token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
-```
-
-Intentionally unsafe profile examples live in `bad-token-zoo/`. They are JSON
-templates instead of signed JWTs so they do not age into misleading static
-credentials.

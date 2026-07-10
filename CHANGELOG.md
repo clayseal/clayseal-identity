@@ -43,6 +43,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 First public release. The open-source readiness pass below includes several
 breaking changes relative to the internal 0.4.x line.
 
+### Removed
+
+- **Breaking:** the `clayseal-identity` command-line interface and its console
+  script entry point. Token inspection/verification is now library-only via
+  `clayseal.identity` (`verify_offline`, `AgentIdentityClaims`).
+- Developer/debug tooling: the token profile linter and `explain_token`
+  (`profile.py`), the diagnostics module (`doctor`, `preflight`, `scan-mcp`),
+  the usability helpers (`whoami`, `diff-token`, `generate`), the `replay-lab`
+  sample-token generator, and the `bad-token-zoo/` fixtures that fed the linter.
+  These symbols are no longer exported from `clayseal.identity`.
+
 ### Added
 
 - `clayseal/_core.py`: the small shared-helper surface (canonical JSON, path-scope
@@ -60,8 +71,7 @@ breaking changes relative to the internal 0.4.x line.
   with coverage; the layering contract is a dependency-free grep guard.
 - `ruff` + `mypy` configuration in `pyproject.toml`.
 - JWT attack tests (`alg:none`, RS256→HS256 confusion, unknown-`kid`, key-swap,
-  stripped/tampered signatures) for `verify_offline`, and the `bad-token-zoo`
-  fixtures are now wired into the profile linter via a parametrized test.
+  stripped/tampered signatures) for `verify_offline`.
 - Bounded exponential-backoff retries in the SDK HTTP transport for transient
   network/5xx failures (idempotent methods; connect errors for all methods).
 - Fail-safe warnings when the admin gate is open in non-production and when a

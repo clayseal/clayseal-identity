@@ -23,5 +23,4 @@ pytest backend/tests sdk/python/tests -q
 
 echo ""
 echo "Bootstrap complete. Activate the environment with:  source .venv/bin/activate"
-echo "  clayseal-identity --help"
 echo "  python examples/01_quickstart.py"

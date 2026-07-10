@@ -27,14 +27,6 @@ from .adapters import (
     register_identity_adapter,
 )
 from .client import ClaySeal
-from .diagnostics import (
-    DiagnosticFinding,
-    doctor_agent_identity_document,
-    doctor_token,
-    findings_payload,
-    preflight_endpoint,
-    scan_mcp_config,
-)
 from .errors import (
     AgentNotFoundError,
     AgentRevokedError,
@@ -58,14 +50,8 @@ from .integrations import (
     protect_tools,
 )
 from .models import AgentInfo, Credential, ValidationResult
-from .profile import AgentIdentityClaims, explain_token, lint_token
+from .profile import AgentIdentityClaims
 from .session import AgentSession
-from .usability import (
-    diff_token_payload,
-    generate_integration,
-    replay_lab_payload,
-    whoami_payload,
-)
 from .verifier import verify_offline
 
 __version__ = "0.5.0"
@@ -77,19 +63,7 @@ __all__ = [
     "AgentInfo",
     "ValidationResult",
     "AgentIdentityClaims",
-    "explain_token",
-    "lint_token",
     "verify_offline",
-    "DiagnosticFinding",
-    "doctor_agent_identity_document",
-    "doctor_token",
-    "findings_payload",
-    "preflight_endpoint",
-    "scan_mcp_config",
-    "diff_token_payload",
-    "generate_integration",
-    "replay_lab_payload",
-    "whoami_payload",
     "IdentityAdapter",
     "IdentityBinding",
     "get_identity_adapter",

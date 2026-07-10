@@ -172,20 +172,6 @@ claims = verify_offline(
 assert claims["cnf"]["jkt"]  # sender-constrained; not a plain bearer token
 ```
 
-### CLI and linter
-
-The package installs the `clayseal-identity` console script:
-
-```bash
-clayseal-identity explain token.jwt
-clayseal-identity lint token.jwt
-clayseal-identity verify token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
-```
-
-The linter checks the public [Agent Identity Profile](AGENT_IDENTITY_PROFILE.md):
-token type, algorithm, required claims, `cnf.jkt`, TTL, and recommended agent
-metadata.
-
 ### Framework helpers
 
 Identity-only helpers live under `clayseal.identity.integrations`:
