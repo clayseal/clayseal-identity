@@ -2,6 +2,12 @@
 
 <img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
+[![PyPI](https://img.shields.io/pypi/v/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
+[![npm @clayseal/verify](https://img.shields.io/npm/v/%40clayseal%2Fverify?label=npm%20%40clayseal%2Fverify)](https://www.npmjs.com/package/@clayseal/verify)
+[![Python versions](https://img.shields.io/pypi/pyversions/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
+[![CI](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml/badge.svg)](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/pypi/l/clayseal-identity)](LICENSE)
+
 Clay Seal Identity is layer 1 of Clay Seal: cryptographically attested identity
 for autonomous agents. The package is published as `clayseal-identity` and
 imports from `clayseal.identity`.
