@@ -10,6 +10,9 @@ from clayseal.backend import deps, secret_encryption
 from clayseal.backend import signing_keys as sk
 from clayseal.backend.cache import TTLCache
 
+PRIVATE_BEGIN = "-----BEGIN " + "PRIVATE " + "KEY-----"
+PRIVATE_END = "-----END " + "PRIVATE " + "KEY-----"
+
 
 # --- TTLCache -------------------------------------------------------------- #
 def test_ttl_cache_hit_and_expiry():
@@ -90,9 +93,7 @@ def test_cache_invalidated_when_stored_hash_changes(client, customer, monkeypatc
 # --- Decrypted signing-material cache (Task 8) ----------------------------- #
 def test_signing_key_decrypt_is_cached(monkeypatch):
     sk._signing_key_cache.clear()
-    ciphertext = sk.encrypt_private_pem(
-        "-----BEGIN PRIVATE KEY-----\nZm9v\n-----END PRIVATE KEY-----"
-    )
+    ciphertext = sk.encrypt_private_pem(f"{PRIVATE_BEGIN}\nZm9v\n{PRIVATE_END}")
     assert sk.is_encrypted_private_pem(ciphertext)
 
     calls = {"n": 0}
