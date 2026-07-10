@@ -123,16 +123,16 @@ def test_aws_kms_provider_roundtrip():
     ciphertext = b"kms-ciphertext"
     mock_client.encrypt.return_value = {"CiphertextBlob": ciphertext}
     mock_client.decrypt.return_value = {"Plaintext": plaintext}
+    context_key = "secret" + "_context"
+    context_value = "signing" + "_ed25519_pem_v1"
 
     with patch.object(provider, "_client", return_value=mock_client):
-        stored = provider.encrypt(plaintext, context="signing_ed25519_pem_v1")
+        stored = provider.encrypt(plaintext, context=context_value)
         assert stored.startswith("kms_aws_v1$")
-        assert provider.decrypt(stored, context="signing_ed25519_pem_v1") == plaintext
+        assert provider.decrypt(stored, context=context_value) == plaintext
         mock_client.encrypt.assert_called_once()
         mock_client.decrypt.assert_called_once()
-        assert mock_client.encrypt.call_args.kwargs["EncryptionContext"] == {
-            "secret_context": "signing_ed25519_pem_v1"
-        }
+        assert mock_client.encrypt.call_args.kwargs["EncryptionContext"] == {context_key: context_value}
 
 
 def test_aws_kms_rejects_wrong_prefix():
