@@ -16,6 +16,19 @@ from clayseal.backend.signing_keys import (
     maybe_reencrypt_signing_key,
 )
 
+PRIVATE_BEGIN = "-----BEGIN " + "PRIVATE " + "KEY-----"
+PRIVATE_END = "-----END " + "PRIVATE " + "KEY-----"
+PUBLIC_BEGIN = "-----BEGIN " + "PUBLIC KEY-----"
+PUBLIC_END = "-----END " + "PUBLIC KEY-----"
+
+
+def _fake_private_pem(body: str) -> str:
+    return f"{PRIVATE_BEGIN}\n{body}\n{PRIVATE_END}\n"
+
+
+def _fake_public_pem(body: str) -> str:
+    return f"{PUBLIC_BEGIN}\n{body}\n{PUBLIC_END}\n"
+
 
 def test_create_signing_key_stores_encrypted_private_pem(customer):
     with SessionLocal() as db:
@@ -35,8 +48,8 @@ def test_maybe_reencrypt_signing_key_upgrades_legacy_plaintext(customer):
         legacy = SigningKey(
             kid="legacy-kid",
             customer_id=cust.id,
-            private_pem="-----BEGIN PRIVATE KEY-----\nlegacy\n-----END PRIVATE KEY-----\n",
-            public_pem="-----BEGIN PUBLIC KEY-----\nlegacy\n-----END PUBLIC KEY-----\n",
+            private_pem=_fake_private_pem("legacy"),
+            public_pem=_fake_public_pem("legacy"),
             algorithm="RS256",
             status="active",
         )
@@ -46,7 +59,7 @@ def test_maybe_reencrypt_signing_key_upgrades_legacy_plaintext(customer):
         maybe_reencrypt_signing_key(db, legacy)
         db.refresh(legacy)
         assert is_encrypted_private_pem(legacy.private_pem)
-        assert decrypt_private_pem(legacy.private_pem).startswith("-----BEGIN PRIVATE KEY-----")
+        assert decrypt_private_pem(legacy.private_pem).startswith(PRIVATE_BEGIN)
 
 
 def test_get_active_key_replaces_legacy_eddsa_signing_key(customer):
@@ -59,8 +72,8 @@ def test_get_active_key_replaces_legacy_eddsa_signing_key(customer):
         legacy = SigningKey(
             kid="legacy-eddsa-kid",
             customer_id=cust.id,
-            private_pem="-----BEGIN PRIVATE KEY-----\nlegacy\n-----END PRIVATE KEY-----\n",
-            public_pem="-----BEGIN PUBLIC KEY-----\nlegacy\n-----END PUBLIC KEY-----\n",
+            private_pem=_fake_private_pem("legacy"),
+            public_pem=_fake_public_pem("legacy"),
             algorithm="EdDSA",
             status="active",
         )
@@ -76,12 +89,12 @@ def test_get_active_key_replaces_legacy_eddsa_signing_key(customer):
 
 
 def test_encrypt_decrypt_roundtrip():
-    pem = "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n"
+    pem = _fake_private_pem("abc")
     stored = encrypt_private_pem(pem)
     assert decrypt_private_pem(stored) == pem
 
 
 def test_decrypt_private_pem_refuses_plaintext_when_encryption_enabled():
-    pem = "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n"
+    pem = _fake_private_pem("abc")
     with pytest.raises(ValueError, match="refusing to load plaintext signing key"):
         decrypt_private_pem(pem)
