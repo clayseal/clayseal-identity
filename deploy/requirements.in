@@ -1,8 +1,7 @@
 # ClaySeal identity backend -- DEPLOYABLE third-party runtime dependency inputs.
 #
-# The internal `agentauth-core` distribution is installed from its built wheel in
-# the deploy image (it is not published to PyPI), so it is intentionally NOT in
-# this file. This locks only the third-party runtime tree.
+# This locks the full third-party runtime tree; the package itself has no
+# private dependencies (shared-core helpers are vendored in `clayseal/_core.py`).
 #
 # Compile a hash-pinned lock with either:
 #   uv pip compile deploy/requirements.in --generate-hashes \

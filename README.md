@@ -41,10 +41,12 @@ execution receipts. Those live in the sibling layers:
 
 | Layer | Repository | Purpose |
 | --- | --- | --- |
-| Core | [clay-seal-core](https://github.com/pberlizov/clay-seal-core) | Shared contracts and crypto helpers |
 | L1 | this repo | Agent identity and credential issuance |
-| L2 | [clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities) | Commit tokens, mandates, leases, budgets |
-| L3 | [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts) | Verifiable execution receipts and audit |
+| L2 | clay-seal-capabilities (private preview) | Commit tokens, mandates, leases, budgets |
+| L3 | clay-seal-receipts (private preview) | Verifiable execution receipts and audit |
+
+This package stands alone: it has no dependency on the other layers, and every
+runtime dependency resolves from public PyPI.
 
 ## Install
 
@@ -63,17 +65,12 @@ pip install "clayseal-identity[server]"
 pip install "clayseal-identity[server,kms]"
 ```
 
-> `clayseal-identity` depends on `agentauth-core` (the shared contracts package).
-> Until both are published to PyPI, install from source (below).
-
 ### From source (development)
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-identity.git
 cd clay-seal-identity
 python -m venv .venv && source .venv/bin/activate
-# agentauth-core: from PyPI once published, or the sibling checkout for now:
-pip install -e ../clay-seal-core        # if you have the clay-seal-core checkout
 pip install -e ".[dev]"                 # client + server + test/lint/type tooling
 pytest backend/tests sdk/python/tests -q
 python examples/01_quickstart.py

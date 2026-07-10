@@ -3,8 +3,7 @@ name: release
 # Build and publish the sdist + wheel to PyPI on a version tag (vX.Y.Z), or
 # build-only on manual dispatch. Publishing uses PyPI Trusted Publishing (OIDC) —
 # configure a trusted publisher for `clayseal-identity` and a `pypi` environment
-# before the first tagged release. `agentauth-core` must be published first, since
-# `clayseal-identity` depends on it.
+# before the first tagged release. Every dependency resolves from public PyPI.
 on:
   push:
     tags: ["v*"]

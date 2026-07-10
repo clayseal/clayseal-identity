@@ -6,7 +6,7 @@ standardise on "naive == UTC" everywhere and never mix aware/naive values.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
@@ -20,7 +20,7 @@ def new_id() -> str:
 
 def utcnow() -> datetime:
     # Naive UTC -- see module docstring.
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def to_epoch(dt: datetime) -> int:
@@ -31,7 +31,7 @@ def to_epoch(dt: datetime) -> int:
     first.
     """
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return int(dt.timestamp())
 
 

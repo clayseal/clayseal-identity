@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import secrets
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from biscuit_auth import (
     Algorithm,
@@ -331,7 +331,7 @@ def consume_server_challenge(db: Session, customer_id: str, challenge: str) -> s
 # Mint / attenuate / authorize
 # --------------------------------------------------------------------------- #
 def _to_aware(dt: datetime) -> datetime:
-    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
 def mint_biscuit(

@@ -7,7 +7,7 @@ including automatic rotation. Developers never see a key.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -588,7 +588,7 @@ def attest(
         db,
         customer.id,
         jti=str(node_payload["jti"]),
-        expires_at=datetime.fromtimestamp(int(exp_claim), tz=timezone.utc).replace(tzinfo=None),
+        expires_at=datetime.fromtimestamp(int(exp_claim), tz=UTC).replace(tzinfo=None),
     )
     workload = node_payload.get("workload") or {}
     workload_selectors = derive_workload_selectors(workload)
