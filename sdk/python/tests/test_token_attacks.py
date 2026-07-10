@@ -113,6 +113,17 @@ def test_rejects_unknown_kid(signer):
         verify_offline(token, jwks=jwks, issuer=ISSUER, audience=AUD)
 
 
+def test_rejects_duplicate_kid_in_jwks(signer):
+    key, jwks = signer
+    attacker = _rsa_key()
+    duplicate = _jwks(attacker.public_key())["keys"][0]
+    jwks["keys"].append(duplicate)
+    token = pyjwt.encode(_claims(), key, algorithm="RS256", headers=_headers())
+    with pytest.raises(InvalidTokenError) as exc:
+        verify_offline(token, jwks=jwks, issuer=ISSUER, audience=AUD)
+    assert "multiple keys" in exc.value.message
+
+
 def test_rejects_key_swap(signer):
     """A token signed by a different key but claiming a trusted kid must fail
     signature verification against the trusted JWKS."""

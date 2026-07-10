@@ -174,6 +174,16 @@ def scan_mcp_config(config: dict[str, Any]) -> list[DiagnosticFinding]:
             auth_header = str(headers.get("Authorization") or headers.get("authorization") or "")
         if auth_header.startswith("Bearer "):
             out.append(_finding("pass", f"{prefix}.auth", "Authorization bearer header configured"))
+            token_value = auth_header.removeprefix("Bearer ").strip()
+            looks_interpolated = any(marker in token_value for marker in ("$", "{{", "<", "%"))
+            if token_value and not looks_interpolated:
+                out.append(
+                    _finding(
+                        "warn",
+                        f"{prefix}.auth_literal",
+                        "bearer token appears literal in config; prefer an env placeholder",
+                    )
+                )
         elif url:
             out.append(_finding("warn", f"{prefix}.auth", "remote server has no obvious Authorization header"))
         else:

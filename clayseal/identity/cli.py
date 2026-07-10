@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -45,6 +46,17 @@ def _read_token(value: str) -> str:
 
 def _load_json(path_or_url: str) -> dict[str, Any]:
     if path_or_url.startswith(("https://", "http://")):
+        parsed = urlparse(path_or_url)
+        is_local_http = parsed.scheme == "http" and parsed.hostname in {
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        }
+        if parsed.scheme == "http" and not is_local_http:
+            raise ValueError(
+                "refusing to fetch JSON over plain HTTP from a non-local host; "
+                "use HTTPS or a local file"
+            )
         return httpx.get(path_or_url, timeout=10.0).json()
     return json.loads(Path(path_or_url).read_text())
 

@@ -7,6 +7,7 @@ import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from clayseal.identity import explain_token, lint_token, verify_offline
+from clayseal.identity.cli import _load_json
 from clayseal.identity.cli import main as cli_main
 from clayseal.identity.diagnostics import (
     doctor_agent_identity_document,
@@ -200,7 +201,8 @@ def test_usability_helpers_summarize_diff_generate_and_lab():
 
     snippet = generate_integration("fastapi")
     assert snippet["files"][0]["path"] == "app.py"
-    assert "AgentIdentityVerifier" in snippet["files"][0]["contents"]
+    assert "AgentIdentityVerifier.dependency" in snippet["files"][0]["contents"]
+    assert "Depends(require_agent)" in snippet["files"][0]["contents"]
 
     lab = replay_lab_payload()
     assert {case["name"] for case in lab["cases"]} == {"good", "missing-cnf", "wrong-audience", "long-ttl"}
@@ -236,6 +238,29 @@ def test_preflight_endpoint_is_importable():
     # Direct network preflight is intentionally covered by CLI behavior in real
     # use. Keep the pure function importable and failure-shaped without network.
     assert callable(preflight_endpoint)
+
+
+def test_cli_refuses_remote_plain_http_json():
+    try:
+        _load_json("http://example.com/jwks.json")
+    except ValueError as exc:
+        assert "plain HTTP" in str(exc)
+    else:
+        raise AssertionError("expected non-local plain HTTP to be refused")
+
+
+def test_mcp_scan_warns_on_literal_bearer_token():
+    findings = scan_mcp_config(
+        {
+            "mcpServers": {
+                "remote": {
+                    "url": "https://example.com/mcp",
+                    "headers": {"Authorization": "Bearer secret-token-value"},
+                }
+            }
+        }
+    )
+    assert "mcp.remote.auth_literal" in {finding.code for finding in findings}
 
 
 def test_fastapi_dependency_verifies_bearer_token():
