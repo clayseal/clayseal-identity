@@ -7,10 +7,13 @@ Per-tenant, unauthenticated, read-only public-key documents:
   CustomJWTAuthorizer takes exactly this URL; Keycloak, generic OAuth resource
   servers, and RFC 7523 consumers resolve ``jwks_uri`` from it).
 - ``GET /t/{customer_id}/jwks.json`` — the tenant's RS256 public keys (RFC 7517).
-- ``GET /t/{customer_id}/spiffe-bundle.json`` — the same keys in SPIFFE bundle
-  format (``use: "jwt-svid"`` + ``spiffe_sequence``/``spiffe_refresh_hint``),
-  so SPIFFE-federation-aware peers can trust this tenant via the ``https_web``
+- ``GET /t/{customer_id}/spiffe-bundle.json`` — the SPIFFE bundle: JWT-SVID
+  signing keys (``use: "jwt-svid"``) and X.509-SVID CA certs (``use:
+  "x509-svid"``) with ``spiffe_sequence``/``spiffe_refresh_hint``, so
+  SPIFFE-federation-aware peers can trust this tenant via the ``https_web``
   profile.
+- ``GET /t/{customer_id}/x509-bundle`` — the X.509-SVID CA certificates as a PEM
+  chain, for TLS stacks that verify against a CA file.
 
 Only public material is served; tenant enumeration yields nothing beyond what a
 presented token already reveals (its issuer and key ids).
@@ -19,6 +22,7 @@ presented token already reveals (its issuer and key ids).
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -94,11 +98,16 @@ def public_jwks(customer_id: str, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/t/{customer_id}/spiffe-bundle.json")
 def spiffe_bundle(customer_id: str, db: Session = Depends(get_db)) -> dict:
-    """SPIFFE bundle (https_web profile): JWKS + jwt-svid use + sequencing."""
+    """SPIFFE bundle (https_web profile): both the JWT-SVID signing keys
+    (``use: jwt-svid``) and the X.509-SVID CA certs (``use: x509-svid``), so a
+    federated peer can verify both credential forms from one document."""
+    from ..x509_svid import x509_trust_bundle
+
     _require_customer(db, customer_id)
     jwks = identity_service.build_jwks(db, customer_id)
     for key in jwks["keys"]:
         key["use"] = "jwt-svid"
+    x509_keys = x509_trust_bundle(db, customer_id)["keys"]
     latest = db.scalar(
         select(SigningKey)
         .where(SigningKey.customer_id == customer_id)
@@ -106,7 +115,18 @@ def spiffe_bundle(customer_id: str, db: Session = Depends(get_db)) -> dict:
     )
     sequence = to_epoch(latest.created_at) if latest is not None else 0
     return {
-        "keys": jwks["keys"],
+        "keys": jwks["keys"] + x509_keys,
         "spiffe_sequence": sequence,
         "spiffe_refresh_hint": SPIFFE_REFRESH_HINT_SECONDS,
     }
+
+
+@router.get("/t/{customer_id}/x509-bundle")
+def x509_bundle(customer_id: str, db: Session = Depends(get_db)) -> Response:
+    """The tenant's X.509-SVID trust bundle as a PEM chain of CA certificates,
+    for TLS stacks that verify against a CA file."""
+    from ..x509_svid import x509_trust_bundle
+
+    _require_customer(db, customer_id)
+    bundle = x509_trust_bundle(db, customer_id)
+    return Response(content=bundle["pem"], media_type="application/x-pem-file")

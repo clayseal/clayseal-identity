@@ -345,7 +345,7 @@ pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.5.0"
 - **Receipts, audit, MCP gateway** → Clay Seal Receipts developer guide (private preview)
 - **Cross-provider identity** → Capabilities cross-layer integration guide (private preview)
 - **Agent identity profile** → [docs/AGENT_IDENTITY_PROFILE.md](AGENT_IDENTITY_PROFILE.md)
-- **CLI and framework helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)
+- **Framework integration helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)
 - **Privacy and data handling** → [docs/PRIVACY.md](PRIVACY.md)
 
 If something in this guide does not match the code you checked out, prefer the tagged release you installed and file an issue with the tag name and command you ran.

@@ -82,3 +82,30 @@ def test_agents_listing_and_lookup(auth):
     assert info.id == agent.agent_id
     assert info.agent_type == "researcher"
     assert info.status == "active"
+
+
+# --------------------------------------------------------------------------- #
+# X.509-SVID (mTLS)
+# --------------------------------------------------------------------------- #
+def test_identify_can_request_x509_svid(auth, base_url):
+    import ssl
+
+    from cryptography import x509
+
+    session = auth.identify(
+        agent_type="researcher", owner="a@b.c", capabilities=[{"resource": "db", "action": "read"}],
+        request_x509=True,
+    )
+    chain = session.x509_svid_chain
+    assert chain and "BEGIN CERTIFICATE" in chain
+    leaf = x509.load_pem_x509_certificate(chain.encode())
+    san = leaf.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+    assert san.value.get_values_for_type(x509.UniformResourceIdentifier) == [session.credential.spiffe_id]
+    # The session can build a working mTLS context from the SVID + fetched bundle.
+    ctx = session.mtls_context(purpose=ssl.Purpose.SERVER_AUTH)
+    assert isinstance(ctx, ssl.SSLContext)
+
+
+def test_identify_without_x509_has_no_svid(auth):
+    session = auth.identify(agent_type="researcher", owner="a@b.c", scopes=["db:read"])
+    assert session.x509_svid_chain is None

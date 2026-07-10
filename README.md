@@ -17,8 +17,9 @@ Use this repo when you need to answer:
 
 Implemented today:
 
-- JWT-SVID-style agent credentials signed with RS256 for broad federation
-  compatibility.
+- SPIFFE **JWT-SVID** agent credentials (RS256, `sub` = the SPIFFE ID) for broad
+  federation compatibility, and SPIFFE **X.509-SVID** certificates for mTLS
+  (`identify(..., request_x509=True)`), published with a per-tenant trust bundle.
 - Ed25519 workload keys for sender-constraining (`cnf.jkt`) and offline
   proof-of-possession.
 - SPIFFE-shaped agent identifiers and trust domains.
@@ -124,19 +125,7 @@ verifier (`@clayseal/verify`) for Node MCP servers and OpenClaw tool plugins,
 and an [agentskills.io](https://agentskills.io) skill for Hermes Agent. See
 [integrations/](integrations).
 
-Inspect and lint agent tokens from the terminal:
-
-```bash
-clayseal-identity explain token.jwt
-clayseal-identity lint token.jwt
-clayseal-identity whoami token.jwt
-clayseal-identity diff-token before.jwt after.jwt
-clayseal-identity doctor --token token.jwt --jwks jwks.json --issuer clayseal.io --audience acme
-clayseal-identity preflight http://localhost:8000/tool
-clayseal-identity scan-mcp mcp-config.json
-clayseal-identity generate fastapi
-clayseal-identity replay-lab
-```
+The package is SDK-first. Token issuance, offline verification, and integration checks are exposed through `clayseal.identity` APIs rather than a bundled command-line tool.
 
 The current SDK flow is service-backed: create or point at a tenant, then call
 `identify`. `dev_attestation=True` is only for localhost demos/tests; production

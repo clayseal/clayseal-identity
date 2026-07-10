@@ -112,6 +112,9 @@ class IdentifyRequest(BaseModel):
     # JOSE typ for the minted JWT-SVID. "wit+jwt" opts into WIMSE Workload
     # Identity Token framing (cnf-bound, never bearer); default is unchanged.
     token_typ: Literal["clayseal-svid+jwt", "wit+jwt"] | None = None
+    # Optional EC/RSA public key (SPKI PEM) to also receive an X.509-SVID for
+    # mTLS, bound to the same SPIFFE ID. The workload keeps the private key.
+    x509_public_key_pem: str | None = Field(default=None, max_length=8192)
 
 
 class CredentialOut(BaseModel):
@@ -129,6 +132,9 @@ class CredentialOut(BaseModel):
     biscuit: str | None = None
     biscuit_root_public_key: str | None = None
     bound_keyhash: str | None = None
+    # PEM chain (leaf + signing CA) when an x509_public_key_pem was presented;
+    # validate it against GET /t/{tenant}/x509-bundle.
+    x509_svid_chain: str | None = None
     expires_at: datetime
 
 

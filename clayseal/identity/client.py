@@ -120,6 +120,7 @@ class ClaySeal:
         ttl_seconds: int | None = None,
         attestation_document: str | None = None,
         workload_private_pem: str | None = None,
+        request_x509: bool = False,
     ) -> AgentSession:
         """Issue a fresh agent credential and return a wrapped session.
 
@@ -164,14 +165,22 @@ class ClaySeal:
                 scopes=scopes or [],
                 capabilities=capabilities,
             )
+        x509_private_pem = None
+        x509_public_pem = None
+        if request_x509:
+            from .x509 import generate_ec_keypair
+
+            x509_private_pem, x509_public_pem = generate_ec_keypair()
         data = self.identify_with_attestation(
             attestation_document,
             ttl_seconds=ttl_seconds,
+            x509_public_key_pem=x509_public_pem,
         )
         return AgentSession(
             self,
             Credential.from_api(data),
             workload_private_pem=workload_private_pem,
+            x509_private_pem=x509_private_pem,
         )
 
     def _dev_attestation_document(
@@ -196,17 +205,26 @@ class ClaySeal:
         attestation_document: str,
         *,
         ttl_seconds: int | None = None,
+        x509_public_key_pem: str | None = None,
     ) -> dict:
         """Send a platform-issued attestation document to the backend.
 
         This is the production issuance path. It returns the raw credential
         payload so callers that hold the workload private key can pass it to
-        :meth:`session_from_token` with ``workload_private_pem``.
+        :meth:`session_from_token` with ``workload_private_pem``. Pass
+        ``x509_public_key_pem`` to also receive an X.509-SVID for mTLS.
         """
         body: dict = {"attestation_document": attestation_document}
         if ttl_seconds is not None:
             body["ttl_seconds"] = ttl_seconds
+        if x509_public_key_pem is not None:
+            body["x509_public_key_pem"] = x509_public_key_pem
         return self._http.post("/v1/identify", json=body)
+
+    def fetch_x509_bundle(self, tenant_id: str) -> str:
+        """Fetch the tenant's X.509-SVID trust bundle (PEM CA chain) for mTLS
+        peer verification."""
+        return self._http.get(f"/t/{tenant_id}/x509-bundle")
 
     def session_from_token(
         self, credential_data: dict, *, workload_private_pem: str | None = None

@@ -180,39 +180,8 @@ This is the recommended starting point for OpenClaw/Hermes-style agents:
 identity at startup, capability checks at the tool boundary, and optional
 receipts later through the higher Clay Seal layers.
 
-## Endpoint Preflight
+## SDK-only verification
 
-Before wiring a tool server into an agent, run:
+Clay Seal Identity no longer ships a command-line helper. Keep integration checks in code so the same verifier used in tests is the one used in production. For HTTP tools, add `AgentIdentityVerifier` at the request boundary. For MCP servers, use `ClaySealTokenVerifier` and `ToolGuard`. For JavaScript MCP servers, use `@clayseal/verify`.
 
-```bash
-clayseal-identity preflight http://localhost:8000/tool
-```
-
-The preflight command checks whether missing and malformed identity are rejected.
-
-## Starter Snippets
-
-For a quick integration skeleton:
-
-```bash
-clayseal-identity generate fastapi
-clayseal-identity generate mcp
-clayseal-identity generate gha
-clayseal-identity generate express
-```
-
-These are small starter snippets, not production policy. They are meant to get
-the request boundary correct quickly so you can then add issuer, JWKS, audience,
-and deployment-specific constraints.
-
-## MCP Config Scan
-
-For MCP client configs:
-
-```bash
-clayseal-identity scan-mcp mcp-config.json
-```
-
-This does not replace a security review, but it catches common identity smells:
-plain HTTP remote servers, missing Authorization headers, local command servers,
-and secrets passed through environment variables.
+When reviewing an MCP client config, check the same things the old helper checked: remote servers should use HTTPS, authorization should come from the agent runtime rather than a literal token in the config, and local command servers should not receive broad environment secrets.

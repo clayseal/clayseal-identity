@@ -38,7 +38,9 @@ from ..schemas import (
 router = APIRouter(prefix="/v1", tags=["identity"])
 
 
-def _credential_out(db: Session, agent: Agent, token: str) -> CredentialOut:
+def _credential_out(
+    db: Session, agent: Agent, token: str, *, x509_svid_chain: str | None = None
+) -> CredentialOut:
     root_public_key = None
     if agent.biscuit_kid:
         root = db.get(BiscuitRootKey, agent.biscuit_kid)
@@ -55,6 +57,7 @@ def _credential_out(db: Session, agent: Agent, token: str) -> CredentialOut:
         biscuit=agent.biscuit,
         biscuit_root_public_key=root_public_key,
         bound_keyhash=agent.bound_keyhash,
+        x509_svid_chain=x509_svid_chain,
         expires_at=agent.expires_at,
     )
 
@@ -196,7 +199,19 @@ def identify(
         ttl_seconds=body.ttl_seconds,
         token_typ=body.token_typ,
     )
-    return _credential_out(db, agent, token)
+    x509_chain = None
+    if body.x509_public_key_pem:
+        from ..x509_svid import issue_x509_svid
+
+        ttl = body.ttl_seconds or (agent.expires_at - agent.issued_at).seconds
+        x509_chain = issue_x509_svid(
+            db,
+            customer.id,
+            spiffe_id=agent.spiffe_id,
+            public_key_pem=body.x509_public_key_pem,
+            ttl_seconds=ttl or 3600,
+        )
+    return _credential_out(db, agent, token, x509_svid_chain=x509_chain)
 
 
 @router.post("/validate", response_model=ValidateResponse)

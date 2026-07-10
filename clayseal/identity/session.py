@@ -23,7 +23,12 @@ from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives import serialization
 
 from . import _capabilities as caps
-from .errors import BiscuitError, CapabilityDeniedError, ProofOfPossessionError
+from .errors import (
+    BiscuitError,
+    CapabilityDeniedError,
+    ClaySealError,
+    ProofOfPossessionError,
+)
 from .models import Credential
 
 if TYPE_CHECKING:  # avoid import cycle at runtime
@@ -37,6 +42,7 @@ class AgentSession:
         credential: Credential,
         *,
         workload_private_pem: str | None = None,
+        x509_private_pem: str | None = None,
     ) -> None:
         self._client = client
         self.credential = credential
@@ -44,6 +50,9 @@ class AgentSession:
         # for offline capability authorization. Present for identify()-issued
         # sessions; absent for rehydrated ones unless supplied.
         self._workload_private_pem = workload_private_pem
+        # The private key matching the X.509-SVID (when request_x509=True), held
+        # only in-process for mTLS.
+        self._x509_private_pem = x509_private_pem
 
     # --- identity accessors ----------------------------------------------- #
     @property
@@ -65,6 +74,35 @@ class AgentSession:
     @property
     def owner(self) -> str:
         return self.credential.owner
+
+    # --- X.509-SVID (mTLS) ------------------------------------------------- #
+    @property
+    def x509_svid_chain(self) -> str | None:
+        """The X.509-SVID chain (leaf + CA) when ``request_x509=True``."""
+        return self.credential.x509_svid_chain
+
+    def mtls_context(self, *, purpose=None):
+        """Build an :class:`ssl.SSLContext` from this session's X.509-SVID that
+        presents the SVID and trusts the tenant bundle. Requires an
+        ``identify(..., request_x509=True)`` session."""
+        import ssl
+
+        from .x509 import mtls_context
+
+        if not self.credential.x509_svid_chain or self._x509_private_pem is None:
+            raise ClaySealError(
+                "This session has no X.509-SVID.",
+                code="no_x509_svid",
+                suggestion="Call identify(..., request_x509=True) to receive one.",
+            )
+        tenant_id = self.credential.spiffe_id.split("/customer/", 1)[-1].split("/", 1)[0]
+        bundle = self._client.fetch_x509_bundle(tenant_id)
+        return mtls_context(
+            svid_chain_pem=self.credential.x509_svid_chain,
+            private_key_pem=self._x509_private_pem,
+            trust_bundle_pem=bundle,
+            purpose=purpose or ssl.Purpose.SERVER_AUTH,
+        )
 
     # --- capability accessors ---------------------------------------------- #
     @property

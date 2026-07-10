@@ -8,6 +8,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **SPIFFE X.509-SVIDs for mTLS** (`clayseal/backend/x509_svid.py`). Alongside
+  the JWT-SVID, a workload can request a certificate-form SVID with
+  `identify(..., request_x509=True)`: the SDK generates an EC P-256 keypair
+  locally and receives a spec-conformant leaf certificate (single URI SAN = the
+  SPIFFE ID, `digitalSignature` key usage, serverAuth+clientAuth EKU, CA=false)
+  signed by a per-tenant EC CA. The trust bundle is published at
+  `GET /t/{tenant}/x509-bundle` (PEM) and in `spiffe-bundle.json`
+  (`use: x509-svid`). `session.mtls_context()` builds a ready SSLContext; a test
+  drives a real mTLS handshake and recovers the peer SPIFFE ID. The JWT-SVID
+  keeps its Ed25519 proof-of-possession key; the X.509-SVID uses a TLS-suitable
+  EC/RSA key. New table `x509_ca_keys` (migration `a1b2c3d4e5f6`).
 - **Real cloud / Kubernetes node attestation** (`clayseal/backend/node_attestors.py`).
   Node attestation now verifies platform-signed evidence a workload cannot forge
   without controlling the node: `gcp_iit` (Google-signed instance identity token,

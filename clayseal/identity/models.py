@@ -30,6 +30,8 @@ class Credential:
     biscuit: str | None = None
     biscuit_root_public_key: str | None = None
     bound_keyhash: str | None = None
+    # PEM chain (leaf + signing CA) when an X.509-SVID was requested for mTLS.
+    x509_svid_chain: str | None = None
 
     @classmethod
     def from_api(cls, d: dict) -> Credential:
@@ -46,6 +48,7 @@ class Credential:
             biscuit=d.get("biscuit"),
             biscuit_root_public_key=d.get("biscuit_root_public_key"),
             bound_keyhash=d.get("bound_keyhash"),
+            x509_svid_chain=d.get("x509_svid_chain"),
         )
 
     def to_binding_dict(self) -> dict[str, Any]:

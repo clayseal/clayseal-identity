@@ -141,6 +141,31 @@ class BiscuitRootKey(Base):
     retired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class X509CaKey(Base):
+    """A per-customer EC certificate authority that signs X.509-SVIDs.
+
+    Parallel to :class:`SigningKey` (which roots JWT-SVIDs): this roots the
+    tenant's SPIFFE X.509-SVID chain. The self-signed CA certificate is
+    published in the tenant's X.509 trust bundle so verifiers can validate
+    leaf SVIDs; the private key is stored encrypted. Rotation mirrors the other
+    key tables — one ``active`` CA per customer, retired CAs stay in the bundle
+    until their leaves expire.
+    """
+
+    __tablename__ = "x509_ca_keys"
+
+    kid: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    customer_id: Mapped[str] = mapped_column(
+        ForeignKey("customers.id"), index=True, nullable=False
+    )
+    cert_pem: Mapped[str] = mapped_column(Text, nullable=False)
+    private_pem: Mapped[str] = mapped_column(Text, nullable=False)
+    algorithm: Mapped[str] = mapped_column(String, default="EC-P256")
+    status: Mapped[str] = mapped_column(String, default="active")  # active | retired
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class BiscuitRevocation(Base):
     """A tenant-scoped Biscuit revocation-id deny-list entry."""
 
