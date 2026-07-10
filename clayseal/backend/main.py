@@ -62,7 +62,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Allow the browser dashboard (a separate origin) to call the API with the
+    # Allow browser clients (a separate origin) to call the API with the
     # X-API-Key header. Origins are configurable via CLAYSEAL_CORS_ORIGINS.
     origins = get_settings().cors_origins
     app.add_middleware(

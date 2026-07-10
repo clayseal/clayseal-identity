@@ -114,7 +114,7 @@ class Settings:
         self.aws_kms_key_id: str | None = os.getenv("CLAYSEAL_AWS_KMS_KEY_ID")
         self.gcp_kms_key_name: str | None = os.getenv("CLAYSEAL_GCP_KMS_KEY_NAME")
 
-        # CORS: comma-separated allowed origins for the browser dashboard.
+        # CORS: comma-separated allowed origins for browser clients.
         # Defaults to the Vite dev server. Use "*" to allow any origin.
         self.cors_origins: list[str] = [
             o.strip()

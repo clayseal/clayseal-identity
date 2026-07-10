@@ -182,7 +182,7 @@ class ChallengeResponse(BaseModel):
     challenge: str
 
 
-# --- Agents (dashboard reads) --------------------------------------------- #
+# --- Agents (admin/read views) -------------------------------------------- #
 class AgentOut(BaseModel):
     id: str
     agent_type: str

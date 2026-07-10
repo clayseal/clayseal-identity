@@ -2,7 +2,7 @@
 
 Created once per process with your API key. Issues agent identities and exposes
 the read/admin surface (agents) that mirrors the backend identity router 1:1, so
-dashboards and scripts can use the same client.
+admin/read scripts can use the same client.
 """
 from __future__ import annotations
 
@@ -99,8 +99,8 @@ class ClaySeal:
         """Sign up a new tenant; returns ``{customer_id, name, api_key}``.
 
         The API key is shown once - persist it. Convenience for first-run
-        scripts and tests; production tenants are usually created in the
-        dashboard.
+        scripts and tests; production tenants are usually created by an
+        operator via the admin-gated API.
         """
         base = base_url or os.getenv("CLAYSEAL_BASE_URL") or DEFAULT_BASE_URL
         http = HttpClient(base, None, transport=transport)

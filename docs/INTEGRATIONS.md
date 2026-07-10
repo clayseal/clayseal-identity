@@ -132,11 +132,26 @@ secure_runnable.invoke({"question": "What changed?"})
 The helpers do not import LangChain or LangGraph directly. They work with
 runnable-like objects that accept a `config` argument.
 
-## OpenClaw / Hermes-Style Tool Runtimes
+## OpenClaw and Hermes
 
-For always-on local agents, start by protecting the tools rather than rewriting
-the agent framework. The helper below works with plain callables and common
-tool-object shapes such as `invoke`, `ainvoke`, `run`, and `call`.
+Both frameworks speak MCP, so the primary path is the MCP integration above:
+protect the tool server with `ToolGuard` (Python) or `@clayseal/verify`
+(JavaScript, for OpenClaw plugins), and each tool call is authorized against the
+agent's capability token. Framework-specific on-ramps live in
+[`integrations/`](../integrations):
+
+- **OpenClaw** — a permission-request-hook recipe using `@clayseal/verify`
+  ([`integrations/openclaw`](../integrations/openclaw)).
+- **Hermes Agent** — an [agentskills.io](https://agentskills.io) skill that
+  gives a Hermes agent a Clay Seal identity
+  ([`integrations/hermes`](../integrations/hermes)).
+
+## In-process Python tool guard
+
+For a pure-Python agent that calls local functions directly (no MCP server in
+between), `protect_tools` wraps callables so each runs only when the session's
+capability token allows it. It works with plain callables and common tool-object
+shapes (`invoke`, `ainvoke`, `run`, `call`):
 
 ```python
 from clayseal.identity.integrations.agent_tools import protect_tools, ToolPermission
@@ -158,30 +173,21 @@ tools = protect_tools(
 tools["email.send"]("alice@example.com", "hello")
 ```
 
-Generate a reviewable manifest for plugin/skill install screens:
-
-```python
-manifest = tools.manifest("support-copilot")
-```
-
-The manifest is intentionally small JSON:
-
-```json
-{
-  "profile": "clayseal-agent-tools-v1",
-  "name": "support-copilot",
-  "required_capabilities": [
-    {"resource": "email", "action": "send", "file_path": null}
-  ]
-}
-```
-
-This is the recommended starting point for OpenClaw/Hermes-style agents:
-identity at startup, capability checks at the tool boundary, and optional
-receipts later through the higher Clay Seal layers.
+Generate a reviewable manifest for plugin/skill install screens with
+`tools.manifest("support-copilot")` — small JSON listing the required
+capabilities. Use this when there is no MCP boundary to hang `ToolGuard` on;
+otherwise prefer the MCP path above.
 
 ## SDK-only verification
 
-Keep integration checks in code so the same verifier used in tests is the one used in production. For HTTP tools, add `AgentIdentityVerifier` at the request boundary. For MCP servers, use `ClaySealTokenVerifier` and `ToolGuard`. For JavaScript MCP servers, use `@clayseal/verify`.
+Keep the checks in code. That way the verifier you run in tests is the same one
+you run in production.
 
-When reviewing an MCP client config, make sure remote servers use HTTPS, authorization comes from the agent runtime rather than a literal token in the config, and local command servers do not receive broad environment secrets.
+For HTTP tools, put `AgentIdentityVerifier` at the request boundary. For MCP
+servers, use `ClaySealTokenVerifier` and `ToolGuard`. For JavaScript MCP
+servers, use `@clayseal/verify`.
+
+When you review an MCP client config, remote servers should use HTTPS,
+credentials should come from the agent runtime or secret store rather than a
+literal token in the config, and local command servers should not receive broad
+environment secrets.

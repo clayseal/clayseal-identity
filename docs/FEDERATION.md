@@ -69,10 +69,12 @@ public-surface flow locally; performs the live Anthropic exchange only when
 
 ## WIMSE Workload Identity Tokens
 
-Clay Seal JWT-SVIDs are already WIT-shaped — `cnf` is always present
-(sender-constrained, never bearer). Pass `"token_typ": "wit+jwt"` on
-`POST /v1/identify` to mint with the WIMSE JOSE header so WIT-aware relying
-parties recognize the contract; the default is the SPIFFE-standard `JWT`.
+Clay Seal JWT-SVIDs are already WIT-shaped: `cnf` is always present, so the
+credential is sender-constrained rather than a plain bearer token. By default,
+Clay Seal mints standard SPIFFE JWT-SVIDs with `typ=JWT`. Pass
+`"token_typ": "wit+jwt"` on `POST /v1/identify` when a WIMSE-aware relying
+party wants that JOSE header. Older `clayseal-svid+jwt` tokens still validate
+during upgrades, but new credentials should not use that legacy type.
 
 ## MCP authorization (PRM + CIMD, no DCR)
 

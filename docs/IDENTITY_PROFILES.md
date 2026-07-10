@@ -29,7 +29,8 @@ Use when the environment already has SPIRE.
 
 - Node evidence: SPIRE agent trust boundary
 - Workload key: SPIFFE workload keypair
-- Federation: publish `/t/{tenant}/spiffe-bundle.json`
+- Federation: publish `/t/{tenant}/spiffe-bundle.json`; use
+  `/t/{tenant}/x509-bundle` for mTLS trust roots
 - Recommended verifier: SPIFFE-aware bundle consumer or JWKS validator
 
 ## `aws-workload`

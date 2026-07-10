@@ -1,8 +1,7 @@
 # Agent Tool Integration Backlog
 
 Goal: make Clay Seal Identity easy to add to always-on, tool-using agents
-without requiring developers to adopt the rest of the Clay Seal stack on day
-one.
+without requiring developers to adopt the rest of the Clay Seal stack on day one.
 
 The public wedge should stay narrow:
 
@@ -11,99 +10,52 @@ The public wedge should stay narrow:
 
 ## Principles
 
-- Start with wrappers around existing tools, not framework rewrites.
+- Prefer the tool boundary agents already have (MCP) over framework rewrites.
 - Keep the identity package dependency-light.
 - Make permissions visible before an agent runs.
 - Fail closed before a tool executes.
 - Leave receipts, dynamic mandates, and higher-layer enforcement to the sibling
   packages.
 
+## Shipped
+
+- **MCP server authorization** (the primary path) —
+  `clayseal.identity.integrations.mcp_server` (`ToolGuard`,
+  `ClaySealTokenVerifier`) and the JavaScript `@clayseal/verify`
+  ([`js/clayseal-verify`](../js/clayseal-verify)) authorize each tool call
+  against the agent's capability token, with sender-constrained
+  proof-of-possession and optional single-use replay protection. See
+  [INTEGRATIONS.md](INTEGRATIONS.md).
+- **OpenClaw on-ramp** — a permission-request-hook recipe using
+  `@clayseal/verify` ([`integrations/openclaw`](../integrations/openclaw)).
+- **Hermes on-ramp** — an [agentskills.io](https://agentskills.io) skill that
+  gives a Hermes agent a Clay Seal identity
+  ([`integrations/hermes`](../integrations/hermes)), plus a draft proposal to
+  back Hermes's gateway permission tiers with Clay Seal capabilities.
+- **In-process Python tool guard** — `protect_tool` / `protect_tools` and
+  `agent_tool_manifest` in `clayseal.identity.integrations.agent_tools`, for
+  pure-Python agents that call local callables without an MCP boundary.
+
 ## Backlog
 
-### 1. Generic Tool Proxy
-
-Status: done.
-
-Wrap plain Python callables and common tool-object shapes (`invoke`, `ainvoke`,
-`run`, `call`) with an `AgentSession.enforce(...)` check before execution.
-
-Developer API:
-
-```python
-from clayseal.identity.integrations.agent_tools import protect_tool
-
-send_email = protect_tool(
-    raw_send_email,
-    session,
-    name="email.send",
-    resource="email",
-    action="send",
-)
-```
-
-### 2. Skill/Plugin Permission Manifest
-
-Status: done.
-
-Produce a small JSON-serializable manifest that OpenClaw/Hermes-style plugin
-runtimes can show during install/review.
-
-```python
-manifest = agent_tool_manifest(
-    "support-copilot",
-    [send_email, search_docs],
-)
-```
-
-### 3. OpenClaw-Style Example
-
-Status: done.
-
-Add an example showing a persistent local assistant with `email.send`,
-`calendar.write`, and `file.read` tools wrapped by Clay Seal.
-
-The example should not import OpenClaw. It should mirror the agent-tool shape so
-the integration remains stable even if that project changes internals.
-
-### 4. Hermes-Style Example
+### Install-time permission review
 
 Status: planned.
 
-Add an example for a multi-agent/task-runner workflow where a parent agent
-delegates a narrower session before handing tools to a subtask.
+An SDK helper (`review_manifest`) that turns a tool manifest into a reviewable
+permission summary, callable from install screens, notebooks, or docs
+generators. Not shipped yet.
 
-### 5. Install-Time Permission Review
-
-Status: planned.
-
-Add an SDK helper that turns a tool manifest into a reviewable permission summary. This should be callable from install screens, notebooks, docs generators, or a future UI without requiring a separate executable.
-
-```python
-from clayseal.identity.integrations.agent_tools import review_manifest
-
-summary = review_manifest(manifest)
-```
-
-### 6. Framework-Specific Shims
+### More framework shims
 
 Status: planned.
 
-After the generic proxy lands, add thin shims only where they reduce developer
-friction:
+Thin, optional adapters only where they reduce friction beyond MCP — e.g. a
+CrewAI tool wrapper or an AutoGPT-style command-provider wrapper. Add on demand.
 
-- OpenClaw skill loader adapter
-- Hermes task/tool registry adapter
-- CrewAI tool wrapper
-- AutoGPT-style command provider wrapper
-
-Each shim should be small and optional.
-
-### 7. Later Layers
+### Later layers
 
 Status: later.
 
-When the full Clay Seal stack is available, connect the same proxy points to:
-
-- Layer 2 dynamic mandates and leases.
-- Layer 3 signed action receipts.
-- UI/tooling that explains blocked actions after the fact.
+When the full Clay Seal stack is available, connect the same tool-boundary
+checks to layer 2 dynamic mandates/leases and layer 3 signed action receipts.

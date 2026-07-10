@@ -56,7 +56,7 @@ def _authenticate_customer(db: Session, x_api_key: str) -> Customer:
             if legacy.api_key_hash:
                 raise InvalidAPIKeyError(
                     "API key is not recognised.",
-                    suggestion="Double-check the key from your Clay Seal dashboard.",
+                    suggestion="Check the API key returned when the tenant was created.",
                 )
             _logger.warning(
                 "Accepting a legacy plaintext API key for customer %s and "
@@ -75,7 +75,7 @@ def _authenticate_customer(db: Session, x_api_key: str) -> Customer:
             return customer
     raise InvalidAPIKeyError(
         "API key is not recognised.",
-        suggestion="Double-check the key from your ClaySeal dashboard.",
+        suggestion="Check the API key returned when the tenant was created.",
     )
 
 

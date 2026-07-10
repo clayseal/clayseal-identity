@@ -28,7 +28,7 @@ def prune_expired(db: Session, *, agent_grace_days: int = 30) -> dict[str, int]:
     """Delete expired one-time records and long-expired agents.
 
     Returns a ``{table: rows_deleted}`` summary. ``agent_grace_days`` keeps
-    recently-expired agents around so the dashboard can still show them; set it
+    recently-expired agents around so read views can still show them; set it
     to 0 to prune every expired (non-revoked) agent immediately.
     """
     now = utcnow()

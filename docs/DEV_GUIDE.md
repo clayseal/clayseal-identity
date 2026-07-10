@@ -66,7 +66,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-From a pinned tag (recommended for partners):
+From a pinned tag (recommended when you need a reproducible install):
 
 ```bash
 pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"

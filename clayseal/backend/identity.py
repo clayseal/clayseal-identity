@@ -719,7 +719,7 @@ def validate_token(
     try:
         claims = _decode(token, key.public_pem, customer.id)
     except jwt.ExpiredSignatureError as exc:
-        # Best-effort: mark the agent expired so the dashboard reflects reality.
+        # Best-effort: mark the agent expired so reads reflect reality.
         # (Authoritative expiry is the JWT `exp` claim enforced above; this only
         # keeps the stored status/retention view eventually consistent.)
         try:
@@ -837,7 +837,7 @@ def revoke_agent(db: Session, customer: Customer, agent_id: str) -> Agent | None
 
 # --------------------------------------------------------------------------- #
 # Capability authorization (server-side path). The fully-offline path lives in
-# the SDK; this endpoint backs the dashboard, non-Python clients, and layers in
+# the SDK; this endpoint backs admin/read clients, non-Python clients, and layers in
 # revocation -- which an offline verifier (holding only the token) cannot see.
 # --------------------------------------------------------------------------- #
 def _customer_root_public_hexes(db: Session, customer_id: str) -> list[str]:

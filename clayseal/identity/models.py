@@ -74,7 +74,7 @@ class Credential:
 
 @dataclass
 class AgentInfo:
-    """A read-model of an agent (dashboard/admin views)."""
+    """A read-model of an agent (admin/read views)."""
 
     id: str
     agent_type: str
