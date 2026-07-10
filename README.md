@@ -90,7 +90,6 @@ python examples/02_capabilities.py
 python examples/04_mcp_server.py   # lock down an MCP server (needs the [mcp] extra)
 ```
 
-<<<<<<< HEAD
 ### Protect an MCP server
 
 Most MCP servers in the wild are reachable by anything that can open a
@@ -135,8 +134,6 @@ clayseal-identity generate fastapi
 clayseal-identity replay-lab
 ```
 
-=======
->>>>>>> 7716b04 (remove dup code)
 The current SDK flow is service-backed: create or point at a tenant, then call
 `identify`. `dev_attestation=True` is only for localhost demos/tests; production
 callers pass a platform-issued attestation document.
