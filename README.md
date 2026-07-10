@@ -155,6 +155,7 @@ or employee data.
 - [Agent identity profile](docs/AGENT_IDENTITY_PROFILE.md)
 - [CLI](docs/CLI.md)
 - [Identity-only integrations](docs/INTEGRATIONS.md)
+- [Agent tool integration backlog](docs/AGENT_TOOL_BACKLOG.md)
 - [Federation notes](docs/FEDERATION.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Conformance guide](docs/CONFORMANCE.md)

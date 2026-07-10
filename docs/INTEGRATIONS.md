@@ -66,6 +66,54 @@ secure_runnable.invoke({"question": "What changed?"})
 The helpers do not import LangChain or LangGraph directly. They work with
 runnable-like objects that accept a `config` argument.
 
+## OpenClaw / Hermes-Style Tool Runtimes
+
+For always-on local agents, start by protecting the tools rather than rewriting
+the agent framework. The helper below works with plain callables and common
+tool-object shapes such as `invoke`, `ainvoke`, `run`, and `call`.
+
+```python
+from clayseal.identity.integrations.agent_tools import protect_tools, ToolPermission
+
+tools = protect_tools(
+    {
+        "email.send": raw_send_email,
+        "calendar.write": raw_calendar_writer,
+        "file.read": raw_file_reader,
+    },
+    session,
+    permissions={
+        "email.send": ToolPermission("email", "send"),
+        "calendar.write": ToolPermission("calendar", "write"),
+        "file.read": {"resource": "file", "action": "read", "file_path": "/repo/README.md"},
+    },
+)
+
+tools["email.send"]("alice@example.com", "hello")
+```
+
+Generate a reviewable manifest for plugin/skill install screens:
+
+```python
+manifest = tools.manifest("support-copilot")
+```
+
+The manifest is intentionally small JSON:
+
+```json
+{
+  "profile": "clayseal-agent-tools-v1",
+  "name": "support-copilot",
+  "required_capabilities": [
+    {"resource": "email", "action": "send", "file_path": null}
+  ]
+}
+```
+
+This is the recommended starting point for OpenClaw/Hermes-style agents:
+identity at startup, capability checks at the tool boundary, and optional
+receipts later through the higher Clay Seal layers.
+
 ## Endpoint Preflight
 
 Before wiring a tool server into an agent, run:
