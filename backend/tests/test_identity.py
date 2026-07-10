@@ -66,7 +66,7 @@ def test_create_customer_returns_api_key(client):
     resp = client.post("/v1/customers", json={"name": "Beta Corp"})
     assert resp.status_code == 201
     data = resp.json()
-    assert data["api_key"].startswith("aa_")
+    assert data["api_key"].startswith("cs_")
     assert data["customer_id"]
 
     with SessionLocal() as db:
@@ -86,7 +86,7 @@ def test_identify_rejects_bad_api_key(client):
     resp = client.post(
         "/v1/identify",
         json={"attestation_document": "x"},
-        headers={"X-API-Key": "aa_nope"},
+        headers={"X-API-Key": "cs_nope"},
     )
     assert resp.status_code == 401
 

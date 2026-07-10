@@ -3,7 +3,7 @@
 The backend issues identities only after attestation: a workload presents a
 *signed* attestation document, the node attestor verifies it against a registered
 trust anchor, the workload attestor derives selectors, and a pre-registered entry
-must match (see ``identity/identity.md`` and ``docs/v2-decisions``).
+must match (see ``docs/THREAT_MODEL.md`` for the attestation model and its limits).
 
 In production a SPIRE Agent on the node does this and the platform pre-registers
 which environments may receive which identity. For **local development** we keep

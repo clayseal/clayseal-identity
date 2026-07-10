@@ -1,0 +1,5 @@
+# False positives: dummy PEM/string fixtures in tests (bodies are literals like "legacy"/"abc").
+6de8b161eb2a0b6357e26a8706973aab93e42f1c:backend/tests/test_secret_encryption.py:generic-api-key:134
+6de8b161eb2a0b6357e26a8706973aab93e42f1c:backend/tests/test_signing_keys.py:private-key:38
+6de8b161eb2a0b6357e26a8706973aab93e42f1c:backend/tests/test_signing_keys.py:private-key:49
+6de8b161eb2a0b6357e26a8706973aab93e42f1c:backend/tests/test_signing_keys.py:private-key:79

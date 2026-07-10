@@ -6,7 +6,7 @@ Quickstart::
 
     # Point at your Clay Seal identity service. In production the workload's
     # platform (e.g. a SPIRE agent) supplies the attestation document.
-    auth = ClaySeal(api_key="aa_...", base_url="https://identity.example.com")
+    auth = ClaySeal(api_key="cs_...", base_url="https://identity.example.com")
     agent = auth.identify(agent_type="researcher", owner="alice@acme.ai",
                           scopes=["db:read"])
 

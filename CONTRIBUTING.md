@@ -18,7 +18,7 @@ We recommend a virtual environment on **Python 3.13** (the project supports
 3.11–3.13).
 
 ```bash
-git clone https://github.com/pberlizov/clayseal-identity.git
+git clone https://github.com/clayseal/clayseal-identity.git
 cd clayseal-identity
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev,server]"
