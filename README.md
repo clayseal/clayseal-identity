@@ -87,7 +87,31 @@ and revokes it:
 ```bash
 python examples/01_quickstart.py
 python examples/02_capabilities.py
+python examples/04_mcp_server.py   # lock down an MCP server (needs the [mcp] extra)
 ```
+
+### Protect an MCP server
+
+Most MCP servers in the wild are reachable by anything that can open a
+connection. With the `[mcp]` extra, a FastMCP server accepts only Clay
+Seal-credentialed agents, and each tool call is authorized against the
+caller's capability token — attenuation included, so an agent that narrowed
+itself mid-task is held to the narrowed rights:
+
+```python
+from mcp.server.fastmcp import FastMCP
+from clayseal.identity.integrations.mcp_server import (
+    ClaySealTokenVerifier, ToolGuard, build_auth_settings,
+)
+
+mcp = FastMCP("tools", token_verifier=verifier, auth=auth_settings)
+
+@mcp.tool()
+@guard.require()
+def search_web(query: str) -> str: ...
+```
+
+Details in [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
 
 Inspect and lint agent tokens from the terminal:
 

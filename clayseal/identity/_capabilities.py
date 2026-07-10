@@ -149,8 +149,16 @@ def authorize_biscuit(
     expected_htm: str | None = None,
     expected_htu: str | None = None,
     file_path: str | None = None,
+    pop_binds_operation: bool = True,
 ) -> dict:
-    """Offline authorization decision. Returns ``{"allowed": bool, "reason": str}``."""
+    """Offline authorization decision. Returns ``{"allowed": bool, "reason": str}``.
+
+    ``pop_binds_operation=False`` accepts a connection-level PoP whose signed
+    message omits the operation tuple (e.g. one proof covering an MCP session
+    against a single endpoint). Possession of the bound workload key is still
+    proven and the proof stays bound to the token (``ath``), method, URL, and
+    freshness window; only the per-operation binding is relaxed.
+    """
     token = _parse(token_b64, root_public_hex)
     bound = read_bound_keys(token_b64, root_public_hex)
 
@@ -184,7 +192,7 @@ def authorize_biscuit(
             iat=pop.iat,
             jti=pop.jti,
             signature_b64=pop.signature_b64,
-            operation=operation,
+            operation=operation if pop_binds_operation else None,
             expected_htm=expected_htm,
             expected_htu=expected_htu,
             expected_ath=token_hash(token_b64),

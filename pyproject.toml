@@ -49,9 +49,12 @@ server = [
 # secret_encryption.AwsKmsProvider, so it is only required when that provider
 # is selected — install `clayseal-identity[kms]` in prod.
 kms = ["boto3>=1.43.45"]
+# Server-side MCP authorization (clayseal.identity.integrations.mcp_server):
+# plug ClaySealTokenVerifier + ToolGuard into an official-SDK FastMCP server.
+mcp = ["mcp>=1.10"]
 # Full development environment: client + server + test/lint/type tooling.
 dev = [
-  "clayseal-identity[server]",
+  "clayseal-identity[server,mcp]",
   "pytest>=8.0",
   "pytest-asyncio>=1.4.0",
   "pytest-cov>=7.1.0",

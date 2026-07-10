@@ -4,6 +4,26 @@ All notable changes to **clayseal-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **MCP server authorization** (`clayseal.identity.integrations.mcp_server`,
+  behind the new `[mcp]` extra): `ClaySealTokenVerifier` plugs into the
+  official MCP SDK's `FastMCP(token_verifier=...)` to verify agent JWT-SVIDs
+  offline at the transport (401 + RFC 9728 metadata handled by the SDK), and
+  `ToolGuard` authorizes every tool call against the caller's Biscuit
+  capability token plus a proof-of-possession of its bound workload key —
+  attenuation is honored, path-scoped tokens are enforced on file tools via
+  `@guard.require(file_path_arg=...)`, and a stolen token without the key
+  authorizes nothing. See `examples/04_mcp_server.py`.
+- MCP client helpers now send the capability token and a connection-level
+  proof-of-possession (`tool_headers(session, server_url=...)` adds
+  `X-ClaySeal-Biscuit` and `X-ClaySeal-PoP` next to the JWT bearer).
+- `authorize_biscuit(..., pop_binds_operation=False)` accepts a
+  connection-level proof (signed without the operation tuple) while still
+  binding it to the token hash, HTTP method, URL, and freshness window.
+
 ## [0.5.0] - 2026-07-10
 
 First public release. The open-source readiness pass below includes several

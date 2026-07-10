@@ -23,23 +23,66 @@ def tool(identity = Depends(require_agent)):
     return {"agent_id": identity.agent_id, "agent_type": identity.agent_type}
 ```
 
-## MCP HTTP Transports
+## MCP clients
 
-Attach a Clay Seal identity token as a bearer credential:
+Attach the agent's identity to an MCP HTTP transport. Three headers travel
+together: the JWT bearer (who the agent is), the Biscuit capability token
+(what it may do), and a proof-of-possession of the workload key the tokens
+are bound to (so a stolen token authorizes nothing):
 
 ```python
 from clayseal.identity.integrations.mcp import tool_headers
 
-headers = tool_headers(session)
+headers = tool_headers(session, server_url="https://tools.example.com/mcp")
 ```
 
-Log structured identity metadata:
+The proof carries a freshness timestamp; rebuild headers at least every few
+minutes and whenever the endpoint changes. Log structured identity metadata
+with `identity_metadata(session)`.
+
+## MCP servers
+
+Protect a FastMCP server (official `mcp` SDK) so only Clay Seal-credentialed
+agents connect, and each tool call is authorized against the caller's
+capability token. Requires `pip install "clayseal-identity[mcp]"`:
 
 ```python
-from clayseal.identity.integrations.mcp import identity_metadata
+from mcp.server.fastmcp import FastMCP
+from clayseal.identity.integrations.mcp_server import (
+    ClaySealTokenVerifier, ToolGuard, build_auth_settings,
+)
 
-metadata = identity_metadata(session)
+verifier = ClaySealTokenVerifier(jwks=tenant_jwks, issuer="clayseal.io")
+guard = ToolGuard(
+    biscuit_root_public_key=tenant_root_public_hex,
+    server_url="https://tools.example.com/mcp",
+)
+mcp = FastMCP(
+    "tools",
+    token_verifier=verifier,
+    auth=build_auth_settings(
+        issuer_url="https://identity.example.com",
+        resource_server_url="https://tools.example.com/mcp",
+    ),
+)
+
+@mcp.tool()
+@guard.require()
+def search_web(query: str) -> str: ...
 ```
+
+The transport rejects callers without a valid credential (401 plus RFC 9728
+resource metadata, handled by the MCP SDK). Each `@guard.require()` tool then
+demands the capability `("tool", <name>)` — grant it when minting
+(`capabilities=[{"resource": "tool", "action": "search_web"}]`, or
+`"action": "*"` for all tools). Because authorization runs against the
+Biscuit, an agent that attenuated itself mid-task is held to the narrowed
+token. For file-shaped tools, `@guard.require(file_path_arg="path")` also
+enforces the token's `allowed_path`/`denied_path` scope. HTTP transports
+only; stdio has neither bearer tokens nor headers.
+
+See `examples/04_mcp_server.py` for the full flow, including attenuation and
+the stolen-token case.
 
 ## LangChain / LangGraph
 
