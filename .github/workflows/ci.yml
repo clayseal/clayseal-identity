@@ -86,4 +86,4 @@ jobs:
       - name: Run @clayseal/verify parity tests
         # --experimental-wasm-modules: biscuit-wasm imports a .wasm module, which
         # Node enables by default only on newer releases.
-        run: cd js/clayseal-verify && node --experimental-wasm-modules --no-warnings --test test/
+        run: cd js/clayseal-verify && node --experimental-wasm-modules --no-warnings --test test/*.test.mjs
