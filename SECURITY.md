@@ -28,7 +28,7 @@ of Clay Seal Identity at risk.
 Instead, report privately through GitHub's Private Vulnerability Reporting:
 
 1. Go to the repository's **Security** tab:
-   <https://github.com/pberlizov/clay-seal-identity/security>
+   <https://github.com/pberlizov/clayseal-identity/security>
 2. Click **Report a vulnerability** to open a private security advisory.
 3. Fill in the details described below.
 

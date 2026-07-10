@@ -1,6 +1,6 @@
 # Clay Seal Identity — Production & Open-Source Readiness Report
 
-**Package:** `clayseal-identity` v0.5.0 · **Repo:** `pberlizov/clay-seal-identity` ·
+**Package:** `clayseal-identity` v0.5.0 · **Repo:** `pberlizov/clayseal-identity` ·
 **Audit date:** 2026-07-08 · **Scope:** full repository
 
 ---

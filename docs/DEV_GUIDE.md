@@ -60,8 +60,8 @@ There is intentionally **no** top-level `from clayseal import Identity` here. Th
 From a clone:
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-identity.git
-cd clay-seal-identity
+git clone https://github.com/pberlizov/clayseal-identity.git
+cd clayseal-identity
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -69,7 +69,7 @@ pip install -e ".[dev]"
 From a pinned tag (recommended for partners):
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
 ```
 
 This package stands alone — no other Clay Seal layer is required. The upper
@@ -349,7 +349,7 @@ Checklist for maintainers:
 Partners should pin:
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
 ```
 
 ---
