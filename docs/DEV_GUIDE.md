@@ -69,22 +69,12 @@ pip install -e ".[dev]"
 From a pinned tag (recommended for partners):
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
 pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 
-### With the full stack
-
-Install in order — each layer depends on the one below:
-
-```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-receipts.git@v0.5.0"
-```
-
-Or use the smoke script in the receipts repo: `scripts/layer_install_smoke.sh`.
+This package stands alone — no other Clay Seal layer is required. The upper
+layers (capabilities, receipts) are in private preview; partners with access
+install them on top, in order, from their own pinned tags.
 
 ### Python version
 
@@ -121,7 +111,7 @@ Biscuits provide **attenuation**: a parent token can derive child tokens that ca
 
 ### AuthorityBinding (shared with L2/L3)
 
-`AuthorityBinding` (`agentauth.core.authority_binding`, from the `agentauth-core` contract package) normalizes verified credential material into an `AuthorityContext` that upper layers understand. If you integrate with capabilities or receipts, you will see this type cross repo boundaries.
+When this package is used with the upper Clay Seal layers, `Credential.to_binding_dict()` produces the authority facts the receipts runtime consumes (its `AuthorityBinding` type normalizes them for L2/L3). This repo itself has no dependency on those layers.
 
 ---
 
@@ -271,8 +261,9 @@ CI runs the same suites on Python 3.11 and 3.13.
 | `sdk/python/tests/` | SDK unit tests |
 | `examples/` | Runnable scripts |
 
-Shared contract types such as `AuthorityBinding` live in the external
-`agentauth-core` package (`agentauth.core`), not in this repo.
+The small set of helpers shared with the upper layers (canonical JSON, path-scope
+matching, production guards) is vendored in `clayseal/_core.py`, so this repo has
+no external Clay Seal dependency.
 
 ### Editable installs and namespace gotchas
 
@@ -338,7 +329,7 @@ employee, customer, or regulated data.
 | `ModuleNotFoundError: clayseal.identity` | Package not installed | `pip install -e ".[dev]"` in this repo |
 | Wrong code imported | CWD namespace merge | Install via pip; avoid running from monorepo parent |
 | Verification fails immediately | Expired credential or clock skew | Re-identify; check system time |
-| Biscuit errors on 3.14+ | Unsupported Python | Use 3.10–3.13 |
+| Biscuit errors on 3.14+ | Unsupported Python | Use 3.11–3.13 |
 | Layer 2 import errors | Identity version mismatch | Pin matching tags (`v0.5.0` across stack) |
 
 ---
@@ -358,7 +349,6 @@ Checklist for maintainers:
 Partners should pin:
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
 pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
 ```
 

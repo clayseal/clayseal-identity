@@ -11,6 +11,12 @@ from urllib.parse import urlparse
 
 import httpx
 
+from clayseal._core import (
+    DEV_ATTESTOR_ENV,
+    UNSAFE_DEV_ATTESTOR_ENV,
+    refuse_dev_attestation_client,
+)
+
 from ._http import HttpClient
 from .errors import ClaySealError
 from .logging import get_logger
@@ -18,8 +24,6 @@ from .models import AgentInfo, Credential, ValidationResult
 from .session import AgentSession
 
 DEFAULT_BASE_URL = "http://localhost:8000"
-DEV_ATTESTOR_ENV = "CLAYSEAL_DEV_ATTESTOR"
-UNSAFE_DEV_ATTESTOR_ENV = "CLAYSEAL_ALLOW_REMOTE_DEV_ATTESTOR"
 
 
 def _env_truthy(name: str) -> bool:
@@ -70,8 +74,6 @@ class ClaySeal:
         self._dev_attestation = (
             _env_truthy(DEV_ATTESTOR_ENV) if dev_attestation is None else dev_attestation
         )
-        from agentauth.core.production import refuse_dev_attestation_client
-
         refuse_dev_attestation_client(dev_attestation_enabled=self._dev_attestation)
         self._dev_attestor = None  # created lazily when explicit dev attestation is enabled
 

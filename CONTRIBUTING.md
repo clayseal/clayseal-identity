@@ -15,7 +15,7 @@ By participating in this project you are expected to uphold our
 ## Development Environment
 
 We recommend a virtual environment on **Python 3.13** (the project supports
-3.10–3.13).
+3.11–3.13).
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-identity.git
@@ -25,19 +25,8 @@ pip install -e ".[dev,server]"
 ```
 
 The `dev` extra installs the test tooling; the `server` extra installs the
-FastAPI backend and its heavier dependencies.
-
-### The `agentauth-core` dependency
-
-Clay Seal Identity depends on `agentauth-core`, a sibling package published by
-the maintainer. Once it is available on PyPI, `pip install -e ".[dev,server]"`
-will pull it in automatically. Until then, install it from the sibling
-[clay-seal-core](https://github.com/pberlizov/clay-seal-core) repository first,
-for example:
-
-```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@main"
-```
+FastAPI backend and its heavier dependencies. Every dependency resolves from
+public PyPI — no private packages are needed to develop or test this repo.
 
 ## Running the Tests
 

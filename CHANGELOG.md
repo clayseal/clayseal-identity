@@ -11,6 +11,15 @@ version bump before release.
 
 ### Added
 
+- `clayseal/_core.py`: the small shared-core surface (canonical JSON, path-scope
+  matching, production guards) is now vendored, so the package has **no private
+  dependency** — every runtime dependency resolves from public PyPI. Internal CI
+  runs a `core-parity` job so the vendored helpers cannot drift from their
+  `agentauth-core` originals; the parity tests skip on public checkouts.
+- Restored `Credential.to_binding_dict()` (removed in the dead-code prune): it is
+  the duck-typed seam the receipts layer's `wrap_agentauth_session` consumes.
+  A test now pins the contract's key set.
+
 - Community health files: `SECURITY.md` (private vulnerability reporting),
   `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS`, issue/PR templates.
 - `release.yml` workflow: tag-triggered `python -m build` + PyPI Trusted
@@ -33,8 +42,20 @@ version bump before release.
 - **Breaking:** the FastAPI identity service (`clayseal.backend`) and its heavy
   dependencies (`fastapi`, `uvicorn`, `SQLAlchemy`, `pydantic`, `psycopg`,
   `alembic`) moved behind a `[server]` optional extra. The client SDK
-  (`clayseal.identity`) now installs only `agentauth-core`, `httpx`,
-  `biscuit-python`, `PyJWT`, and `cryptography`.
+  (`clayseal.identity`) now installs only `httpx`, `biscuit-python`, `PyJWT`,
+  and `cryptography`.
+- **Breaking (fix):** the production guards (`refuse_dev_attestation_client`,
+  `enforce_production_policy`) now key off `CLAYSEAL_ENV` and `CLAYSEAL_*`
+  variables. They previously still read `AGENTAUTH_ENV`/`AGENTAUTH_*`, so after
+  the env-var rename they silently no-opped under `CLAYSEAL_ENV=production`
+  (dev attestation was not refused; admin-key/CORS startup checks did not run).
+  Regression tests added.
+- The Dockerfile installs `.[server,kms]` — after the `[server]` split it
+  installed only `.[kms]` plus uvicorn/psycopg, producing an image without
+  FastAPI/SQLAlchemy that could not boot.
+- **Breaking:** minimum Python is now 3.11 (was 3.10): it matches the CI matrix,
+  and `biscuit-python` ships no macOS wheel for CPython 3.10, which would have
+  forced a Rust source build on Mac.
 - `scripts/bootstrap.sh` rewritten to real setup; `.gitignore` pruned of
   monorepo leftovers; docs corrected (no more `clayseal.wrap`, `clayseal/core/`,
   or a second CLI alias).

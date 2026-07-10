@@ -26,9 +26,10 @@ import time
 import uuid
 
 import jwt
-from agentauth.core.hash_util import canonical_json_bytes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
+
+from clayseal._core import canonical_json_bytes
 
 
 def _rsa_keypair() -> tuple[str, str]:

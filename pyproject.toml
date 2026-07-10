@@ -8,12 +8,13 @@ version = "0.5.0"
 description = "Clay Seal layer 1 — attested agent identity and Biscuit capability tokens"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10,<3.14"
+# Floor 3.11: matches the CI matrix, and biscuit-python ships no macOS wheel
+# for CPython 3.10 (a 3.10 floor would mean a Rust source build on Mac).
+requires-python = ">=3.11,<3.14"
 # Client SDK (clayseal.identity) runtime deps only — deliberately minimal so
 # `pip install clayseal-identity` stays lightweight. The bundled FastAPI identity
 # service (clayseal.backend) and its heavy deps live behind the [server] extra.
 dependencies = [
-  "agentauth-core>=0.5,<0.6",
   "httpx>=0.27",
   "biscuit-python>=0.4,<0.5",
   "PyJWT>=2.8,<3.0",
@@ -58,13 +59,13 @@ dev = [
   "mypy>=1.11",
 ]
 
-# Ship only the paths this distribution owns. `clayseal` is this package's own
-# top-level namespace — it no longer overlaps the sibling `agentauth.core`
-# wheel's namespace, so there is no cross-wheel RECORD collision to avoid.
+# Ship only the paths this distribution owns; `clayseal` is this package's own
+# top-level namespace.
 [tool.hatch.build.targets.wheel]
 only-include = [
   "clayseal/identity",
   "clayseal/backend",
+  "clayseal/_core.py",
   "clayseal/workload_keys.py",
   "clayseal/biscuit_scope.py",
 ]
@@ -75,7 +76,7 @@ pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
@@ -98,7 +99,7 @@ extend-immutable-calls = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 files = ["clayseal"]
 namespace_packages = true
 explicit_package_bases = true

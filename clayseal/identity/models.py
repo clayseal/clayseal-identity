@@ -48,6 +48,29 @@ class Credential:
             bound_keyhash=d.get("bound_keyhash"),
         )
 
+    def to_binding_dict(self) -> dict[str, Any]:
+        """The L1/L2 authority facts, in the shape the receipts runtime's
+        ``AuthorityBinding.from_agentauth_credential`` consumes. This is the
+        seam that binds an attested identity into every execution receipt.
+
+        No in-repo caller: the consumer is ``wrap_agentauth_session`` in the
+        receipts layer, which duck-types on ``session.credential`` having this
+        method. Do not remove without changing that contract.
+        """
+        return {
+            "agent_id": self.agent_id,
+            "spiffe_id": self.spiffe_id,
+            "agent_type": self.agent_type,
+            "owner": self.owner,
+            "scopes": list(self.scopes),
+            "selectors": list(self.selectors),
+            "expires_at": self.expires_at,
+            "capabilities": list(self.capabilities),
+            "biscuit": self.biscuit,
+            "has_biscuit": bool(self.biscuit),
+            "bound_keyhash": self.bound_keyhash,
+        }
+
 
 @dataclass
 class AgentInfo:

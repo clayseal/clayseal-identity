@@ -1,10 +1,8 @@
 # Production image for the ClaySeal Identity Service.
 #
-# Layer note: this package depends on `agentauth-core`, which is published as a
-# separate wheel. Make it resolvable at build time via a wheelhouse or a private
-# index, e.g.:
-#   docker build --build-arg PIP_EXTRA_INDEX_URL=https://pypi.example/simple .
-# (pin the base image by digest in your registry/CI; we pin by tag here).
+# All dependencies resolve from public PyPI (PIP_EXTRA_INDEX_URL stays available
+# for mirrors). Pin the base image by digest in your registry/CI; we pin by tag
+# here.
 FROM python:3.12-slim AS base
 
 # - PYTHONDONTWRITEBYTECODE: no .pyc clutter in the image
@@ -25,11 +23,11 @@ COPY clayseal ./clayseal
 COPY migrations ./migrations
 COPY alembic.ini ./alembic.ini
 
-# The service plus its psycopg[binary] + SQLAlchemy deps, the ASGI server, and
-# boto3 (the [kms] extra) for the AWS KMS envelope-encryption provider that
-# production selects via CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms.
+# The [server] extra carries the FastAPI service, ASGI server, SQLAlchemy,
+# psycopg, and alembic; [kms] adds boto3 for the AWS KMS envelope-encryption
+# provider that production selects via CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms.
 RUN pip install --upgrade pip \
-    && pip install ".[kms]" "uvicorn[standard]>=0.27" "psycopg[binary]>=3.1"
+    && pip install ".[server,kms]"
 
 # Run as an unprivileged user.
 RUN useradd --create-home --uid 10001 appuser

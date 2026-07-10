@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from agentauth.core.production import enforce_production_policy
+from clayseal._core import enforce_production_policy
 
 from .config import Settings, get_settings
 from .db import validate_database_config
@@ -18,7 +18,7 @@ def validate_production_startup(settings: Settings | None = None) -> None:
     validate_secret_encryption_config(settings.database_url)
     if not settings.is_production:
         return
-    enforce_production_policy(layer="identity")
+    enforce_production_policy()
     extra = _identity_specific_violations(settings)
     if extra:
         raise RuntimeError(

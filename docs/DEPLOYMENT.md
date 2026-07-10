@@ -1,8 +1,8 @@
 # Clay Seal Identity — deployment
 
 Production checklist for the **Clay Seal Identity** service (repo: `clay-seal-identity`,
-PyPI package: `clayseal-identity`). Cross-cutting items (receipts, capabilities,
-Terraform) live in the `clay-seal-core` repo at `docs/DEPLOYMENT.md`.
+PyPI package: `clayseal-identity`). Deployment of the upper Clay Seal layers
+(receipts, capabilities) is documented in their own repos.
 
 ## Pre-deploy
 

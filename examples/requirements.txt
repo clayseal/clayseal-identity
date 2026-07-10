@@ -6,9 +6,6 @@
 #   python3 -m venv .venv && source .venv/bin/activate
 #   pip install -r examples/requirements.txt
 #   python examples/01_quickstart.py
-#
-# `agentauth-core` is pulled from PyPI once published; until then install it
-# from the sibling clay-seal-core repo first (see CONTRIBUTING.md).
 
 # This package in editable mode, including the FastAPI service ([server]) deps.
 -e ..[server]

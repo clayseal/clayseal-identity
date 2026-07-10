@@ -2,8 +2,8 @@
 
 Dynamic L2 file scope is encoded as ``allowed_path`` / ``denied_path`` facts on
 attenuated Biscuit tokens. Fact extraction (Biscuit-specific) lives here; the
-matching semantics are the canonical implementation in
-``agentauth.core.path_matching``, re-exported for callers of this module.
+matching semantics live in ``clayseal._core`` (kept behaviorally identical to
+the upper layers' implementation), re-exported for callers of this module.
 Datalog still gates the coarse ``(resource, action)`` capability.
 """
 
@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from agentauth.core.path_matching import evaluate_path_scope, path_matches_any
+from clayseal._core import evaluate_path_scope, path_matches_any
 
 FILE_RESOURCE = "file"
 
