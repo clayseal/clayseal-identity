@@ -109,9 +109,9 @@ class IdentifyRequest(BaseModel):
         ..., min_length=1, max_length=MAX_ATTESTATION_DOCUMENT_CHARS
     )
     ttl_seconds: int | None = None
-    # JOSE typ for the minted JWT-SVID. "wit+jwt" opts into WIMSE Workload
-    # Identity Token framing (cnf-bound, never bearer); default is unchanged.
-    token_typ: Literal["clayseal-svid+jwt", "wit+jwt"] | None = None
+    # JOSE typ for the minted JWT-SVID. Default "JWT" is the SPIFFE JWT-SVID
+    # standard; "wit+jwt" opts into WIMSE Workload Identity Token framing.
+    token_typ: Literal["JWT", "wit+jwt"] | None = None
     # Optional EC/RSA public key (SPKI PEM) to also receive an X.509-SVID for
     # mTLS, bound to the same SPIFFE ID. The workload keeps the private key.
     x509_public_key_pem: str | None = Field(default=None, max_length=8192)

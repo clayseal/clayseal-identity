@@ -201,7 +201,7 @@ def test_attestation_issues_jwt_svid(client, customer):
     assert data["token"].count(".") == 2
     header = jwt.get_unverified_header(data["token"])
     assert header["alg"] == "RS256"
-    assert header["typ"] == "clayseal-svid+jwt"
+    assert header["typ"] == "JWT"
     assert header["kid"]
 
 

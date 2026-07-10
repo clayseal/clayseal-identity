@@ -14,7 +14,10 @@ import jwt
 
 from .errors import InvalidTokenError, TokenExpiredError
 
-DEFAULT_ALLOWED_TOKEN_TYPES = ("clayseal-svid+jwt", "wit+jwt")
+# SPIFFE JWT-SVID typ is "JWT" (or "JOSE"); "wit+jwt" is the WIMSE opt-in and
+# "clayseal-svid+jwt" is the legacy Clay Seal typ, still accepted for pre-0.6
+# tokens.
+DEFAULT_ALLOWED_TOKEN_TYPES = ("JWT", "JOSE", "wit+jwt", "clayseal-svid+jwt")
 DEFAULT_ALGORITHMS = ("RS256",)
 
 

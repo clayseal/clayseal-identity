@@ -19,7 +19,9 @@ import { createHash, createPublicKey, verify as edVerify } from "node:crypto";
 import { AuthorizerBuilder, Biscuit, PublicKey } from "@biscuit-auth/biscuit-wasm";
 import { createLocalJWKSet, jwtVerify } from "jose";
 
-const DEFAULT_ALLOWED_TOKEN_TYPES = ["clayseal-svid+jwt", "wit+jwt"];
+// SPIFFE JWT-SVID typ is "JWT" (or "JOSE"); "wit+jwt" is the WIMSE opt-in and
+// "clayseal-svid+jwt" is the legacy Clay Seal typ, still accepted for pre-0.6 tokens.
+const DEFAULT_ALLOWED_TOKEN_TYPES = ["JWT", "JOSE", "wit+jwt", "clayseal-svid+jwt"];
 const POP_MAX_AGE_SECONDS = 300;
 
 // MUST stay byte-identical to the Datalog policy in

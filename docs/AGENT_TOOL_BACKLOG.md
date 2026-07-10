@@ -76,10 +76,12 @@ delegates a narrower session before handing tools to a subtask.
 
 Status: planned.
 
-Add CLI support to inspect a manifest and print a plain-English review:
+Add an SDK helper that turns a tool manifest into a reviewable permission summary. This should be callable from install screens, notebooks, docs generators, or a future UI without requiring a separate executable.
 
-```bash
-clayseal-identity review-tools clayseal-tools.json
+```python
+from clayseal.identity.integrations.agent_tools import review_manifest
+
+summary = review_manifest(manifest)
 ```
 
 ### 6. Framework-Specific Shims

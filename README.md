@@ -125,7 +125,7 @@ verifier (`@clayseal/verify`) for Node MCP servers and OpenClaw tool plugins,
 and an [agentskills.io](https://agentskills.io) skill for Hermes Agent. See
 [integrations/](integrations).
 
-The package is SDK-first. Token issuance, offline verification, and integration checks are exposed through `clayseal.identity` APIs rather than a bundled command-line tool.
+The package is SDK-first. Token issuance, offline verification, and integration checks are exposed through `clayseal.identity` APIs for use in application code and tests.
 
 The current SDK flow is service-backed: create or point at a tenant, then call
 `identify`. `dev_attestation=True` is only for localhost demos/tests; production

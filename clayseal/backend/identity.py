@@ -56,13 +56,23 @@ from .signing_keys import decrypt_private_pem, encrypt_private_pem, maybe_reencr
 # sender-constraining (cnf.jkt PoP) and Biscuit-root algorithm, where it never
 # crosses a federation boundary.
 JWT_ALGORITHM = "RS256"
-JWT_TYPE = "clayseal-svid+jwt"
+# The SPIFFE JWT-SVID standard fixes typ to "JWT" (a validator MAY reject any
+# other value), so that is the default and the credential is a conformant
+# JWT-SVID out of the box.
+JWT_TYPE = "JWT"
 # WIMSE Workload Identity Token framing (draft-ietf-wimse-workload-creds): our
 # JWT-SVIDs are already WIT-shaped — cnf is REQUIRED (always set below) and the
 # token must not be accepted as a bearer credential. Opting into typ=wit+jwt
 # lets WIMSE-aware relying parties recognize that contract from the header.
 WIT_JWT_TYPE = "wit+jwt"
+# "clayseal-svid+jwt" is the legacy Clay Seal typ, still accepted on the wire
+# for pre-0.6 tokens but no longer minted.
+LEGACY_SVID_JWT_TYPE = "clayseal-svid+jwt"
+# typ values accepted by issuance (mint) — SPIFFE "JWT" or the WIMSE opt-in.
 SUPPORTED_JWT_TYPES = (JWT_TYPE, WIT_JWT_TYPE)
+# typ values accepted on verification — the above plus SPIFFE's alternate
+# "JOSE" and the legacy Clay Seal typ.
+ACCEPTED_JWT_TYPES = (JWT_TYPE, "JOSE", WIT_JWT_TYPE, LEGACY_SVID_JWT_TYPE)
 
 
 def generate_ed25519_keypair() -> tuple[str, str]:
@@ -700,7 +710,7 @@ def validate_token(
             "Token uses an unsupported signing algorithm.",
             suggestion="Mint a fresh signed credential with identify().",
         )
-    if header.get("typ") not in SUPPORTED_JWT_TYPES:
+    if header.get("typ") not in ACCEPTED_JWT_TYPES:
         raise InvalidTokenError(
             "Token type is not a Clay Seal SVID.",
             suggestion="Pass the credential JWT returned by identify(), not another JWT type.",

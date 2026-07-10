@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **JWT-SVID `typ` is now the SPIFFE-standard `"JWT"`** (was `clayseal-svid+jwt`),
+  so the default credential is a conformant SPIFFE JWT-SVID that strict
+  validators accept. `wit+jwt` remains an opt-in (WIMSE). Verification still
+  accepts `JWT`, `JOSE`, `wit+jwt`, and the legacy `clayseal-svid+jwt`, so
+  tokens minted before this change keep validating.
+
 ### Added
 
 - **SPIFFE X.509-SVIDs for mTLS** (`clayseal/backend/x509_svid.py`). Alongside

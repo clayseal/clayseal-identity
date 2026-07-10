@@ -34,7 +34,7 @@ def test_agent_identity_configuration_is_public(client, customer):
     assert doc["profile"] == "clayseal-agent-identity-v1"
     assert doc["jwks_uri"].endswith(f"/t/{cid}/jwks.json")
     assert doc["proof_of_possession_required"] is True
-    assert "clayseal-svid+jwt" in doc["supported_token_types"]
+    assert "JWT" in doc["supported_token_types"]
 
 
 def test_public_jwks_requires_no_api_key(client, customer):
@@ -128,9 +128,10 @@ def test_offline_verifier_rejects_stale_jwks(client, customer):
         raise AssertionError("empty JWKS was accepted")
 
 
-def test_default_token_typ_unchanged(client, customer):
+def test_default_token_typ_is_spiffe_jwt(client, customer):
+    """The default credential is a conformant SPIFFE JWT-SVID: typ == "JWT"."""
     token = register_and_identify(client, customer["headers"]).json()["token"]
-    assert pyjwt.get_unverified_header(token)["typ"] == "clayseal-svid+jwt"
+    assert pyjwt.get_unverified_header(token)["typ"] == "JWT"
 
 
 def test_wit_typ_opt_in_mints_wit_shaped_token(client, customer):

@@ -61,7 +61,7 @@ def _claims() -> dict:
 
 
 def _headers(**overrides) -> dict:
-    header = {"kid": KID, "typ": "clayseal-svid+jwt"}
+    header = {"kid": KID, "typ": "JWT"}
     header.update(overrides)
     return header
 

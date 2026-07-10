@@ -182,6 +182,6 @@ receipts later through the higher Clay Seal layers.
 
 ## SDK-only verification
 
-Clay Seal Identity no longer ships a command-line helper. Keep integration checks in code so the same verifier used in tests is the one used in production. For HTTP tools, add `AgentIdentityVerifier` at the request boundary. For MCP servers, use `ClaySealTokenVerifier` and `ToolGuard`. For JavaScript MCP servers, use `@clayseal/verify`.
+Keep integration checks in code so the same verifier used in tests is the one used in production. For HTTP tools, add `AgentIdentityVerifier` at the request boundary. For MCP servers, use `ClaySealTokenVerifier` and `ToolGuard`. For JavaScript MCP servers, use `@clayseal/verify`.
 
-When reviewing an MCP client config, check the same things the old helper checked: remote servers should use HTTPS, authorization should come from the agent runtime rather than a literal token in the config, and local command servers should not receive broad environment secrets.
+When reviewing an MCP client config, make sure remote servers use HTTPS, authorization comes from the agent runtime rather than a literal token in the config, and local command servers do not receive broad environment secrets.
