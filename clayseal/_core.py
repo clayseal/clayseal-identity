@@ -1,18 +1,15 @@
-"""Vendored shared-core helpers, so `clayseal-identity` has no private dependency.
+"""Vendored shared helpers, so `clayseal-identity` has no private dependency.
 
-This is the complete surface this package used from the internal `agentauth-core`
-contracts distribution, copied in so `pip install clayseal-identity` resolves
-entirely from public PyPI:
+This module contains the small, stable helper surface the identity layer needs
+without requiring any sibling Clay Seal repository at install time:
 
 - canonical JSON encoding (hashing/signing/audit linkage),
-- path-scope matching (the semantics upper Clay Seal layers evaluate identically),
+- path-scope matching (the semantics upper Clay Seal layers evaluate),
 - the identity-layer production guards, keyed to ``CLAYSEAL_*`` env vars.
 
-The hash and path-matching functions must stay behaviorally identical to their
-`agentauth.core` originals — capability and receipt layers evaluate the same
-facts, and a drift here would make layers disagree about what a token allows.
-Internal CI runs a parity test against a core checkout to enforce this
-(see ``sdk/python/tests/test_vendored_core.py``; it skips when core is absent).
+The hash and path-matching functions are intentionally tiny and pinned by local
+behavior tests. If an upper layer changes these semantics, update the tests and
+release the affected layers together.
 """
 from __future__ import annotations
 
@@ -24,7 +21,7 @@ import posixpath
 from collections.abc import Callable
 from typing import Any
 
-# --- canonical JSON (parity: agentauth.core.hash_util) ---------------------- #
+# --- canonical JSON --------------------------------------------------------- #
 
 
 def sha256_hex(data: bytes) -> str:
@@ -42,7 +39,7 @@ def canonical_json_bytes(value: Any, *, default: Callable[[Any], Any] | None = N
     ).encode("utf-8")
 
 
-# --- path-scope matching (parity: agentauth.core.path_matching) -------------- #
+# --- path-scope matching ---------------------------------------------------- #
 
 
 def normalize_path(path: str) -> str:

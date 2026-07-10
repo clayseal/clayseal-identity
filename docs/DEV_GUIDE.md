@@ -23,8 +23,8 @@ Concretely, this repo provides:
 
 What this repo deliberately does **not** include:
 
-- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities) (layer 2).
-- Execution receipts, audit logs, MCP gateways, or policy proofs — that is [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts) (layer 3).
+- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is [clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities) (layer 2).
+- Execution receipts, audit logs, MCP gateways, or policy proofs — that is [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts) (layer 3).
 
 If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
 
@@ -37,8 +37,8 @@ Think of the stack as increasing specificity:
 | Layer | Repository | Question it answers |
 |-------|------------|---------------------|
 | L1 Identity | **this repo** | Who is acting, with what attested key? |
-| L2 Capabilities | agentauth-capabilities | What are they allowed to do right now (scoped, attenuated)? |
-| L3 Receipts | agentauth-receipts | What did they actually do, and can a third party verify it? |
+| L2 Capabilities | clay-seal-capabilities | What are they allowed to do right now (scoped, attenuated)? |
+| L3 Receipts | clay-seal-receipts | What did they actually do, and can a third party verify it? |
 
 Layer 1 exports facts. Layer 2 narrows them into action-scoped tokens. Layer 3 records decisions and builds tamper-evident proofs.
 
@@ -78,7 +78,7 @@ install them on top, in order, from their own pinned tags.
 
 ### Python version
 
-Supported: **3.10 through 3.13** (see `pyproject.toml`). Biscuit’s native wheel is the reason for the upper bound.
+Supported: **3.11 through 3.13** (see `pyproject.toml`). Biscuit’s native wheel is the reason for the lower bound.
 
 ---
 
@@ -356,8 +356,8 @@ pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
 
 ## Where to go next
 
-- **Scope and commit tokens** → [agentauth-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
-- **Receipts, audit, MCP gateway** → [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
+- **Scope and commit tokens** → [clay-seal-capabilities](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md)
+- **Receipts, audit, MCP gateway** → [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - **Cross-provider identity** → [capabilities cross_layer_integration.md](https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/cross_layer_integration.md)
 - **Agent identity profile** → [docs/AGENT_IDENTITY_PROFILE.md](AGENT_IDENTITY_PROFILE.md)
 - **CLI and framework helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)

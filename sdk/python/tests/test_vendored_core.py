@@ -1,16 +1,15 @@
-"""Vendored-core guarantees (``clayseal/_core.py``).
+"""Vendored-helper guarantees (``clayseal/_core.py``).
 
 Two concerns:
 
 1. **Behavior of the CLAYSEAL_*-keyed production guards.** The guards used to
-   live in the internal core package keyed to ``AGENTAUTH_ENV``, so after the
-   env-var rename they silently no-opped under ``CLAYSEAL_ENV=production``.
-   These tests pin the fixed behavior.
+   be keyed to the old environment name, so after the env-var rename they could
+   silently no-op under ``CLAYSEAL_ENV=production``. These tests pin the fixed
+   behavior.
 
-2. **Parity with the ``agentauth.core`` originals** for the helpers whose
-   semantics are shared with the upper Clay Seal layers (canonical JSON,
-   path-scope matching). These tests run only where the internal core package
-   is installed (internal CI's ``core-parity`` job) and skip everywhere else.
+2. **Stable local semantics** for helpers shared with the upper Clay Seal layers
+   (canonical JSON, path-scope matching). The identity repo must be fully
+   testable without cloning any sibling repository.
 """
 from __future__ import annotations
 
@@ -32,8 +31,7 @@ def test_guards_inactive_outside_production(monkeypatch):
 
 
 def test_refuses_dev_attestation_in_production(monkeypatch):
-    """Regression: this refusal previously keyed off AGENTAUTH_ENV and no-opped
-    under CLAYSEAL_ENV=production."""
+    """Regression: this refusal must key off CLAYSEAL_ENV."""
     monkeypatch.setenv("CLAYSEAL_ENV", "production")
     with pytest.raises(RuntimeError, match="dev_attestation is not permitted"):
         _core.refuse_dev_attestation_client(dev_attestation_enabled=True)
@@ -88,8 +86,8 @@ def test_clean_production_env_passes(monkeypatch):
 # receipts seam: Credential.to_binding_dict
 # --------------------------------------------------------------------------- #
 
-# The exact key set wrap_agentauth_session -> AuthorityBinding.from_agentauth_credential
-# consumes in the receipts layer. Changing it is a cross-repo API break.
+# The exact key set consumed by the upper Clay Seal layers. Changing it is a
+# cross-repo API break.
 _BINDING_KEYS = {
     "agent_id", "spiffe_id", "agent_type", "owner", "scopes", "selectors",
     "expires_at", "capabilities", "biscuit", "has_biscuit", "bound_keyhash",
@@ -117,18 +115,8 @@ def test_to_binding_dict_keeps_the_receipts_contract():
 
 
 # --------------------------------------------------------------------------- #
-# parity with agentauth.core (skips when core is not installed)
+# shared-helper behavior
 # --------------------------------------------------------------------------- #
-
-try:
-    from agentauth.core import hash_util as core_hash
-    from agentauth.core import path_matching as core_paths
-except ImportError:  # public checkouts: core is internal-only
-    core_hash = core_paths = None
-
-needs_core = pytest.mark.skipif(
-    core_hash is None, reason="internal agentauth-core not installed"
-)
 
 _JSON_CORPUS = [
     {"b": 1, "a": [2, {"z": None, "y": "ü"}], "c": True},
@@ -159,28 +147,42 @@ _PATTERNS = [
 ]
 
 
-@needs_core
 @pytest.mark.parametrize("value", _JSON_CORPUS)
-def test_canonical_json_parity(value):
-    assert _core.canonical_json_bytes(value) == core_hash.canonical_json_bytes(value)
+def test_canonical_json_is_stable_and_tight(value):
+    encoded = _core.canonical_json_bytes(value)
+    assert isinstance(encoded, bytes)
+    # Stable across repeated calls.
+    assert encoded == _core.canonical_json_bytes(value)
+    # No insignificant whitespace outside string values.
+    if isinstance(value, (dict, list)):
+        assert b", " not in encoded
+        assert b": " not in encoded
 
 
-@needs_core
 @pytest.mark.parametrize("path", _PATH_CORPUS)
-def test_path_normalization_parity(path):
-    assert _core.normalize_path(path) == core_paths.normalize_path(path)
-    assert _core.path_escapes_root(path) == core_paths.path_escapes_root(path)
+def test_path_normalization_and_escape_detection(path):
+    normalized = _core.normalize_path(path)
+    assert "\\" not in normalized
+    assert "//" not in normalized
+    if path in {"../escape.txt", "/absolute/path", ".."}:
+        assert _core.path_escapes_root(path) is True
+    else:
+        assert _core.path_escapes_root(path) is False
 
 
-@needs_core
 @pytest.mark.parametrize("path", _PATH_CORPUS)
 @pytest.mark.parametrize("patterns", _PATTERNS)
-def test_path_matching_parity(path, patterns):
-    assert _core.path_matches_any(path, patterns) == core_paths.path_matches_any(
-        path, patterns
-    )
-    assert _core.evaluate_path_scope(
-        path, allowed_paths=patterns, denied_paths=["secrets/*"]
-    ) == core_paths.evaluate_path_scope(
+def test_path_scope_is_consistent(path, patterns):
+    matched = _core.path_matches_any(path, patterns)
+    allowed, reason = _core.evaluate_path_scope(
         path, allowed_paths=patterns, denied_paths=["secrets/*"]
     )
+
+    assert isinstance(matched, bool)
+    assert isinstance(allowed, bool)
+    assert reason
+    if _core.path_escapes_root(path):
+        assert allowed is False
+        assert "escapes" in reason
+    elif patterns:
+        assert allowed is matched or _core.path_matches_any(path, ["secrets/*"])

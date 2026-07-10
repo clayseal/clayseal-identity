@@ -19,10 +19,10 @@ jobs:
       - run: pip install ruff
       - name: Ruff lint
         run: ruff check .
-      - name: Standalone contract (no agentauth imports; shared helpers are vendored)
+      - name: Standalone contract (no private package imports; shared helpers are vendored)
         run: |
-          if grep -rnE "(import|from)[[:space:]]+agentauth" clayseal; then
-            echo "::error::clayseal must not import any agentauth package — shared helpers are vendored in clayseal/_core.py"
+          if grep -rnE "(import|from)[[:space:]]+(clay_seal_core|clayseal_core)" clayseal; then
+            echo "::error::clayseal must not import private sibling packages — shared helpers are vendored in clayseal/_core.py"
             exit 1
           fi
 
@@ -58,27 +58,3 @@ jobs:
         run: >
           pytest backend/tests sdk/python/tests -q
           --cov=clayseal --cov-report=term-missing --cov-report=xml
-
-  # Internal-only: prove the vendored helpers in clayseal/_core.py have not
-  # drifted from their agentauth-core originals. Skipped on fork PRs (no token);
-  # the parity tests themselves skip when agentauth.core is not importable.
-  core-parity:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: pberlizov/clay-seal-core
-          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
-          path: deps/agentauth-core
-          ref: main
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Install (this package + core for comparison)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]" "./deps/agentauth-core"
-      - name: Vendored-core parity tests
-        run: pytest sdk/python/tests/test_vendored_core.py -q

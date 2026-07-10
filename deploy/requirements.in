@@ -24,10 +24,9 @@ pydantic>=2.6,<3.0
 psycopg[binary]>=3.1,<4.0
 alembic>=1.13,<2.0
 
-# --- deploy-only addition (NOT declared in pyproject.toml) ---
+# --- kms extra mirrored from clayseal-identity/pyproject.toml ---
 # boto3 is imported lazily by AwsKmsProvider when
-# CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms (the production setting). It is NOT
-# a declared dependency of clayseal-identity and the identity Dockerfile installs
-# from pyproject, so the deploy image MUST add boto3 separately (or install from
-# this lock) for the aws_kms provider to work.
+# CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms. The production Dockerfile installs
+# `.[server,kms]`; this lock input keeps the deploy dependency tree equivalent
+# when using hash-pinned installs.
 boto3>=1.34

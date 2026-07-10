@@ -49,13 +49,10 @@ class Credential:
         )
 
     def to_binding_dict(self) -> dict[str, Any]:
-        """The L1/L2 authority facts, in the shape the receipts runtime's
-        ``AuthorityBinding.from_agentauth_credential`` consumes. This is the
-        seam that binds an attested identity into every execution receipt.
+        """The L1/L2 authority facts consumed by the receipts runtime.
 
-        No in-repo caller: the consumer is ``wrap_agentauth_session`` in the
-        receipts layer, which duck-types on ``session.credential`` having this
-        method. Do not remove without changing that contract.
+        No in-repo caller: upper layers duck-type on ``session.credential``
+        having this method. Do not remove without changing that contract.
         """
         return {
             "agent_id": self.agent_id,
