@@ -48,6 +48,15 @@ from .errors import (
     TransportError,
     TTLOutOfRangeError,
 )
+from .integrations import (
+    AgentToolProxy,
+    ProtectedTool,
+    ToolCallContext,
+    ToolPermission,
+    agent_tool_manifest,
+    protect_tool,
+    protect_tools,
+)
 from .models import AgentInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims, explain_token, lint_token
 from .session import AgentSession
@@ -86,6 +95,13 @@ __all__ = [
     "get_identity_adapter",
     "list_identity_adapters",
     "register_identity_adapter",
+    "AgentToolProxy",
+    "ProtectedTool",
+    "ToolCallContext",
+    "ToolPermission",
+    "agent_tool_manifest",
+    "protect_tool",
+    "protect_tools",
     "ClaySealError",
     "TransportError",
     "InvalidAPIKeyError",
