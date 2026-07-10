@@ -11,11 +11,10 @@ version bump before release.
 
 ### Added
 
-- `clayseal/_core.py`: the small shared-core surface (canonical JSON, path-scope
+- `clayseal/_core.py`: the small shared-helper surface (canonical JSON, path-scope
   matching, production guards) is now vendored, so the package has **no private
-  dependency** — every runtime dependency resolves from public PyPI. Internal CI
-  runs a `core-parity` job so the vendored helpers cannot drift from their
-  `agentauth-core` originals; the parity tests skip on public checkouts.
+  dependency** — every runtime dependency resolves from public PyPI. Local
+  behavior tests pin the helper semantics without checking out any sibling repo.
 - Restored `Credential.to_binding_dict()` (removed in the dead-code prune): it is
   the duck-typed seam the receipts layer's `wrap_agentauth_session` consumes.
   A test now pins the contract's key set.
@@ -68,8 +67,8 @@ version bump before release.
   mode"; the advertised-but-rejected public `constraints` field on `Capability`
   (invalid constraints still fail closed); and dead SDK/backend helpers
   (`ClaySeal.biscuit_root_public_key`, `HttpClient.put/delete/context-manager`,
-  `Credential.to_binding_dict`, `AgentSession.can_read_path` /
-  `attenuate_for_task_scope`, `mtls.spiffe_id_from_cert`).
+  `AgentSession.can_read_path` / `attenuate_for_task_scope`,
+  `mtls.spiffe_id_from_cert`).
 
 ### Fixed
 
@@ -80,8 +79,8 @@ version bump before release.
 ### Known follow-ups
 
 - SDK↔backend mirrors (error hierarchy, offline JWT verify, profile/authorizer
-  constants) remain duplicated, guarded by a cross-package parity test; full
-  consolidation awaits a shared module in `agentauth-core`.
+  constants) remain duplicated, guarded by local contract tests; full
+  consolidation can move to a public shared module if the layers need it.
 - mypy runs advisory: ~30 type nits to burn down. `AuditEvent.customer_id` has no
   FK; timestamp helpers not yet unified.
 
@@ -108,8 +107,7 @@ version bump before release.
   `CLAYSEAL_*` environment variables, the `clayseal-identity` distribution name
   (the `agentauth-identity` console script alias is removed), and the default
   `clayseal-svid+jwt`/`clayseal-pop+jwt` token types and `clayseal.io` trust
-  domain. The sibling `agentauth-core` dependency and its `agentauth.core.*`
-  namespace are unaffected by this rename.
+  domain.
 - README and developer guide now describe the current attestation-backed SDK
   flow and RS256/Ed25519 split accurately.
 - Example bootstrap quiets embedded-backend logs for cleaner first-run output.
@@ -129,7 +127,7 @@ version bump before release.
 
 ### Changed
 
-- `session.wrap()` imports `AuthorityBinding` from shared `agentauth.core.authority_binding` (used by L2/L3 cross-provider integration).
+- Introduced the receipt-binding contract used by L2/L3 cross-provider integration.
 - Import convention: use `from clayseal.identity import ClaySeal` (no top-level `clayseal` package in this repo).
 
 ### Fixed
