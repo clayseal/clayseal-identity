@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     # Advisory while the codebase adopts type annotations incrementally. mypy
     # analyses source without importing, so no dependencies are required here.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
@@ -38,7 +37,11 @@ jobs:
           python-version: "3.13"
       - run: pip install mypy
       - name: Mypy (advisory)
-        run: mypy
+        run: |
+          mypy || {
+            echo "::warning::mypy advisory failed; type coverage is not yet release-gating"
+            exit 0
+          }
 
   test:
     runs-on: ubuntu-latest

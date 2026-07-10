@@ -16,6 +16,10 @@ permissions:
 
 jobs:
   analyze:
+    # Private repositories need GitHub Advanced Security/code scanning enabled
+    # before CodeQL can upload results. Run automatically once public; for a
+    # private GHAS repo, set CLAYSEAL_ENABLE_CODEQL=true as a repo/org variable.
+    if: ${{ github.event.repository.private == false || vars.CLAYSEAL_ENABLE_CODEQL == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
