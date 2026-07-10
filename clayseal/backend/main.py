@@ -35,6 +35,9 @@ async def lifespan(app: FastAPI):
     # Fail fast on unsafe production config before serving any traffic.
     validate_production_startup(settings)
     init_db()
+    from .node_attestor_config import configure_cloud_attestors_from_env
+
+    cloud_attestors = configure_cloud_attestors_from_env()
     get_logger().info(
         "startup complete",
         extra={
@@ -42,6 +45,7 @@ async def lifespan(app: FastAPI):
             "env": settings.env,
             "manage_schema": settings.manage_schema,
             "rate_limit_enabled": settings.rate_limit_enabled,
+            "cloud_attestors": cloud_attestors,
         },
     )
     yield

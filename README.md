@@ -29,12 +29,16 @@ Implemented today:
 - SQLite-by-default development storage and Postgres-ready production storage.
 - Alembic migrations, API-key hardening, and optional KMS envelope encryption.
 
-> **Attestation model — please read.** The node/workload attestation in this repo
-> is a *prototype stand-in for SPIRE*: the backend trusts an RSA anchor an
-> operator registers out-of-band and does **not** yet verify live
-> Kubernetes/AWS/GCP node evidence. Treat it as bring-your-own-attestation and
-> front issuance with a real SPIRE agent in production. Details:
-> [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md#attestation-model--read-this-first).
+> **Attestation model.** Node attestation verifies platform-signed evidence a
+> workload cannot forge without controlling the node: a Google-signed GCP
+> instance identity token, a Kubernetes projected service-account token (checked
+> via the cluster's TokenReview API), or an AWS EC2 instance identity document
+> (RSA-2048 signature against AWS's regional certificate). The node token's
+> audience binds the workload key being presented, so evidence captured
+> elsewhere can't be replayed to bind a different key. For on-prem and bare-metal
+> there is also a static trust-anchor attestor (operator-registered key). Enable
+> attestors per deployment (see [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and
+> [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 Layer 1 deliberately does not issue action-scoped commit tokens or write
 execution receipts. Those live in the sibling layers:

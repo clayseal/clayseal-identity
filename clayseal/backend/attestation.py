@@ -1,28 +1,20 @@
-"""Attestation: turning *verified evidence* into selectors.
+"""Static trust-anchor node attestation (on-prem / bare-metal / dev).
 
-This is the prototype's stand-in for SPIRE's two attestation stages. In
-production a SPIRE Agent proves a workload's environment to the SPIRE Server in
-two steps:
+Real cloud and Kubernetes node attestation — verifying Google/AWS/cluster-signed
+evidence — lives in ``node_attestors.py``. This module is the remaining, still
+legitimate, attestation method for environments with no cloud metadata service:
+**static key attestation**, akin to SPIRE's ``x509pop`` / join-token.
 
-1. **Node attestation** — the agent proves which node/environment it runs on
-   (Kubernetes projected SA token, AWS instance identity document, GCP metadata
-   token). The server verifies this cryptographically and derives *node
-   selectors*.
-2. **Workload attestation** — the (now-trusted) agent reports the calling
-   process's attributes (service account, pod labels, container image digest,
-   process UID), from which the server derives *workload selectors*.
-
-We cannot call a live Kubernetes TokenReview or AWS IID endpoint from an
-in-process service, so the workload presents a **signed attestation document**
-(a JWT). The signature is verified against a node trust anchor an admin
-registered for the tenant (``NodeAttestor``) — that *is* the node attestation,
-and it is real cryptography: forging provenance requires the anchor's private
-key. The verified document's ``workload`` block then feeds workload selector
-derivation. The transport is simulated; the trust decision is not.
+An operator registers a node trust anchor (an RSA public key) for the tenant.
+The workload presents a **signed attestation document** (a JWT) carrying node +
+workload evidence; the signature is verified against a registered anchor. That
+is real cryptography — forging provenance requires the anchor's private key —
+and its trust root is the operator's key management (whoever holds the anchor
+key can vouch for a node), which is the right model on-prem but is why cloud
+workloads should use the platform attestors instead.
 
 A caller never hands us a selector directly. Selectors are always *derived from
-verified evidence*, which is the whole point: an agent cannot claim an identity,
-only prove one.
+verified evidence*: an agent cannot claim an identity, only prove one.
 """
 from __future__ import annotations
 

@@ -8,6 +8,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Real cloud / Kubernetes node attestation** (`clayseal/backend/node_attestors.py`).
+  Node attestation now verifies platform-signed evidence a workload cannot forge
+  without controlling the node: `gcp_iit` (Google-signed instance identity token,
+  verified against Google's keys), `k8s_psat` (projected service-account token,
+  verified by the cluster's TokenReview API), and `aws_iid` (EC2 instance
+  identity document, RSA-2048 signature against AWS's regional certificate). The
+  node token's audience binds the workload key being presented, so evidence
+  captured elsewhere cannot bind a different key. Attestors are enabled per
+  deployment via `CLAYSEAL_ATTEST_*`. The operator-registered RSA trust anchor
+  remains available as static-key attestation for on-prem / bare-metal. This
+  replaces the previous simulated-transport model; the trust root is now the
+  cloud provider or cluster, not an out-of-band operator key.
 - **Framework integrations for OpenClaw and Hermes Agent** (`integrations/`,
   `js/`). `@clayseal/verify` is a JavaScript/TypeScript verifier (offline
   JWT-SVID verification, Biscuit authorization, and Ed25519 proof-of-possession)

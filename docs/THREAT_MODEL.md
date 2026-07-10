@@ -6,21 +6,38 @@ itself.
 
 ## Attestation Model — read this first
 
-The attestation layer in this repository is a **prototype stand-in for SPIRE**,
-not a production node-attestation system. The backend verifies that an
-attestation document is signed by an RSA trust anchor an operator registered
-**out-of-band** for the tenant, and derives workload selectors from the document.
-It does **not** independently verify live platform evidence (Kubernetes
-TokenReview, AWS Instance Identity Documents, GCP Instance Identity Tokens). In
-SPIRE terms: the trust decision — does this document chain to a registered
-anchor? — is real, but the node/workload attestation *transport* is simulated.
+Node attestation verifies **platform-signed evidence** a workload cannot forge
+without controlling the node. Three cloud/cluster attestors verify evidence
+against the provider or cluster itself (`clayseal/backend/node_attestors.py`):
 
-**Implication:** the strength of "which workload is acting" rests on how the
-registered anchor's private key is protected and how registration entries are
-provisioned. Treat this as **bring-your-own-attestation**: in production, front
-issuance with a real SPIRE agent (or equivalent platform attestation) and
-pre-register anchors and entries out-of-band. Live cloud/Kubernetes node-attestor
-verification is on the roadmap, not implemented here.
+- **`gcp_iit`** — a Google-signed instance identity token (JWT, RS256), verified
+  against Google's published keys; selectors from the `google.compute_engine`
+  block.
+- **`k8s_psat`** — a Kubernetes projected service-account token, verified by the
+  cluster's **TokenReview** API, which also returns the namespace, service
+  account, and pod it is bound to.
+- **`aws_iid`** — an EC2 instance identity document plus its RSA-2048 signature,
+  verified against AWS's regional public certificate.
+
+**Key binding.** A node token proves the *node*, not the *presenter*. The
+audience the workload requests encodes the tenant and the Ed25519 workload key
+being bound (`clayseal://<tenant>/attest/<key-thumbprint>`), so a token captured
+elsewhere cannot be replayed to bind a different key. GCP and Kubernetes let a
+workload choose its token audience, so this is enforced there. An AWS instance
+identity document has no audience or expiry: it proves *which instance* is
+calling but not freshness or key binding, so pair `aws_iid` with a network trust
+boundary; the one-time table still prevents the same document minting twice.
+
+**Static trust anchor (on-prem / bare-metal).** Where there is no cloud metadata
+service, an operator can register an RSA trust anchor and the workload presents a
+JWT signed by it (`clayseal/backend/attestation.py`) — legitimate static-key
+attestation (SPIRE's `x509pop` / join-token model). Its trust root is the
+operator's key management: whoever holds the anchor key can vouch for a node, so
+protect it like a root key and prefer the platform attestors for cloud workloads.
+
+**Enable per deployment.** Attestors are off until configured (`CLAYSEAL_ATTEST_*`,
+see `DEPLOYMENT.md`); an identity service accepts only the clouds/clusters its
+operator turns on.
 
 `dev_attestation=True` (SDK) is a local-only convenience that plays both the node
 and workload roles; it is refused in production and restricted to localhost
@@ -46,8 +63,13 @@ backends.
   capabilities and layer 3 receipts for action-scoped enforcement.
 - **Compromise of the workload private key while the credential is live.** Keep
   TTLs short and rotate workload keys.
-- **A compromised node attestor private key.** Treat node attestor keys like root
-  trust anchors; rotate them and keep blast radius tenant-scoped.
+- **A compromised static trust-anchor private key.** For the on-prem static
+  attestor, whoever holds the anchor key can vouch for a node — treat it like a
+  root trust anchor, rotate it, keep blast radius tenant-scoped, and prefer the
+  cloud/cluster attestors where available.
+- **A leaked node token replayed to bind an attacker's key.** Prevented for GCP
+  and Kubernetes by the key-bound audience; not prevented for AWS `aws_iid`,
+  which has no audience (pair it with a network trust boundary).
 - **Prompt injection by itself.** Identity makes downstream decisions attributable
   and sender-constrained, but it does not inspect prompts or model outputs.
 - **Transport security.** Run the hosted service behind TLS and use mTLS or

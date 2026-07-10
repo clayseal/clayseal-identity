@@ -24,6 +24,23 @@ PyPI package: `clayseal-identity`). Deployment of the upper Clay Seal layers
 | `CLAYSEAL_MANAGE_SCHEMA` | `alembic` |
 | `CLAYSEAL_API_URL` | Clay Seal Identity base URL (required for attested receipt profiles) |
 
+## Node attestors
+
+Node attestation is off until you enable the clouds/clusters this service
+accepts. Each workload requests its node token with the audience
+`clayseal://<tenant>/attest/<workload-key-thumbprint>`, which binds the token to
+the key being presented.
+
+| Variable | Enables | Notes |
+|----------|---------|-------|
+| `CLAYSEAL_ATTEST_GCP=1` | `gcp_iit` | GCP instance identity tokens (`format=full`), verified against Google's keys. No other config. |
+| `CLAYSEAL_ATTEST_K8S_CLUSTER=<name>` | `k8s_psat` | Also set `CLAYSEAL_ATTEST_K8S_API` (API server URL), `CLAYSEAL_ATTEST_K8S_TOKEN` or `_TOKEN_FILE` (reviewer SA token, needs `system:auth-delegator`), and `CLAYSEAL_ATTEST_K8S_CA` (cluster CA PEM path). |
+| `CLAYSEAL_ATTEST_AWS_CERTS=<region>=<pem>,...` | `aws_iid` | Map each region to AWS's regional public certificate file. `aws_iid` proves instance identity but not freshness — pair with a network boundary. |
+
+On-prem / bare-metal with no metadata service: register a static RSA trust
+anchor (`POST /v1/node-attestors`) and have the workload present a JWT signed by
+it. Protect the anchor key like a root key.
+
 ## Startup guards
 
 `validate_production_startup()` refuses to serve when:

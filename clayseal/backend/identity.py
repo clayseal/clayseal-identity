@@ -43,6 +43,7 @@ from .models import (
     to_epoch,
     utcnow,
 )
+from .node_attestors import parse_cloud_bundle, verify_cloud_node_attestation
 from .signing_keys import decrypt_private_pem, encrypt_private_pem, maybe_reencrypt_signing_key
 
 # --------------------------------------------------------------------------- #
@@ -572,25 +573,44 @@ def attest(
 ) -> tuple[Agent, str]:
     """Prove an identity from verified evidence and mint a JWT-SVID.
 
-    Node attestation verifies the signed document; workload attestation derives
+    Node attestation verifies the evidence; workload attestation derives
     selectors from it; the union must match a pre-registered entry, which
     dictates the ``agent_type`` and ``scopes`` (never the caller). No match ->
     :class:`AttestationDeniedError`.
+
+    Two evidence forms are accepted: a real cloud/Kubernetes token bundle
+    (``gcp_iit`` / ``k8s_psat`` / ``aws_iid``, verified against the provider or
+    cluster), or a JWT signed by a registered static trust anchor (on-prem /
+    bare-metal / dev). The cloud path binds the node token's audience to the
+    workload key so captured evidence cannot bind a different key.
     """
-    node_payload, node_selectors = verify_node_attestation(db, customer, attestation_document)
-    exp_claim = node_payload.get("exp")
-    if not isinstance(exp_claim, (int, float)):
-        raise AttestationDeniedError(
-            "Attestation document is missing a valid exp claim.",
-            suggestion="Node attestation documents must be short-lived JWTs with exp and jti.",
+    max_ttl = get_settings().attestation_max_ttl_seconds
+    bundle = parse_cloud_bundle(attestation_document)
+    if bundle is not None:
+        result, cloud_workload_pubkey_pem, workload = verify_cloud_node_attestation(
+            bundle, tenant_id=customer.id, max_ttl_seconds=max_ttl
         )
-    record_attestation_use(
-        db,
-        customer.id,
-        jti=str(node_payload["jti"]),
-        expires_at=datetime.fromtimestamp(int(exp_claim), tz=UTC).replace(tzinfo=None),
-    )
-    workload = node_payload.get("workload") or {}
+        node_selectors = result.node_selectors
+        record_attestation_use(db, customer.id, jti=result.jti, expires_at=result.expires_at)
+        # Cloud evidence carries the workload key alongside the token (bound via
+        # the audience), not inside a signed workload block.
+        workload = dict(workload)
+        workload.setdefault("workload_pubkey_pem", cloud_workload_pubkey_pem)
+    else:
+        node_payload, node_selectors = verify_node_attestation(db, customer, attestation_document)
+        exp_claim = node_payload.get("exp")
+        if not isinstance(exp_claim, (int, float)):
+            raise AttestationDeniedError(
+                "Attestation document is missing a valid exp claim.",
+                suggestion="Node attestation documents must be short-lived JWTs with exp and jti.",
+            )
+        record_attestation_use(
+            db,
+            customer.id,
+            jti=str(node_payload["jti"]),
+            expires_at=datetime.fromtimestamp(int(exp_claim), tz=UTC).replace(tzinfo=None),
+        )
+        workload = node_payload.get("workload") or {}
     workload_selectors = derive_workload_selectors(workload)
     presented = set(node_selectors) | set(workload_selectors)
 
