@@ -22,7 +22,7 @@ uvicorn[standard]>=0.27,<1.0
 SQLAlchemy>=2.0,<3.0
 pydantic>=2.6,<3.0
 psycopg[binary]>=3.1,<4.0
-alembic>=1.13,<2.0
+alembic>=1.18.5,<2.0
 
 # --- kms extra mirrored from clayseal-identity/pyproject.toml ---
 # boto3 is imported lazily by AwsKmsProvider when
