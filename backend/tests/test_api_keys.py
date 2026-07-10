@@ -9,7 +9,7 @@ def test_create_customer_stores_only_api_key_hash(client):
     resp = client.post("/v1/customers", json={"name": "Beta Corp"})
     assert resp.status_code == 201
     data = resp.json()
-    assert data["api_key"].startswith("aa_")
+    assert data["api_key"].startswith("cs_")
     assert data["customer_id"]
 
     with SessionLocal() as db:

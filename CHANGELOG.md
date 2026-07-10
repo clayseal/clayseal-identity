@@ -55,6 +55,11 @@ version bump before release.
 - **Breaking:** minimum Python is now 3.11 (was 3.10): it matches the CI matrix,
   and `biscuit-python` ships no macOS wheel for CPython 3.10, which would have
   forced a Rust source build on Mac.
+- **Breaking:** tenant API keys are now issued with the `cs_` prefix (was `aa_`).
+  No deployed tenants exist, so no old-prefix keys are in circulation;
+  `scripts/migrate_api_keys.py` continues to hash whatever plaintext keys it finds.
+- Repository moved to the `clayseal` GitHub organization
+  (github.com/clayseal/clayseal-identity); all in-repo URLs updated.
 - `scripts/bootstrap.sh` rewritten to real setup; `.gitignore` pruned of
   monorepo leftovers; docs corrected (no more `clayseal.wrap`, `clayseal/core/`,
   or a second CLI alias).

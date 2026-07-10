@@ -31,7 +31,7 @@ def migrate(*, dry_run: bool) -> int:
             if lookup is None:
                 skipped += 1
                 print(
-                    f"skip customer_id={customer.id}: api_key is not a modern aa_<lookup>.<secret> value"
+                    f"skip customer_id={customer.id}: api_key is not a modern cs_<lookup>.<secret> value"
                 )
                 continue
             customer.api_key_hash = hash_api_key(customer.api_key)

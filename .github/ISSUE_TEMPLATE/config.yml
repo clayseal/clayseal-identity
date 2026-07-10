@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/pberlizov/clayseal-identity/security/advisories/new
+    url: https://github.com/clayseal/clayseal-identity/security/advisories/new
     about: Clay Seal Identity is security-critical. Please report vulnerabilities privately via the Security tab, not as a public issue. See SECURITY.md.
   - name: Documentation
-    url: https://github.com/pberlizov/clayseal-identity/blob/main/docs/DEV_GUIDE.md
+    url: https://github.com/clayseal/clayseal-identity/blob/main/docs/DEV_GUIDE.md
     about: Read the developer guide and other docs before opening an issue.

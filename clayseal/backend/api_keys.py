@@ -7,7 +7,7 @@ import secrets
 
 PBKDF2_ITERATIONS = 200_000
 PBKDF2_DIGEST = "sha256"
-KEY_PREFIX = "aa_"
+KEY_PREFIX = "cs_"
 
 
 def generate_api_key() -> tuple[str, str, str]:

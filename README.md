@@ -68,7 +68,7 @@ pip install "clayseal-identity[server,kms]"
 ### From source (development)
 
 ```bash
-git clone https://github.com/pberlizov/clayseal-identity.git
+git clone https://github.com/clayseal/clayseal-identity.git
 cd clayseal-identity
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"                 # client + server + test/lint/type tooling

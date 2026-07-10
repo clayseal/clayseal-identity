@@ -38,7 +38,7 @@ def to_epoch(dt: datetime) -> int:
 def spiffe_id(trust_domain: str, customer_id: str, agent_type: str) -> str:
     """Build the SPIFFE ID for an agent of ``agent_type`` owned by a customer.
 
-    Mirrors the production SPIRE layout from ``identity/identity.md``:
+    Mirrors the production SPIRE layout:
     ``spiffe://clayseal.io/customer/{customer_id}/agent/{agent_type}``.
     """
     return f"spiffe://{trust_domain}/customer/{customer_id}/agent/{agent_type}"

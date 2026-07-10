@@ -14,7 +14,7 @@ from clayseal.identity.errors import from_envelope
 
 
 def test_bad_api_key_raises_invalid_api_key(base_url):
-    client = ClaySeal(api_key="aa_not_real", base_url=base_url, dev_attestation=True)
+    client = ClaySeal(api_key="cs_not_real", base_url=base_url, dev_attestation=True)
     with pytest.raises(InvalidAPIKeyError) as exc:
         client.identify(agent_type="x", owner="y", scopes=[])
     assert exc.value.code == "invalid_api_key"
