@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time developer setup for clay-seal-identity: create a virtualenv, install
+# One-time developer setup for clayseal-identity: create a virtualenv, install
 # the package (client + server) with dev tooling, and run the test suite.
 set -euo pipefail
 

@@ -22,11 +22,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pberlizov/clay-seal-identity"
-Documentation = "https://github.com/pberlizov/clay-seal-identity/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/clay-seal-identity"
-Issues = "https://github.com/pberlizov/clay-seal-identity/issues"
-Changelog = "https://github.com/pberlizov/clay-seal-identity/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/pberlizov/clayseal-identity"
+Documentation = "https://github.com/pberlizov/clayseal-identity/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/pberlizov/clayseal-identity"
+Issues = "https://github.com/pberlizov/clayseal-identity/issues"
+Changelog = "https://github.com/pberlizov/clayseal-identity/blob/main/CHANGELOG.md"
 
 [project.scripts]
 clayseal-identity = "clayseal.identity.cli:main"

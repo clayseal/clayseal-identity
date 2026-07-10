@@ -1,6 +1,6 @@
 # Clay Seal Identity — deployment
 
-Production checklist for the **Clay Seal Identity** service (repo: `clay-seal-identity`,
+Production checklist for the **Clay Seal Identity** service (repo: `clayseal-identity`,
 PyPI package: `clayseal-identity`). Deployment of the upper Clay Seal layers
 (receipts, capabilities) is documented in their own repos.
 
