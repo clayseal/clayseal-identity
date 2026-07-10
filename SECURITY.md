@@ -12,12 +12,12 @@ Security fixes are provided for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.5.x   | :white_check_mark: |
-| < 0.5   | :x:                |
+| 0.6.x   | :white_check_mark: |
+| < 0.6   | :x:                |
 
-Older `0.3.x` and `0.4.x` releases predate the `clayseal` package rename and are
-no longer maintained. Please upgrade to the latest `0.5.x` release before
-reporting an issue.
+Releases before `0.5` predate the `clayseal` package rename and are no longer
+maintained. Please upgrade to the latest `0.6.x` release before reporting an
+issue.
 
 ## Reporting a Vulnerability
 
