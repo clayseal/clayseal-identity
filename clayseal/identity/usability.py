@@ -122,14 +122,14 @@ def generate_integration(framework: str) -> dict[str, Any]:
 from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
 
 app = FastAPI()
-verify_agent = AgentIdentityVerifier(
+require_agent = AgentIdentityVerifier.dependency(
     jwks={\"keys\": [...]},
     issuer=\"https://identity.example.com\",
     audience=\"tools-api\",
 )
 
 @app.post(\"/tool\")
-def run_tool(agent=Depends(verify_agent)):
+def run_tool(agent=Depends(require_agent)):
     return {\"agent_id\": agent.agent_id, \"ok\": True}
 """,
                 }

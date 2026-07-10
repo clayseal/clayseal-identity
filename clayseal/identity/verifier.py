@@ -41,9 +41,15 @@ def _select_jwk(jwks: Mapping[str, Any] | Iterable[Mapping[str, Any]], kid: str 
             "Token header is missing kid.",
             suggestion="Pass a Clay Seal JWT-SVID issued by the identity service.",
         )
-    for key in keys:
-        if key.get("kid") == kid:
-            return key
+    matches = [key for key in keys if key.get("kid") == kid]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        raise InvalidTokenError(
+            "JWKS contains multiple keys with the token kid.",
+            suggestion="Publish unique key IDs and refresh the verifier JWKS.",
+            details={"kid": kid},
+        )
     raise InvalidTokenError(
         "No JWKS key matches the token kid.",
         suggestion="Refresh the tenant JWKS or verify you are using the token's tenant.",
