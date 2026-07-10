@@ -33,6 +33,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .config import get_settings
 from .errors import AttestationDeniedError
 from .models import AttestationUse, Customer, NodeAttestor
 
@@ -186,6 +187,19 @@ def verify_node_attestation(
         except jwt.InvalidTokenError:
             continue
         # Verified: this anchor proves the node.
+        iat = payload.get("iat")
+        exp = payload.get("exp")
+        if not isinstance(iat, (int, float)) or not isinstance(exp, (int, float)):
+            raise AttestationDeniedError(
+                "Attestation document is missing valid iat/exp claims.",
+                suggestion="Node attestation documents must be short-lived JWTs with iat, exp, and jti.",
+            )
+        max_ttl = get_settings().attestation_max_ttl_seconds
+        if exp - iat > max_ttl:
+            raise AttestationDeniedError(
+                "Attestation document lifetime is too long.",
+                suggestion=f"Keep node attestation JWTs at or below {max_ttl} seconds.",
+            )
         node = payload.get("node") or {}
         selectors = _node_selectors(anchor.type, node)
         return payload, selectors

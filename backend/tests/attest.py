@@ -115,6 +115,7 @@ def sign_attestation(
     workload: dict | None = None,
     key_pem: str = NODE_PRIVATE_PEM,
     attestor_type: str = "k8s_psat",
+    iat: int | None = None,
     exp: int | None = None,
     jti: str | None = None,
     aud: str | None = None,
@@ -126,7 +127,7 @@ def sign_attestation(
         "node": node if node is not None else DEFAULT_NODE,
         "workload": workload or {},
         "jti": jti or uuid.uuid4().hex,
-        "iat": now,
+        "iat": iat if iat is not None else now,
         "exp": exp if exp is not None else now + 300,
     }
     if aud is not None:
