@@ -87,6 +87,12 @@ class Settings:
         self.min_ttl_seconds: int = int(os.getenv("CLAYSEAL_MIN_TTL", str(5 * 60)))
         self.max_ttl_seconds: int = int(os.getenv("CLAYSEAL_MAX_TTL", str(24 * 60 * 60)))
         self.default_ttl_seconds: int = int(os.getenv("CLAYSEAL_DEFAULT_TTL", str(60 * 60)))
+        # Signed node/workload attestation evidence should be very short-lived:
+        # it is consumed once, but a leaked unused document should not remain
+        # useful for a long window.
+        self.attestation_max_ttl_seconds: int = int(
+            os.getenv("CLAYSEAL_ATTESTATION_MAX_TTL", "300")
+        )
 
         # SPIFFE trust domain. Every issued JWT-SVID's subject is a SPIFFE ID
         # under this domain (spiffe://{trust_domain}/customer/{id}/agent/{type}),

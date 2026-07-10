@@ -1,9 +1,12 @@
 """Focused attestation selector and failure-path tests."""
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from clayseal.backend.attestation import derive_workload_selectors, verify_node_attestation
+from clayseal.backend.config import get_settings
 from clayseal.backend.db import SessionLocal
 from clayseal.backend.errors import AttestationDeniedError
 from clayseal.backend.models import Customer, NodeAttestor, new_id
@@ -83,3 +86,28 @@ def test_verify_node_attestation_rejects_unparseable_jws(customer):
         assert cust is not None
         with pytest.raises(AttestationDeniedError, match="could not be parsed"):
             verify_node_attestation(db, cust, "bad.header.signature")
+
+
+def test_verify_node_attestation_rejects_overlong_lifetime(customer, monkeypatch):
+    monkeypatch.setenv("CLAYSEAL_ATTESTATION_MAX_TTL", "300")
+    get_settings.cache_clear()
+    now = int(time.time())
+    with SessionLocal() as db:
+        cust = db.get(Customer, customer["customer_id"])
+        assert cust is not None
+        db.add(
+            NodeAttestor(
+                id=new_id(),
+                customer_id=cust.id,
+                type="k8s_psat",
+                public_pem=NODE_PUBLIC_PEM,
+            )
+        )
+        db.commit()
+        document = sign_attestation(
+            aud=customer["customer_id"],
+            iat=now,
+            exp=now + 3600,
+        )
+        with pytest.raises(AttestationDeniedError, match="lifetime is too long"):
+            verify_node_attestation(db, cust, document)
