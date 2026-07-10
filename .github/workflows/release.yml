@@ -1,9 +1,11 @@
 name: release
 
 # Build and publish the sdist + wheel to PyPI on a version tag (vX.Y.Z), or
-# build-only on manual dispatch. Publishing uses PyPI Trusted Publishing (OIDC) —
-# configure a trusted publisher for `clayseal-identity` and a `pypi` environment
-# before the first tagged release. Every dependency resolves from public PyPI.
+# build-only on manual dispatch. Publishes with the PYPI_API_TOKEN repo secret
+# (the name `clayseal-identity` is already registered). Preferred upgrade: add a
+# Trusted Publisher (OIDC) for this repo/workflow/environment in the PyPI UI,
+# then drop the password line below and delete the secret.
+# Every dependency resolves from public PyPI.
 on:
   push:
     tags: ["v*"]
@@ -44,3 +46,5 @@ jobs:
           path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
