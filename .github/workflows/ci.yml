@@ -75,7 +75,7 @@ jobs:
           python-version: "3.13"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install (Python service + JS deps)
         run: |
           python -m pip install --upgrade pip
@@ -84,4 +84,6 @@ jobs:
       - name: Generate parity fixture from the Python backend
         run: python js/clayseal-verify/test/gen_fixture.py js/clayseal-verify/test/fixture.json
       - name: Run @clayseal/verify parity tests
-        run: cd js/clayseal-verify && node --no-warnings --test test/
+        # --experimental-wasm-modules: biscuit-wasm imports a .wasm module, which
+        # Node enables by default only on newer releases.
+        run: cd js/clayseal-verify && node --experimental-wasm-modules --no-warnings --test test/

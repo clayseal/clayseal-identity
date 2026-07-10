@@ -13,6 +13,11 @@ a private key or a network call.
 npm install @clayseal/verify
 ```
 
+**Node compatibility.** The Biscuit verifier is WebAssembly. Node enables
+WebAssembly ES module imports by default only on recent releases; on Node 20–22,
+run with `--experimental-wasm-modules` (e.g. `node --experimental-wasm-modules
+server.js`). Bundlers (webpack, Vite, esbuild) handle the `.wasm` import for you.
+
 ## What it checks
 
 A Clay Seal request carries three things, added by the client's
