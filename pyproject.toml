@@ -41,7 +41,7 @@ server = [
   "uvicorn[standard]>=0.27,<1.0",
   "SQLAlchemy>=2.0,<3.0",
   "pydantic>=2.6,<3.0",
-  "psycopg[binary]>=3.1,<4.0",
+  "psycopg[binary]>=3.3.4,<4.0",
   "alembic>=1.18.5,<2.0",
 ]
 # AWS KMS envelope-encryption provider for signing/Biscuit keys at rest
