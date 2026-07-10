@@ -29,4 +29,4 @@ alembic>=1.13,<2.0
 # CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms. The production Dockerfile installs
 # `.[server,kms]`; this lock input keeps the deploy dependency tree equivalent
 # when using hash-pinned installs.
-boto3>=1.34
+boto3>=1.43.45

@@ -48,7 +48,7 @@ server = [
 # (CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms). boto3 is lazy-imported by
 # secret_encryption.AwsKmsProvider, so it is only required when that provider
 # is selected — install `clayseal-identity[kms]` in prod.
-kms = ["boto3>=1.34"]
+kms = ["boto3>=1.43.45"]
 # Full development environment: client + server + test/lint/type tooling.
 dev = [
   "clayseal-identity[server]",
