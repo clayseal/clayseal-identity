@@ -4,10 +4,10 @@ All notable changes to **clayseal-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.5.0] - 2026-07-10
 
-Open-source readiness pass. Several changes are breaking and warrant a minor
-version bump before release.
+First public release. The open-source readiness pass below includes several
+breaking changes relative to the internal 0.4.x line.
 
 ### Added
 
