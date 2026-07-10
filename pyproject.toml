@@ -15,7 +15,7 @@ requires-python = ">=3.11,<3.14"
 # `pip install clayseal-identity` stays lightweight. The bundled FastAPI identity
 # service (clayseal.backend) and its heavy deps live behind the [server] extra.
 dependencies = [
-  "httpx>=0.27",
+  "httpx>=0.28.1",
   "biscuit-python>=0.4,<0.5",
   "PyJWT>=2.8,<3.0",
   "cryptography>=42.0",
