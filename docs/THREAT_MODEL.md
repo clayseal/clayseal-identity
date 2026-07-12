@@ -4,6 +4,12 @@ Clay Seal Identity answers one narrow question: **which attested workload is
 acting?** It is not a full agent sandbox, policy engine, or audit system by
 itself.
 
+That boundary is intentional. Clay Seal's forthcoming runtime capability layer
+is where task-scoped mandates, leases, budgets, and suspicious-sequence checks
+belong. The receipts layer is where action decisions become auditable. The
+known gaps between identity and those upper layers are tracked in
+[SECURITY_BACKLOG.md](SECURITY_BACKLOG.md).
+
 ## Attestation Model — read this first
 
 Node attestation verifies **platform-signed evidence** a workload cannot forge
@@ -59,8 +65,10 @@ backends.
 
 ## Does Not Protect Against
 
-- **A legitimate agent doing a harmful but authorized action.** Use layer 2
-  capabilities and layer 3 receipts for action-scoped enforcement.
+- **A legitimate agent doing a harmful sequence of authorized actions.** Identity
+  will not catch patterns such as two `$999` payments used to avoid a `$1000`
+  review threshold. Use the forthcoming layer 2 runtime capability sandbox and
+  layer 3 receipts for stateful enforcement.
 - **Compromise of the workload private key while the credential is live.** Keep
   TTLs short and rotate workload keys.
 - **A compromised static trust-anchor private key.** For the on-prem static
@@ -70,6 +78,13 @@ backends.
 - **A leaked node token replayed to bind an attacker's key.** Prevented for GCP
   and Kubernetes by the key-bound audience; not prevented for AWS `aws_iid`,
   which has no audience (pair it with a network trust boundary).
+- **Offline revocation checks.** Offline JWT verification cannot learn that a
+  token was revoked after issuance. Use short TTLs, online validation, or
+  server-side capability authorization when revocation needs to be immediate.
+- **Integrations that skip proof-of-possession.** If a service verifies only the
+  JWT and ignores proof-of-possession or `ToolGuard`, it has reduced Clay Seal
+  to an identity label. Sensitive tools should require the bound-key proof and
+  an authorization decision.
 - **Prompt injection by itself.** Identity makes downstream decisions attributable
   and sender-constrained, but it does not inspect prompts or model outputs.
 - **Transport security.** Run the hosted service behind TLS and use mTLS or

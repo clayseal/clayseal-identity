@@ -40,6 +40,7 @@ from .errors import (
     TransportError,
     TTLOutOfRangeError,
 )
+from .inspector import TokenInspection, inspect_token
 from .integrations import (
     AgentToolProxy,
     ProtectedTool,
@@ -49,7 +50,6 @@ from .integrations import (
     protect_tool,
     protect_tools,
 )
-from .inspector import TokenInspection, inspect_token
 from .models import AgentInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims
 from .session import AgentSession

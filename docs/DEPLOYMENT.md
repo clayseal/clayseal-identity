@@ -19,7 +19,7 @@ PyPI package: `clayseal-identity`). Deployment of the upper Clay Seal layers
 | `CLAYSEAL_DATABASE_URL` | PostgreSQL (not SQLite) |
 | `CLAYSEAL_ADMIN_API_KEY` | Gates `POST /v1/customers` |
 | `CLAYSEAL_SECRET_ENCRYPTION_PROVIDER` | `aws_kms` or `local` |
-| `CLAYSEAL_HTTP_ALLOWED_HOSTS` | Outbound fetch allowlist |
+| `CLAYSEAL_HTTP_ALLOWED_HOSTS` | Accepted inbound HTTP Host headers |
 | `CLAYSEAL_CORS_ORIGINS` | Allowed browser-client origins (no `*`) |
 | `CLAYSEAL_MANAGE_SCHEMA` | `alembic` |
 | `CLAYSEAL_API_URL` | Clay Seal Identity base URL (required for attested receipt profiles) |

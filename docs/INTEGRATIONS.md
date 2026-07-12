@@ -86,13 +86,12 @@ only; stdio has neither bearer tokens nor headers.
 The proof-of-possession is signed over this server's endpoint URL, so a proof
 presented to one service can't be replayed against another — set `server_url`
 on the guard (and give each server its real public URL) to get that binding.
-By default one proof authorizes repeated calls on the same endpoint, which
-suits clients that set auth headers once per session.
+By default each proof is single-use within its freshness window. Clients should
+send a fresh proof per request — `tool_headers` mints a new one on every call,
+so rebuild headers per request.
 
-If you want each proof to be **single-use**, pass a replay cache; a repeated
-proof is then rejected within its freshness window. Clients must send a fresh
-proof per request — `tool_headers` mints a new one on every call, so rebuild
-headers per request when this is on:
+The default cache is in-process. For multi-worker servers, pass a shared replay
+cache with the same interface:
 
 ```python
 from clayseal.identity.integrations.mcp_server import ToolGuard, InMemoryReplayCache
@@ -100,9 +99,12 @@ from clayseal.identity.integrations.mcp_server import ToolGuard, InMemoryReplayC
 guard = ToolGuard(
     biscuit_root_public_key=tenant_root_public_hex,
     server_url="https://tools.example.com/mcp",
-    replay_cache=InMemoryReplayCache(),   # per-process; back with a shared store across workers
+    replay_cache=InMemoryReplayCache(),   # replace with Redis/memcached across workers
 )
 ```
+
+Only pass `replay_cache=False` if another layer already enforces single-use
+proofs.
 
 See `examples/04_mcp_server.py` for the full flow, including attenuation and
 the stolen-token case.

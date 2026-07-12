@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import jwt
@@ -14,7 +14,7 @@ from .profile import AgentIdentityClaims
 def _utc_from_epoch(value: Any) -> datetime | None:
     if not isinstance(value, (int, float)):
         return None
-    return datetime.fromtimestamp(value, tz=timezone.utc)
+    return datetime.fromtimestamp(value, tz=UTC)
 
 
 def _iso(dt: datetime | None) -> str | None:
@@ -128,7 +128,7 @@ def inspect_token(token: str, *, now: datetime | None = None) -> TokenInspection
     proof-of-possession. Resource servers should use ``verify_offline`` or the
     hosted validation path for enforcement.
     """
-    inspected_at = now or datetime.now(timezone.utc)
+    inspected_at = now or datetime.now(UTC)
     try:
         header = jwt.get_unverified_header(token)
         claims = jwt.decode(token, options={"verify_signature": False})

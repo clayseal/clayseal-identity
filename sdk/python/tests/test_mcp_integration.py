@@ -19,7 +19,6 @@ from clayseal.identity.integrations.mcp import (
 )
 from clayseal.identity.integrations.mcp_server import (
     ClaySealTokenVerifier,
-    InMemoryReplayCache,
     ToolGuard,
     default_tool_capability,
 )
@@ -105,13 +104,14 @@ def test_verify_token_callable_jwks(session, base_url):
 # --- per-tool authorization ---------------------------------------------------- #
 def test_granted_tools_allowed_others_denied(guard, session):
     biscuit = session.credential.biscuit
-    pop = _pop(session)
-    assert guard.authorize_call("search_web", biscuit_b64=biscuit, pop_json=pop) == (
+    assert guard.authorize_call("search_web", biscuit_b64=biscuit, pop_json=_pop(session)) == (
         True,
         "authorized",
     )
-    assert guard.authorize_call("read_docs", biscuit_b64=biscuit, pop_json=pop)[0] is True
-    allowed, _ = guard.authorize_call("delete_records", biscuit_b64=biscuit, pop_json=pop)
+    assert guard.authorize_call("read_docs", biscuit_b64=biscuit, pop_json=_pop(session))[0] is True
+    allowed, _ = guard.authorize_call(
+        "delete_records", biscuit_b64=biscuit, pop_json=_pop(session)
+    )
     assert allowed is False
 
 
@@ -160,13 +160,12 @@ def test_pop_for_wrong_server_url_fails(guard, session):
     assert allowed is False
 
 
-def test_replay_cache_makes_proofs_single_use(session):
-    """With a replay cache, a captured proof works once and is rejected on
-    reuse; a fresh proof for the same session still passes."""
+def test_tool_guard_replay_protection_is_default(session):
+    """By default, a captured proof works once and is rejected on reuse; a fresh
+    proof for the same session still passes."""
     guard = ToolGuard(
         biscuit_root_public_key=session.credential.biscuit_root_public_key,
         server_url=SERVER_URL,
-        replay_cache=InMemoryReplayCache(),
     )
     biscuit = session.credential.biscuit
     pop = _pop(session)
@@ -180,9 +179,14 @@ def test_replay_cache_makes_proofs_single_use(session):
     assert fresh[0] is True
 
 
-def test_without_replay_cache_a_proof_is_reusable(guard, session):
-    """Default (connection-level) behavior: one proof authorizes repeated calls.
-    Endpoint-binding still prevents cross-service replay."""
+def test_replay_cache_can_be_explicitly_disabled(session):
+    """Deployments with replay protection at another layer can explicitly
+    disable the in-process cache."""
+    guard = ToolGuard(
+        biscuit_root_public_key=session.credential.biscuit_root_public_key,
+        server_url=SERVER_URL,
+        replay_cache=False,
+    )
     biscuit = session.credential.biscuit
     pop = _pop(session)
     assert guard.authorize_call("search_web", biscuit_b64=biscuit, pop_json=pop)[0] is True

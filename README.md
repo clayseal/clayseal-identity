@@ -12,6 +12,13 @@ Clay Seal Identity is layer 1 of Clay Seal: cryptographically attested identity
 for autonomous agents. The package is published as `clayseal-identity` and
 imports from `clayseal.identity`.
 
+This release starts with the identity layer because agent security needs a
+clean primitive first: every agent run should have its own short-lived,
+verifiable identity instead of borrowing a long-lived human or service key. The
+next Clay Seal layers, now in private preview, add runtime capability scoping
+and receipts for actions that need stronger enforcement than identity alone can
+provide.
+
 Use this repo when you need to answer:
 
 - Which agent is acting?
@@ -66,8 +73,9 @@ Implemented today:
 > attestors per deployment (see [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) and
 > [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
-Layer 1 deliberately does not issue action-scoped commit tokens or write
-execution receipts. Those live in the sibling layers:
+Layer 1 deliberately does not try to be a complete sandbox. Runtime capability
+scoping, stateful budget checks, suspicious-sequence detection, and execution
+receipts live in the sibling layers:
 
 | Layer | Repository | Purpose |
 | --- | --- | --- |
@@ -77,6 +85,9 @@ execution receipts. Those live in the sibling layers:
 
 This package stands alone: it has no dependency on the other layers, and every
 runtime dependency resolves from public PyPI.
+
+Known boundaries and planned hardening work are tracked in
+[docs/SECURITY_BACKLOG.md](docs/SECURITY_BACKLOG.md).
 
 ## Install
 
@@ -218,6 +229,7 @@ Start with:
 
 - [Developer guide](docs/DEV_GUIDE.md)
 - [Identity-only integrations](docs/INTEGRATIONS.md)
+- [Security backlog](docs/SECURITY_BACKLOG.md)
 - [Deployment checklist](docs/DEPLOYMENT.md)
 
 Reference:

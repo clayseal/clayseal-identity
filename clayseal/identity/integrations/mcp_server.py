@@ -191,11 +191,11 @@ class ToolGuard:
     to this server's public MCP endpoint, which is what stops a proof captured
     by one service from being replayed against another.
 
-    Pass ``replay_cache`` (e.g. :class:`InMemoryReplayCache`) to also make each
-    proof **single-use** within its freshness window, closing same-endpoint
-    replay. This requires clients to send a fresh proof per request;
-    ``tool_headers`` mints a new one on every call, so rebuild headers per
-    request when replay protection is on.
+    By default an in-process replay cache makes each proof **single-use** within
+    its freshness window, closing same-endpoint replay. For a multi-process
+    deployment, pass a shared-store cache with the same interface. Pass
+    ``replay_cache=False`` only when another layer already enforces single-use
+    proofs.
     """
 
     def __init__(
@@ -206,7 +206,7 @@ class ToolGuard:
         biscuit_header: str = BISCUIT_HEADER,
         pop_header: str = POP_HEADER,
         server_url: str | None = None,
-        replay_cache: ReplayCache | None = None,
+        replay_cache: ReplayCache | bool | None = None,
     ) -> None:
         keys = (
             [biscuit_root_public_key]
@@ -220,7 +220,15 @@ class ToolGuard:
         self._biscuit_header = biscuit_header
         self._pop_header = pop_header
         self._server_url = server_url
-        self._replay_cache = replay_cache
+        if replay_cache is True:
+            raise ValueError("replay_cache=True is ambiguous; pass a ReplayCache or omit it")
+        self._replay_cache = (
+            None
+            if replay_cache is False
+            else replay_cache
+            if replay_cache is not None
+            else InMemoryReplayCache()
+        )
 
     # --- framework-agnostic core ------------------------------------------- #
     def authorize_call(

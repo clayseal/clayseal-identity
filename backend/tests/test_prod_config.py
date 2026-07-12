@@ -92,6 +92,14 @@ def test_development_allows_sqlite(monkeypatch):
     assert is_sqlite_url("sqlite:///x.db")
 
 
+def test_proxy_headers_are_opt_in_even_in_production(monkeypatch):
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
+    monkeypatch.delenv("CLAYSEAL_TRUST_PROXY_HEADERS", raising=False)
+    assert Settings().trust_proxy_headers is False
+    monkeypatch.setenv("CLAYSEAL_TRUST_PROXY_HEADERS", "1")
+    assert Settings().trust_proxy_headers is True
+
+
 # --- Secret encryption required in production regardless of DB backend ----- #
 def test_secret_encryption_required_in_production_even_on_sqlite(monkeypatch):
     monkeypatch.setenv("CLAYSEAL_ENV", "production")

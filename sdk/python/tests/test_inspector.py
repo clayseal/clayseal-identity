@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import jwt
 
@@ -39,7 +39,7 @@ def test_inspect_token_returns_readable_identity_view():
 
     inspection = inspect_token(
         token,
-        now=datetime.fromtimestamp(now, tz=timezone.utc),
+        now=datetime.fromtimestamp(now, tz=UTC),
     )
 
     assert isinstance(inspection, TokenInspection)
@@ -68,7 +68,7 @@ def test_inspect_token_warns_on_missing_sender_constraint_and_expiry():
 
     inspection = inspect_token(
         token,
-        now=datetime.fromtimestamp(now, tz=timezone.utc),
+        now=datetime.fromtimestamp(now, tz=UTC),
     )
 
     assert inspection.is_sender_constrained is False

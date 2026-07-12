@@ -44,10 +44,13 @@ Concretely, this repo provides:
 
 What this repo deliberately does **not** include:
 
-- Dynamic capability narrowing, commit tokens, or mandate enforcement — that is the Clay Seal Capabilities layer (layer 2, private preview).
+- Dynamic capability narrowing, commit tokens, mandates, leases, or budget enforcement — that is the Clay Seal Capabilities layer (layer 2, private preview).
+- Suspicious-sequence checks, such as catching multiple individually allowed actions that evade a cumulative limit — that is part of the forthcoming runtime capability layer.
 - Execution receipts, audit logs, MCP gateways, or policy proofs — that is the Clay Seal Receipts layer (layer 3, private preview).
 
 If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
+
+Known security boundaries and planned fixes are tracked in [SECURITY_BACKLOG.md](SECURITY_BACKLOG.md).
 
 ---
 

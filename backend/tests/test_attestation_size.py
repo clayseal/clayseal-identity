@@ -5,7 +5,12 @@ request body-size limit still belongs at the edge (documented in schemas).
 """
 from __future__ import annotations
 
-from clayseal.backend.schemas import MAX_ATTESTATION_DOCUMENT_CHARS
+from clayseal.backend.schemas import (
+    MAX_ATTESTATION_DOCUMENT_CHARS,
+    MAX_CAPABILITY_TOKEN_CHARS,
+    MAX_JWT_CHARS,
+    MAX_PEM_CHARS,
+)
 
 
 def test_oversized_attestation_document_rejected(client, customer):
@@ -27,3 +32,33 @@ def test_reasonably_sized_document_passes_validation(client, customer):
         headers=customer["headers"],
     )
     assert resp.status_code != 422
+
+
+def test_oversized_validation_token_rejected(client, customer):
+    resp = client.post(
+        "/v1/validate",
+        json={"token": "x" * (MAX_JWT_CHARS + 1)},
+        headers=customer["headers"],
+    )
+    assert resp.status_code == 422
+
+
+def test_oversized_capability_token_rejected(client, customer):
+    resp = client.post(
+        "/v1/authorize",
+        json={
+            "token": "x" * (MAX_CAPABILITY_TOKEN_CHARS + 1),
+            "operation": {"resource": "tool", "action": "read"},
+        },
+        headers=customer["headers"],
+    )
+    assert resp.status_code == 422
+
+
+def test_oversized_node_attestor_pem_rejected(client, customer):
+    resp = client.post(
+        "/v1/node-attestors",
+        json={"type": "k8s_psat", "public_pem": "x" * (MAX_PEM_CHARS + 1)},
+        headers=customer["headers"],
+    )
+    assert resp.status_code == 422

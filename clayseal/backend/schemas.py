@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -11,6 +11,16 @@ from pydantic import BaseModel, Field
 # payload inflating RSA-verify/parse work; a global request body-size limit still
 # belongs at the edge (ALB/API gateway / uvicorn --limit-request-*).
 MAX_ATTESTATION_DOCUMENT_CHARS = 16 * 1024
+MAX_JWT_CHARS = 16 * 1024
+MAX_CAPABILITY_TOKEN_CHARS = 64 * 1024
+MAX_PEM_CHARS = 8 * 1024
+MAX_SELECTORS_PER_ENTRY = 64
+MAX_SCOPES_PER_ENTRY = 256
+MAX_CAPABILITIES_PER_ENTRY = 256
+
+ShortText = Annotated[str, Field(min_length=1, max_length=200)]
+SelectorText = Annotated[str, Field(min_length=1, max_length=500)]
+ScopeText = Annotated[str, Field(min_length=1, max_length=200)]
 
 
 # --- Customers ------------------------------------------------------------- #
@@ -27,7 +37,7 @@ class CustomerOut(BaseModel):
 # --- Node attestors (admin: register trust anchors) ------------------------ #
 class NodeAttestorCreate(BaseModel):
     type: str = Field(..., pattern="^(k8s_psat|aws_iid|gcp_iit)$")
-    public_pem: str = Field(..., min_length=1)
+    public_pem: str = Field(..., min_length=1, max_length=MAX_PEM_CHARS)
     description: str = Field(default="", max_length=500)
 
 
@@ -53,18 +63,22 @@ class Capability(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    resource: str = Field(..., min_length=1, max_length=200)
-    action: str = Field(..., min_length=1, max_length=200)
+    resource: ShortText
+    action: ShortText
 
 
 # --- Registration entries (admin: pre-approve identities) ------------------ #
 class RegistrationEntryCreate(BaseModel):
-    agent_type: str = Field(..., min_length=1, max_length=200)
-    selectors: list[str] = Field(..., min_length=1)
+    agent_type: ShortText
+    selectors: list[SelectorText] = Field(
+        ..., min_length=1, max_length=MAX_SELECTORS_PER_ENTRY
+    )
     # Capabilities are the source of truth; legacy ``scopes`` are accepted and
     # parsed into capabilities when no capabilities are given.
-    capabilities: list[Capability] = Field(default_factory=list)
-    scopes: list[str] = Field(default_factory=list)
+    capabilities: list[Capability] = Field(
+        default_factory=list, max_length=MAX_CAPABILITIES_PER_ENTRY
+    )
+    scopes: list[ScopeText] = Field(default_factory=list, max_length=MAX_SCOPES_PER_ENTRY)
     owner: str | None = Field(default=None, max_length=200)
     ttl_seconds: int | None = None
     description: str = Field(default="", max_length=500)
@@ -114,7 +128,7 @@ class IdentifyRequest(BaseModel):
     token_typ: Literal["JWT", "wit+jwt"] | None = None
     # Optional EC/RSA public key (SPKI PEM) to also receive an X.509-SVID for
     # mTLS, bound to the same SPIFFE ID. The workload keeps the private key.
-    x509_public_key_pem: str | None = Field(default=None, max_length=8192)
+    x509_public_key_pem: str | None = Field(default=None, max_length=MAX_PEM_CHARS)
 
 
 class CredentialOut(BaseModel):
@@ -141,18 +155,18 @@ class CredentialOut(BaseModel):
 class PopIn(BaseModel):
     """Request-bound proof-of-possession from the workload's SPIFFE key."""
 
-    challenge: str = Field(..., min_length=1)
-    signature: str = Field(..., min_length=1)
-    pubkey_pem: str = Field(..., min_length=1)
-    htm: str = Field(..., min_length=1)
-    htu: str = Field(..., min_length=1)
-    ath: str = Field(..., min_length=1)
+    challenge: str = Field(..., min_length=1, max_length=256)
+    signature: str = Field(..., min_length=1, max_length=2048)
+    pubkey_pem: str = Field(..., min_length=1, max_length=MAX_PEM_CHARS)
+    htm: str = Field(..., min_length=1, max_length=16)
+    htu: str = Field(..., min_length=1, max_length=2048)
+    ath: str = Field(..., min_length=1, max_length=128)
     iat: int
-    jti: str = Field(..., min_length=1)
+    jti: str = Field(..., min_length=1, max_length=128)
 
 
 class ValidateRequest(BaseModel):
-    token: str
+    token: str = Field(..., min_length=1, max_length=MAX_JWT_CHARS)
     pop: PopIn | None = None
 
 
@@ -163,12 +177,12 @@ class ValidateResponse(BaseModel):
 
 # --- Capability authorization --------------------------------------------- #
 class OperationIn(BaseModel):
-    resource: str = Field(..., min_length=1, max_length=200)
-    action: str = Field(..., min_length=1, max_length=200)
+    resource: ShortText
+    action: ShortText
 
 
 class AuthorizeRequest(BaseModel):
-    token: str = Field(..., min_length=1)
+    token: str = Field(..., min_length=1, max_length=MAX_CAPABILITY_TOKEN_CHARS)
     operation: OperationIn
     pop: PopIn | None = None
 

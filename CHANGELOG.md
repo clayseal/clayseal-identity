@@ -62,12 +62,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `authorize_biscuit(..., pop_binds_operation=False)` accepts a
   connection-level proof (signed without the operation tuple) while still
   binding it to the token hash, HTTP method, URL, and freshness window.
-- Optional single-use proofs: `ToolGuard(replay_cache=...)` (and
-  `authorizeTool({ replayCache })` in `@clayseal/verify`) reject a
-  proof-of-possession reused within its freshness window, closing same-endpoint
-  replay. `InMemoryReplayCache` is provided for single-process servers; supply a
-  shared-store implementation across workers. Endpoint-binding already prevents
-  cross-service replay without this.
+- Single-use proofs: `ToolGuard` rejects a proof-of-possession reused within
+  its freshness window by default, closing same-endpoint replay.
+  `InMemoryReplayCache` is provided for single-process servers; supply a
+  shared-store implementation across workers, or pass `replay_cache=False` only
+  when another layer already enforces replay protection. Endpoint-binding
+  prevents cross-service replay.
 
 ## [0.5.0] - 2026-07-10
 

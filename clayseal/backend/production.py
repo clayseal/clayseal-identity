@@ -36,7 +36,7 @@ def _identity_specific_violations(settings: Settings) -> list[str]:
         violations.append("CLAYSEAL_AWS_KMS_KEY_ID is required when using aws_kms encryption")
     if not os.environ.get("CLAYSEAL_HTTP_ALLOWED_HOSTS", "").strip():
         violations.append(
-            "CLAYSEAL_HTTP_ALLOWED_HOSTS must list IdP/CIMD hosts permitted for outbound fetch"
+            "CLAYSEAL_HTTP_ALLOWED_HOSTS must list accepted HTTP Host headers"
         )
     if settings.is_production and settings.manage_schema.strip().lower() == "auto":
         violations.append(

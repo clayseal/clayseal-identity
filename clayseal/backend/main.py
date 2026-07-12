@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import __version__
 from .config import get_settings
@@ -62,9 +63,16 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    settings = get_settings()
+    if settings.http_allowed_hosts:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=settings.http_allowed_hosts,
+        )
+
     # Allow browser clients (a separate origin) to call the API with the
     # X-API-Key header. Origins are configurable via CLAYSEAL_CORS_ORIGINS.
-    origins = get_settings().cors_origins
+    origins = settings.cors_origins
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
