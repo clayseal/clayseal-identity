@@ -49,12 +49,13 @@ from .integrations import (
     protect_tool,
     protect_tools,
 )
+from .inspector import TokenInspection, inspect_token
 from .models import AgentInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims
 from .session import AgentSession
 from .verifier import verify_offline
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "ClaySeal",
@@ -63,6 +64,8 @@ __all__ = [
     "AgentInfo",
     "ValidationResult",
     "AgentIdentityClaims",
+    "TokenInspection",
+    "inspect_token",
     "verify_offline",
     "IdentityAdapter",
     "IdentityBinding",

@@ -41,3 +41,9 @@ def test_quickstart_example_runs(tmp_path):
 def test_capabilities_example_runs(tmp_path):
     out = _run_example("02_capabilities.py", tmp_path)
     assert "Done - express, attenuate, delegate, and verify rights offline" in out
+
+
+def test_inspect_token_example_runs(tmp_path):
+    out = _run_example("05_inspect_token.py", tmp_path)
+    assert "Clay Seal token inspection (unverified)" in out
+    assert "sender_constrained: yes" in out

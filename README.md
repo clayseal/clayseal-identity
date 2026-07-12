@@ -19,7 +19,26 @@ Use this repo when you need to answer:
 - Is the credential short-lived, signed, and bound to the holder key?
 - Can downstream systems verify the identity offline?
 
-## Current State
+## Start Here
+
+```bash
+pip install clayseal-identity
+python examples/01_quickstart.py
+python examples/05_inspect_token.py
+```
+
+The examples are zero-config from a clone. They start a throwaway local identity
+service, mint a demo credential, and show what an agent token contains.
+
+| If you want to... | Go here |
+| --- | --- |
+| issue and validate your first agent token | `examples/01_quickstart.py` |
+| inspect what a token says | `examples/05_inspect_token.py` |
+| verify a token with only JWKS | [docs/FEDERATION.md](docs/FEDERATION.md) |
+| protect FastAPI, MCP, or LangChain-style tools | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) |
+| run the identity service in production | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+
+## What You Get
 
 Implemented today:
 
@@ -93,10 +112,12 @@ Or run `scripts/bootstrap.sh`, which performs the steps above.
 
 The fastest path is the zero-config embedded demo. It starts a throwaway local
 identity service, creates a tenant, identifies an agent, validates the token,
-and revokes it:
+and revokes it. The inspector example prints the token's identity fields without
+trusting it:
 
 ```bash
 python examples/01_quickstart.py
+python examples/05_inspect_token.py
 python examples/02_capabilities.py
 python examples/04_mcp_server.py   # lock down an MCP server (needs the [mcp] extra)
 ```
@@ -157,6 +178,18 @@ claims = session.validate().claims
 assert claims["sub"].startswith("spiffe://")
 ```
 
+### Inspect a token
+
+Inspection is for humans and debug screens. It decodes claims without trusting
+the token. Use `verify_offline(...)` or `session.validate()` before enforcement.
+
+```python
+from clayseal.identity import inspect_token
+
+inspection = inspect_token(session.token)
+print("\n".join(inspection.summary_lines()))
+```
+
 ## Hosted Service
 
 Run the local FastAPI service:
@@ -181,10 +214,15 @@ or employee data.
 
 ## Documentation
 
+Start with:
+
 - [Developer guide](docs/DEV_GUIDE.md)
-- [Agent identity profile](docs/AGENT_IDENTITY_PROFILE.md)
 - [Identity-only integrations](docs/INTEGRATIONS.md)
-- [Agent tool integration backlog](docs/AGENT_TOOL_BACKLOG.md)
+- [Deployment checklist](docs/DEPLOYMENT.md)
+
+Reference:
+
+- [Agent identity profile](docs/AGENT_IDENTITY_PROFILE.md)
 - [Federation notes](docs/FEDERATION.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Conformance guide](docs/CONFORMANCE.md)

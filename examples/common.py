@@ -125,6 +125,7 @@ def _boot_embedded() -> str:
     os.environ.setdefault("CLAYSEAL_LOG_LEVEL", "WARNING")
     logging.getLogger("clayseal").setLevel(logging.WARNING)
     logging.getLogger("clayseal.access").setLevel(logging.CRITICAL)
+    logging.getLogger("clayseal.backend.auth").setLevel(logging.CRITICAL)
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
@@ -192,5 +193,6 @@ def bootstrap(org_name: str = "Acme AI"):
     if not os.getenv("CLAYSEAL_EXAMPLES_VERBOSE"):
         logging.getLogger("clayseal").setLevel(logging.WARNING)
         logging.getLogger("clayseal.access").setLevel(logging.CRITICAL)
+        logging.getLogger("clayseal.backend.auth").setLevel(logging.CRITICAL)
 
     return client, tenant["api_key"], base_url

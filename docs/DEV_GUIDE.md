@@ -4,6 +4,27 @@ This document is written for engineers who need to **run, integrate, or extend**
 
 ---
 
+## Shortest Path
+
+If you are new to the repo, do this first:
+
+```bash
+python examples/01_quickstart.py
+python examples/05_inspect_token.py
+```
+
+Then read the section that matches what you are building:
+
+| Need | Section |
+|------|---------|
+| Issue an agent token | [Minimal SDK usage](#minimal-sdk-usage) |
+| Read what a token contains | [Token inspection](#token-inspection) |
+| Verify tokens in another service | [Offline resource-server verification](#offline-resource-server-verification) |
+| Add identity to FastAPI, MCP, or LangChain-style tools | [Framework helpers](#framework-helpers) |
+| Run the hosted service | [Running the hosted identity service](#running-the-hosted-identity-service) |
+
+---
+
 ## What this repository is for
 
 **Clay Seal Identity** is layer 1 of the Clay Seal stack. Its package name is
@@ -154,6 +175,23 @@ assert claims["sub"].startswith("spiffe://")
 For production, do not enable dev attestation. Register a node attestor and
 registration entry, then call `identify_with_attestation(attestation_document)`
 with evidence issued by your workload environment.
+
+### Token inspection
+
+Inspection is for understanding a token, not trusting it. It decodes the JOSE
+header and claims without verifying the signature, issuer, audience, revocation,
+or proof-of-possession.
+
+```python
+from clayseal.identity import inspect_token
+
+inspection = inspect_token(session.token)
+for line in inspection.summary_lines():
+    print(line)
+```
+
+Use `verify_offline(...)` or `session.validate()` when a service is deciding
+whether to accept a request.
 
 ### Offline resource-server verification
 
