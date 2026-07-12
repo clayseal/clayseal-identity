@@ -73,7 +73,8 @@ from clayseal.identity import ClaySeal
 from clayseal.identity.session import AgentSession
 ```
 
-There is intentionally **no** top-level `from clayseal import Identity` here. That unified export lives only in the receipts repo, which owns the public `clayseal` package surface for full-stack users.
+There is intentionally **no** top-level `from clayseal import Identity` here.
+Treat `clayseal.identity` as the stable public API for this package.
 
 ---
 
@@ -313,9 +314,8 @@ cross-layer `IdentitySession` abstraction, live in the private-preview sibling
 packages. Layer 1 remains the **native** stack when you want the full Clay Seal
 attestation model.
 
-Layer 3 (`wrap_with_identity_session`) accepts the same `IdentitySession`
-abstraction. Partners with access can use the capabilities cross-layer guide and
-receipts developer guide for full-stack wiring.
+Layer 3 accepts the same identity facts through its own adapter. Partners with
+private-preview access can use the layer-specific guides for full-stack wiring.
 
 ---
 

@@ -50,6 +50,7 @@ const decision = authorizeTool({
   pop: req.headers["x-clayseal-pop"],
   rootPublicKey: tenantBiscuitRootHex,   // or an array during key rotation
   serverUrl: "https://tools.example.com/mcp",
+  replayCache: sharedReplayCache,         // Redis/memcached-style store in production clusters
 });
 if (!decision.allowed) return forbidden(decision.reason);
 ```
@@ -61,8 +62,9 @@ missing token, a missing or stale proof, a wrong endpoint, or an ungranted
 capability.
 
 The proof is bound to `serverUrl`, so a proof presented to one service can't be
-replayed against another. To make each proof **single-use** on the same endpoint
-too, pass a replay cache (clients then send a fresh proof per request):
+replayed against another. `authorizeTool` also makes each proof **single-use**
+on the same endpoint by default, using an in-process cache. In a multi-worker
+or distributed deployment, pass a shared replay cache:
 
 ```js
 import { InMemoryReplayCache } from "@clayseal/verify";
@@ -70,6 +72,9 @@ import { InMemoryReplayCache } from "@clayseal/verify";
 const replayCache = new InMemoryReplayCache(); // per-process; back with a shared store across workers
 authorizeTool({ tool, biscuit, pop, rootPublicKey, serverUrl, replayCache });
 ```
+
+Only pass `replayCache: false` if another layer already enforces single-use
+proofs.
 
 ## OpenClaw
 

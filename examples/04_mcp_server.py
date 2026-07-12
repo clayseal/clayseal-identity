@@ -82,8 +82,10 @@ def main() -> None:
     # 4. Per-tool authorization: the Biscuit + proof-of-possession decide.
     common.step("Authorize tool calls against the capability token")
     biscuit = session.credential.biscuit
-    pop = headers.get("X-ClaySeal-PoP")
     for tool in ("search_web", "read_docs", "delete_records"):
+        # ToolGuard makes proofs single-use by default, so a real client sends
+        # a fresh proof per request. `tool_headers` is cheap and mints one.
+        pop = tool_headers(session, server_url=MCP_URL).get("X-ClaySeal-PoP")
         allowed, reason = guard.authorize_call(tool, biscuit_b64=biscuit, pop_json=pop)
         if allowed:
             common.allow(f"{tool}: allowed")
@@ -96,10 +98,9 @@ def main() -> None:
     narrowed = session.attenuate(
         capabilities=[{"resource": "tool", "action": "read_docs"}]
     )
-    n_headers = tool_headers(narrowed, server_url=MCP_URL)
     n_biscuit = narrowed.credential.biscuit
-    n_pop = n_headers.get("X-ClaySeal-PoP")
     for tool in ("read_docs", "search_web"):
+        n_pop = tool_headers(narrowed, server_url=MCP_URL).get("X-ClaySeal-PoP")
         allowed, _ = guard.authorize_call(tool, biscuit_b64=n_biscuit, pop_json=n_pop)
         if allowed:
             common.allow(f"{tool}: still allowed")

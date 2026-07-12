@@ -16,9 +16,8 @@ Three headers travel together:
   biscuit without the key authorizes nothing. The proof is signed over the MCP
   endpoint URL, HTTP method, and the biscuit's hash, so a proof presented to
   one service cannot be replayed against another. It carries a freshness
-  timestamp; rebuild headers (they are cheap) at least every few minutes and
-  whenever the endpoint changes. To make each proof single-use as well, the
-  server can enable a replay cache (see ``mcp_server.ToolGuard``).
+  timestamp; Clay Seal's Python server guard makes proofs single-use by default,
+  so rebuild headers for every request. They are cheap to mint.
 """
 from __future__ import annotations
 

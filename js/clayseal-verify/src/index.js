@@ -232,8 +232,10 @@ function authorizeAgainstRoot(biscuitB64, rootHex, operation) {
  * @param {string|string[]} opts.rootPublicKey  Tenant Biscuit root public key(s), hex.
  * @param {string} [opts.serverUrl]          This server's MCP endpoint (pins the proof).
  * @param {(name:string)=>[string,string]} [opts.capabilityForTool]
- * @param {{storeIfNew:(jti:string,expiresAt:number)=>boolean}} [opts.replayCache]
- *        Makes proofs single-use within their window (see InMemoryReplayCache).
+ * @param {{storeIfNew:(jti:string,expiresAt:number)=>boolean}|false} [opts.replayCache]
+ *        Defaults to an in-process cache that makes proofs single-use within
+ *        their window. Pass a shared cache for multi-worker servers, or false
+ *        only when another layer already enforces single-use proofs.
  * @returns {{allowed: boolean, reason: string}}
  */
 export function authorizeTool(opts) {
@@ -267,10 +269,8 @@ export function authorizeTool(opts) {
     }
     // Signature valid and call authorized. If single-use is on, reject a proof
     // already seen (a replay) — only now, so unsigned jti values can't fill it.
-    if (
-      replayCache &&
-      !replayCache.storeIfNew(popObj.jti, Number(popObj.iat) + POP_MAX_AGE_SECONDS)
-    ) {
+    const cache = replayCache === false ? null : replayCache || defaultReplayCache();
+    if (cache && !cache.storeIfNew(popObj.jti, Number(popObj.iat) + POP_MAX_AGE_SECONDS)) {
       return { allowed: false, reason: "proof-of-possession already used (replay detected)" };
     }
     return { allowed: true, reason: "authorized" };
@@ -288,11 +288,11 @@ function safeParse(s) {
 
 /**
  * Single-process replay cache: each proof-of-possession `jti` is accepted once
- * within its freshness window (expired entries are pruned lazily). Pass an
- * instance as `authorizeTool({ replayCache })` to make proofs single-use, which
- * closes same-endpoint replay. Clients must then send a fresh proof per request
- * (`tool_headers` mints a new one each call). Per-process only — back it with a
- * shared store for multi-process deployments by implementing `storeIfNew`.
+ * within its freshness window (expired entries are pruned lazily). `authorizeTool`
+ * uses one by default, closing same-endpoint replay for single-process servers.
+ * Clients must send a fresh proof per request (`tool_headers` mints a new one
+ * each call). For multi-process deployments, pass a shared store that implements
+ * `storeIfNew`.
  */
 export class InMemoryReplayCache {
   constructor() {
@@ -308,6 +308,15 @@ export class InMemoryReplayCache {
     this._seen.set(jti, expiresAt);
     return true;
   }
+}
+
+let _defaultReplayCache;
+
+function defaultReplayCache() {
+  if (!_defaultReplayCache) {
+    _defaultReplayCache = new InMemoryReplayCache();
+  }
+  return _defaultReplayCache;
 }
 
 export { keyhashForPem, tokenHash };

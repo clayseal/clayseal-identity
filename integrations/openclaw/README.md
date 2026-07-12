@@ -71,7 +71,7 @@ names to capabilities however your deployment prefers by passing
 
 ## Where the credential comes from
 
-The agent gets its Clay Seal credential the same way any client does — from the
-identity service via the Python SDK or the `clayseal-identity` CLI — and carries
-the biscuit + proof-of-possession into the plugin. Issuance never happens inside
-the plugin; this side only verifies.
+The agent gets its Clay Seal credential the same way any client does: call the
+identity service through the Python SDK before the agent starts, then carry the
+biscuit + proof-of-possession into the plugin. Issuance never happens inside the
+plugin; this side only verifies.

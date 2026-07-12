@@ -50,13 +50,13 @@ test("verifyToken rejects the wrong issuer", async () => {
 
 test("granted tools are allowed, others denied", () => {
   assert.equal(call("search_web", fx.headers).allowed, true);
-  assert.equal(call("read_docs", fx.headers).allowed, true);
-  assert.equal(call("delete_records", fx.headers).allowed, false);
+  assert.equal(call("read_docs", fx.headers_read).allowed, true);
+  assert.equal(call("delete_records", fx.headers_delete).allowed, false);
 });
 
 test("attenuated token is held to its narrowed rights", () => {
   assert.equal(call("read_docs", fx.narrowed_headers).allowed, true);
-  assert.equal(call("search_web", fx.narrowed_headers).allowed, false);
+  assert.equal(call("search_web", fx.narrowed_headers_search).allowed, false);
 });
 
 test("a Biscuit with no proof-of-possession is denied (sender-constraint)", () => {
@@ -70,8 +70,8 @@ test("a Biscuit with no proof-of-possession is denied (sender-constraint)", () =
 test("a proof pinned to a different endpoint is denied", () => {
   const decision = authorizeTool({
     tool: "search_web",
-    biscuit: fx.headers[fx.biscuit_header_name],
-    pop: fx.headers[POP],
+    biscuit: fx.headers_wrong_endpoint[fx.biscuit_header_name],
+    pop: fx.headers_wrong_endpoint[POP],
     rootPublicKey: fx.biscuit_root_public_hex,
     serverUrl: "https://evil.example.com/mcp",
   });
@@ -81,22 +81,32 @@ test("a proof pinned to a different endpoint is denied", () => {
 test("the wrong root key denies; rotation set with the right key allows", () => {
   const wrong = "aa".repeat(32);
   assert.equal(
-    call("search_web", fx.headers, { rootPublicKey: wrong }).allowed,
+    call("search_web", fx.headers_wrong_root, { rootPublicKey: wrong }).allowed,
     false,
   );
   assert.equal(
-    call("search_web", fx.headers, {
+    call("search_web", fx.headers_rotation, {
       rootPublicKey: [wrong, fx.biscuit_root_public_hex],
     }).allowed,
     true,
   );
 });
 
-test("a replay cache makes a proof single-use", () => {
-  const replayCache = new InMemoryReplayCache();
-  const first = call("search_web", fx.headers, { replayCache });
+test("proofs are single-use by default", () => {
+  const first = call("search_web", fx.headers_replay);
   assert.equal(first.allowed, true);
-  const replay = call("search_web", fx.headers, { replayCache });
+  const replay = call("search_web", fx.headers_replay);
   assert.equal(replay.allowed, false);
   assert.match(replay.reason, /replay/);
+});
+
+test("a supplied replay cache is also honored", () => {
+  const replayCache = new InMemoryReplayCache();
+  const first = call("search_web", fx.headers_replay, { replayCache: false });
+  assert.equal(first.allowed, true);
+  const replay = call("search_web", fx.headers_replay, { replayCache });
+  assert.equal(replay.allowed, true);
+  const secondReplay = call("search_web", fx.headers_replay, { replayCache });
+  assert.equal(secondReplay.allowed, false);
+  assert.match(secondReplay.reason, /replay/);
 });
