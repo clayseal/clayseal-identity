@@ -41,9 +41,9 @@ database is required to run the suite.
 
 ## Code Style
 
-We use [ruff](https://docs.astral.sh/ruff/) for formatting and linting and
-[mypy](https://mypy.readthedocs.io/) for type checking. These checks are being
-added to CI, so please run them locally before opening a PR:
+We use [ruff](https://docs.astral.sh/ruff/) for formatting and linting. CI also
+runs mypy as an advisory check while the type baseline is being tightened.
+Please run the same checks locally before opening a PR:
 
 ```bash
 ruff format .
@@ -51,8 +51,8 @@ ruff check .
 mypy .
 ```
 
-Keep changes clean and typed; new code should pass `ruff check` and `mypy`
-without new errors.
+Keep changes clean and typed. New code must pass `ruff check`; avoid adding new
+mypy issues even though the existing mypy baseline is not release-gating yet.
 
 ## Commit and Pull Request Conventions
 

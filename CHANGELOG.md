@@ -4,6 +4,30 @@ All notable changes to **clayseal-identity** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- Scoped tenant API keys for `admin`, `issuer`, `verifier`, `reader`, and
+  `revoker` roles, including SDK helpers and server-side revocation.
+- Registration-entry assurance tiers (`low`, `standard`, `high`) so deployments
+  can require stronger attestation evidence for sensitive agent types.
+- CSR-based X.509-SVID issuance: the SDK now proves possession of the TLS key
+  by sending a signed CSR instead of a raw public key.
+- Admin audit endpoints for reading and verifying the identity event log.
+
+### Changed
+
+- Offline verifiers now require explicit audience pinning in Python and
+  JavaScript helper paths.
+- SPIFFE subjects are now per-run
+  (`/agent/{type}/run/{agent_id}`), rather than shared by all runs of the same
+  agent type.
+- Production startup now requires `CLAYSEAL_PUBLIC_BASE_URL` so discovery
+  metadata does not depend on inbound Host headers.
+- README, deployment docs, and integration examples were tightened for
+  open-source users evaluating the repo cold.
+
 ## [0.6.0] - 2026-07-10
 
 ### Changed

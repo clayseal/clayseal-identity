@@ -8,16 +8,18 @@
 [![CI](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml/badge.svg)](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/pypi/l/clayseal-identity)](LICENSE)
 
-Clay Seal Identity is layer 1 of Clay Seal: cryptographically attested identity
-for autonomous agents. The package is published as `clayseal-identity` and
-imports from `clayseal.identity`.
+Clay Seal Identity gives every agent run its own short-lived, verifiable
+credential instead of asking agents to borrow a long-lived human or service API
+key. It is layer 1 of Clay Seal, published as `clayseal-identity` and imported
+from `clayseal.identity`.
 
-This release starts with the identity layer because agent security needs a
-clean primitive first: every agent run should have its own short-lived,
-verifiable identity instead of borrowing a long-lived human or service key. The
-next Clay Seal layers, now in private preview, add runtime capability scoping
-and receipts for actions that need stronger enforcement than identity alone can
-provide.
+Use it when an agent is about to touch real systems and the receiving service
+needs to know: who is this agent, who started it, when does this credential
+expire, and is the caller holding the workload key the token was bound to?
+
+This repo is intentionally just the identity layer. The next Clay Seal layers,
+now in private preview, add runtime capability scoping and receipts for actions
+that need stronger enforcement than identity alone can provide.
 
 Use this repo when you need to answer:
 
@@ -28,14 +30,33 @@ Use this repo when you need to answer:
 
 ## Start Here
 
+Try the zero-config demo from a clone:
+
 ```bash
-pip install clayseal-identity
+git clone https://github.com/clayseal/clayseal-identity.git
+cd clayseal-identity
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
 python examples/01_quickstart.py
 python examples/05_inspect_token.py
 ```
 
-The examples are zero-config from a clone. They start a throwaway local identity
-service, mint a demo credential, and show what an agent token contains.
+The examples start a throwaway local identity service, mint a demo credential,
+validate it, revoke it, and show what the token contains. Nothing touches your
+real cloud account, database, or agent system.
+
+Install the SDK in your own app:
+
+```bash
+pip install clayseal-identity
+```
+
+Add the hosted identity service dependencies only if you plan to run the
+FastAPI issuance/validation service yourself:
+
+```bash
+pip install "clayseal-identity[server]"
+```
 
 | If you want to... | Go here |
 | --- | --- |
@@ -49,13 +70,17 @@ service, mint a demo credential, and show what an agent token contains.
 
 Implemented today:
 
-- SPIFFE **JWT-SVID** agent credentials (RS256, `sub` = the SPIFFE ID) for broad
-  federation compatibility, and SPIFFE **X.509-SVID** certificates for mTLS
-  (`identify(..., request_x509=True)`), published with a per-tenant trust bundle.
+- SPIFFE **JWT-SVID** agent credentials (RS256, `sub` = a per-run SPIFFE ID)
+  for broad federation compatibility, and SPIFFE **X.509-SVID** certificates
+  for mTLS (`identify(..., request_x509=True)`), published with a per-tenant
+  trust bundle.
 - Ed25519 workload keys for sender-constraining (`cnf.jkt`) and offline
   proof-of-possession.
 - SPIFFE-shaped agent identifiers and trust domains.
-- Proof-of-possession confirmation claims for replay resistance.
+- Proof-of-possession confirmation claims so a stolen bearer token is not
+  enough.
+- Scoped tenant API keys (`issuer`, `verifier`, `reader`, `revoker`, `admin`)
+  so agents and gateways do not need broad standing authority.
 - Biscuit primitives for native Clay Seal capability facts.
 - A Python SDK centered on `ClaySeal`.
 - An optional FastAPI identity service for centralized issuance and validation.
@@ -86,8 +111,11 @@ receipts live in the sibling layers:
 This package stands alone: it has no dependency on the other layers, and every
 runtime dependency resolves from public PyPI.
 
-Known boundaries and planned hardening work are tracked in
-[docs/SECURITY_BACKLOG.md](docs/SECURITY_BACKLOG.md).
+Known boundaries are tracked in [docs/SECURITY_BACKLOG.md](docs/SECURITY_BACKLOG.md).
+The short version: Identity proves who the agent run is and whether the
+credential is valid. It is not, by itself, a complete runtime sandbox. For
+revocation-sensitive operations, use online validation or server-side
+capability authorization instead of purely offline JWT verification.
 
 ## Install
 
@@ -118,6 +146,21 @@ python examples/01_quickstart.py
 ```
 
 Or run `scripts/bootstrap.sh`, which performs the steps above.
+
+## Good First Places To Help
+
+If you are looking at Clay Seal as an open-source project, the most useful
+contributions right now are practical integrations and sharp tests:
+
+- Add a small example for a framework you already use.
+- Add a negative test showing a stolen token, wrong audience, replayed proof, or
+  mis-scoped key being rejected.
+- Improve the local demo path so a new developer can understand it faster.
+- Review the threat model and file issues for places where the docs overclaim
+  or underspecify deployment assumptions.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and
+[good first issues](https://github.com/clayseal/clayseal-identity/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22).
 
 ## Quickstart
 

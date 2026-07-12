@@ -18,7 +18,7 @@ from clayseal.identity.errors import AgentRevokedError
 
 
 def main() -> None:
-    common.title("ClaySeal Quickstart - Identity")
+    common.title("Clay Seal Quickstart - Identity")
     auth, _api_key, _url = common.bootstrap("Acme AI")
 
     # 1. Give the agent a real, signed identity (a short-lived JWT-SVID).

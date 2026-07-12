@@ -62,24 +62,28 @@ and replay failures.
 proof-of-possession and use `ToolGuard` or an equivalent authorization check
 before running sensitive tools.
 
-## 4. Tenant API Key Scope
+## 4. Tenant API Key Operational Separation
 
-**Current state.** Tenant API keys can create node attestors, registration
-entries, issue identities, list agents, rotate keys, and revoke credentials.
-That is acceptable for a small service-backed release, but too broad for mature
-production deployments.
+**Current state.** Clay Seal supports scoped tenant API keys: `admin`,
+`issuer`, `verifier`, `reader`, and `revoker`. The bootstrap key returned at
+tenant creation has admin authority, but production components can use narrower
+keys. Scoped-key revocation is checked on cached auth hits, so a revoked key
+does not keep working until the cache TTL expires.
 
-**Why this matters.** A tenant key should not live inside an untrusted agent
-loop. If it leaks, the blast radius is larger than it should be.
+**Why this matters.** Even a scoped key should not live inside prompt-visible
+agent context. The safer shape is a control plane, gateway, or sidecar that
+keeps tenant credentials out of model-accessible tools and only exposes the
+specific operation the agent needs.
 
-**Planned work.** Split keys by purpose: admin keys for tenant configuration,
-issuer keys for identity minting, read-only keys for inspection, and revocation
-keys for incident response. Longer term, support sidecar or control-plane
-deployment patterns where the agent never sees tenant-level credentials.
+**Planned work.** Add more sidecar/control-plane examples, make the scoped-key
+workflow more visible in framework integrations, and document incident-response
+rotation patterns for leaked issuer/verifier keys.
 
 **What developers should do now.** Keep tenant API keys in a control plane,
 gateway, sidecar, or secret store. Do not pass tenant API keys into model
-context or arbitrary agent tools.
+context or arbitrary agent tools. Use `issuer` keys only where credentials are
+minted, `verifier` keys only where online validation/authorization is needed,
+and `reader` keys for dashboards or inspection surfaces.
 
 ## 5. AWS Instance Identity Weakness
 
