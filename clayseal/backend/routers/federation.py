@@ -43,6 +43,11 @@ def _require_customer(db: Session, customer_id: str) -> Customer:
     return customer
 
 
+def _public_base(request: Request) -> str:
+    settings = get_settings()
+    return (settings.public_base_url or str(request.base_url)).rstrip("/")
+
+
 @router.get("/t/{customer_id}/.well-known/openid-configuration")
 def openid_configuration(
     customer_id: str,
@@ -51,7 +56,7 @@ def openid_configuration(
 ) -> dict:
     _require_customer(db, customer_id)
     settings = get_settings()
-    base = str(request.base_url).rstrip("/")
+    base = _public_base(request)
     return {
         "issuer": settings.jwt_issuer,
         "jwks_uri": f"{base}/t/{customer_id}/jwks.json",
@@ -75,7 +80,7 @@ def agent_identity_configuration(
     """
     _require_customer(db, customer_id)
     settings = get_settings()
-    base = str(request.base_url).rstrip("/")
+    base = _public_base(request)
     return {
         "profile": "clayseal-agent-identity-v1",
         "issuer": settings.jwt_issuer,

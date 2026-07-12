@@ -38,6 +38,10 @@ def _identity_specific_violations(settings: Settings) -> list[str]:
         violations.append(
             "CLAYSEAL_HTTP_ALLOWED_HOSTS must list accepted HTTP Host headers"
         )
+    if not settings.public_base_url:
+        violations.append(
+            "CLAYSEAL_PUBLIC_BASE_URL must be set so discovery metadata does not depend on request Host headers"
+        )
     if settings.is_production and settings.manage_schema.strip().lower() == "auto":
         violations.append(
             "CLAYSEAL_MANAGE_SCHEMA must be 'alembic' in production (run alembic upgrade head pre-deploy)"

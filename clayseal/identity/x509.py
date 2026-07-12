@@ -3,7 +3,7 @@ SVID for mTLS.
 
 A workload asks for an X.509-SVID with ``auth.identify(..., request_x509=True)``.
 The SDK generates an EC P-256 keypair locally (the private key never leaves the
-process), sends the public key, and stores the returned certificate chain. Use
+process), sends a CSR signed by that key, and stores the returned certificate chain. Use
 :func:`write_mtls_files` or :func:`mtls_context` to turn the SVID into something
 a TLS stack can use.
 """
@@ -13,8 +13,10 @@ import os
 import ssl
 import tempfile
 
-from cryptography.hazmat.primitives import serialization
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import NameOID
 
 
 def generate_ec_keypair() -> tuple[str, str]:
@@ -31,6 +33,22 @@ def generate_ec_keypair() -> tuple[str, str]:
         .decode()
     )
     return private_pem, public_pem
+
+
+def generate_ec_keypair_and_csr() -> tuple[str, str]:
+    """Return a fresh EC P-256 ``(private_pem, csr_pem)`` for an X.509-SVID."""
+    key = ec.generate_private_key(ec.SECP256R1())
+    private_pem = key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    ).decode()
+    csr = (
+        x509.CertificateSigningRequestBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "clayseal-workload")]))
+        .sign(key, hashes.SHA256())
+    )
+    return private_pem, csr.public_bytes(serialization.Encoding.PEM).decode()
 
 
 def write_mtls_files(

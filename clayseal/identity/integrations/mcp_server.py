@@ -23,7 +23,7 @@ Quickstart::
         ClaySealTokenVerifier, ToolGuard, build_auth_settings,
     )
 
-    verifier = ClaySealTokenVerifier(jwks=jwks, issuer="clayseal.io")
+    verifier = ClaySealTokenVerifier(jwks=jwks, issuer="clayseal.io", audience=tenant_id)
     guard = ToolGuard(biscuit_root_public_key=root_public_hex)
     mcp = FastMCP(
         "tools",
@@ -144,7 +144,7 @@ class ClaySealTokenVerifier:
         *,
         jwks: Mapping[str, Any] | Callable[[], Mapping[str, Any]],
         issuer: str,
-        audience: str | Iterable[str] | None = None,
+        audience: str | Iterable[str],
         leeway: int | float = 0,
     ) -> None:
         self._jwks = jwks

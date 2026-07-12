@@ -114,6 +114,58 @@ def test_plaintext_api_key_row_is_migrated_on_successful_use(client):
         assert customer.api_key_hash is not None
 
 
+def test_scoped_api_keys_enforce_least_privilege_and_revocation(client, customer):
+    h = customer["headers"]
+    issuer = client.post(
+        "/v1/api-keys",
+        json={"name": "issuer", "scopes": ["issuer"]},
+        headers=h,
+    )
+    assert issuer.status_code == 201, issuer.text
+    issuer_key = issuer.json()["api_key"]
+    issuer_headers = {"X-API-Key": issuer_key}
+
+    reader = client.post(
+        "/v1/api-keys",
+        json={"name": "reader", "scopes": ["reader"]},
+        headers=h,
+    )
+    assert reader.status_code == 201, reader.text
+    reader_body = reader.json()
+    reader_headers = {"X-API-Key": reader_body["api_key"]}
+
+    ensure_node_attestor(client, h)
+    register_entry(client, h, agent_type="researcher", scopes=["db:read"])
+    document = sign_attestation(
+        workload=workload_for("researcher"),
+        aud=customer["customer_id"],
+    )
+    issued = client.post(
+        "/v1/identify",
+        json={"attestation_document": document},
+        headers=issuer_headers,
+    )
+    assert issued.status_code == 200, issued.text
+
+    denied_read = client.get("/v1/agents", headers=issuer_headers)
+    assert denied_read.status_code == 403
+    assert denied_read.json()["error"]["code"] == "api_key_scope_denied"
+
+    assert client.get("/v1/agents", headers=reader_headers).status_code == 200
+    denied_issue = client.post(
+        "/v1/identify",
+        json={"attestation_document": document},
+        headers=reader_headers,
+    )
+    assert denied_issue.status_code == 403
+
+    revoke = client.post(f"/v1/api-keys/{reader_body['id']}/revoke", headers=h)
+    assert revoke.status_code == 200, revoke.text
+    revoked_read = client.get("/v1/agents", headers=reader_headers)
+    assert revoked_read.status_code == 401
+    assert revoked_read.json()["error"]["code"] == "invalid_api_key"
+
+
 # --------------------------------------------------------------------------- #
 # Admin: node attestors + registration entries
 # --------------------------------------------------------------------------- #
@@ -182,6 +234,26 @@ def test_register_and_list_entries(client, customer):
     assert any(e["agent_type"] == "finance" for e in listing)
 
 
+def test_high_assurance_registration_rejects_static_attestation(client, customer):
+    h = customer["headers"]
+    ensure_node_attestor(client, h)
+    register_entry(
+        client,
+        h,
+        agent_type="payments",
+        scopes=["pay:send"],
+        min_assurance="high",
+    )
+    document = sign_attestation(
+        workload=workload_for("payments"),
+        aud=customer["customer_id"],
+    )
+    resp = client.post("/v1/identify", json={"attestation_document": document}, headers=h)
+    assert resp.status_code == 403
+    assert resp.json()["error"]["code"] == "attestation_denied"
+    assert "assurance is lower" in resp.json()["error"]["message"]
+
+
 # --------------------------------------------------------------------------- #
 # Attestation -> issuance
 # --------------------------------------------------------------------------- #
@@ -194,7 +266,8 @@ def test_attestation_issues_jwt_svid(client, customer):
     assert data["agent_id"]
     assert data["scopes"] == ["db:read", "web:search"]
     assert data["spiffe_id"] == (
-        f"spiffe://clayseal.io/customer/{customer['customer_id']}/agent/researcher"
+        f"spiffe://clayseal.io/customer/{customer['customer_id']}"
+        f"/agent/researcher/run/{data['agent_id']}"
     )
 
     # The credential is a JWT-SVID: three segments + a kid header.
@@ -210,12 +283,16 @@ def test_jwt_svid_claims_are_correct(client, customer):
         client, customer["headers"], scopes=["db:read", "web:search"]
     ).json()
     claims = jwt.decode(data["token"], options={"verify_signature": False})
-    sid = f"spiffe://clayseal.io/customer/{customer['customer_id']}/agent/researcher"
+    sid = (
+        f"spiffe://clayseal.io/customer/{customer['customer_id']}"
+        f"/agent/researcher/run/{data['agent_id']}"
+    )
     assert claims["sub"] == sid
     assert claims["spiffe_id"] == sid
     assert claims["agent_id"] == data["agent_id"]
     assert claims["agent_type"] == "researcher"
     assert claims["owner"] == "alice@acme.ai"
+    assert claims["principal"] == "alice@acme.ai"
     assert claims["scope"] == ["db:read", "web:search"]
     assert claims["cnf"]["jkt"] == data["bound_keyhash"]
     assert claims["iss"] == "clayseal.io"  # trust domain
@@ -653,7 +730,7 @@ def test_list_and_get_agents(client, customer):
     one = client.get(f"/v1/agents/{a1['agent_id']}", headers=h)
     assert one.status_code == 200
     assert one.json()["id"] == a1["agent_id"]
-    assert one.json()["spiffe_id"].endswith("/agent/planner")
+    assert one.json()["spiffe_id"].endswith(f"/agent/planner/run/{a1['agent_id']}")
 
 
 def test_tenant_isolation_on_listing(client, customer):
@@ -713,7 +790,7 @@ def test_issuance_is_audited(client, customer):
     ]
     assert len(issued) == 1
     assert issued[0]["customer_id"] == customer["customer_id"]
-    assert issued[0]["spiffe_id"].endswith("/agent/researcher")
+    assert issued[0]["spiffe_id"].endswith(f"/agent/researcher/run/{data['agent_id']}")
 
 
 def test_attestor_and_entry_registration_audited(client, customer):

@@ -72,6 +72,7 @@ from .biscuit_keys import (
     encrypt_private_hex,
     maybe_reencrypt_biscuit_root_key,
 )
+from .config import get_settings
 from .errors import BiscuitError, RegistrationEntryError
 from .models import BiscuitRevocation, BiscuitRootKey, CapabilityChallenge, new_id, utcnow
 
@@ -571,6 +572,8 @@ def authorize_biscuit(
 def build_biscuit_jwks(db: Session, customer_id: str) -> dict:
     """Publish a customer's Biscuit root public keys for offline verifiers
     (the capability-token analogue of ``jwks.json``)."""
+    settings = get_settings()
+    retired_cutoff = utcnow() - timedelta(seconds=settings.max_ttl_seconds + 300)
     keys = db.scalars(
         select(BiscuitRootKey).where(BiscuitRootKey.customer_id == customer_id)
     ).all()
@@ -584,5 +587,6 @@ def build_biscuit_jwks(db: Session, customer_id: str) -> dict:
                 "status": k.status,
             }
             for k in keys
+            if k.status == "active" or k.retired_at is None or k.retired_at > retired_cutoff
         ]
     }

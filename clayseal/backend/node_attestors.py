@@ -66,6 +66,8 @@ class NodeAttestationResult:
     node_id: str
     jti: str
     expires_at: datetime
+    attestor_type: str
+    assurance_level: str
 
 
 class NodeAttestor(Protocol):
@@ -205,6 +207,8 @@ class GcpIitAttestor:
             node_id=str(instance_id),
             jti=jti,
             expires_at=_epoch_to_naive_utc(claims["exp"]),
+            attestor_type=self.type,
+            assurance_level="high",
         )
 
 
@@ -310,6 +314,8 @@ class K8sPsatAttestor:
             node_id=str(node_id),
             jti=jti,
             expires_at=_epoch_to_naive_utc(int(time.time()) + max_ttl_seconds),
+            attestor_type=self.type,
+            assurance_level="high",
         )
 
 
@@ -402,6 +408,8 @@ class AwsIidAttestor:
             node_id=str(instance_id),
             jti=jti,
             expires_at=_epoch_to_naive_utc(int(time.time()) + max_ttl_seconds),
+            attestor_type=self.type,
+            assurance_level="low",
         )
 
 

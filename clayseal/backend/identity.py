@@ -73,6 +73,16 @@ SUPPORTED_JWT_TYPES = (JWT_TYPE, WIT_JWT_TYPE)
 # typ values accepted on verification — the above plus SPIFFE's alternate
 # "JOSE" and the legacy Clay Seal typ.
 ACCEPTED_JWT_TYPES = (JWT_TYPE, "JOSE", WIT_JWT_TYPE, LEGACY_SVID_JWT_TYPE)
+ASSURANCE_RANK = {"low": 0, "standard": 1, "high": 2}
+
+
+def record_identity_event(event_type: str, customer_id: str, **fields: object) -> dict:
+    """Append an identity-layer audit event.
+
+    Routers use this for lifecycle changes that do not naturally pass through
+    issuance/revocation helpers.
+    """
+    return record_event(event_type, customer_id, **fields)
 
 
 def generate_ed25519_keypair() -> tuple[str, str]:
@@ -255,7 +265,7 @@ def issue_credential(
     expires_at = now + timedelta(seconds=ttl)
     agent_id = agent_id or new_id()
     jti = new_id()
-    sid = spiffe_id(settings.trust_domain, customer.id, agent_type)
+    sid = spiffe_id(settings.trust_domain, customer.id, agent_type, agent_id)
 
     claims: dict = {
         "iss": settings.jwt_issuer,
@@ -270,6 +280,7 @@ def issue_credential(
         "agent_id": agent_id,
         "agent_type": agent_type,
         "owner": owner,
+        "principal": owner,
         "scope": scopes,
         "selectors": selectors,
     }
@@ -447,6 +458,7 @@ def register_entry(
     scopes: list[str] | None = None,
     owner: str | None = None,
     ttl_seconds: int | None = None,
+    min_assurance: str = "standard",
     description: str = "",
 ) -> RegistrationEntry:
     """Pre-approve an identity (admin op): the selectors a workload must attest
@@ -473,6 +485,7 @@ def register_entry(
         scopes=scopes,
         owner=owner,
         ttl_seconds=ttl_seconds,
+        min_assurance=min_assurance,
         description=description,
     )
     db.add(entry)
@@ -538,6 +551,43 @@ def lint_registration_entries(
     return conflicts
 
 
+def lint_registration_warnings(db: Session, customer: Customer) -> list[dict]:
+    entries = list(
+        db.scalars(
+            select(RegistrationEntry).where(RegistrationEntry.customer_id == customer.id)
+        ).all()
+    )
+    warnings: list[dict] = []
+    for entry in entries:
+        selectors = set(entry.selectors or [])
+        capabilities = list(entry.capabilities or [])
+        if len(selectors) == 1:
+            warnings.append(
+                {
+                    "entry_id": entry.id,
+                    "severity": "warning",
+                    "reason": "registration entry has only one selector; prefer binding to both node and workload selectors",
+                }
+            )
+        if any(str(cap.get("action")) == "*" for cap in capabilities if isinstance(cap, dict)):
+            warnings.append(
+                {
+                    "entry_id": entry.id,
+                    "severity": "warning",
+                    "reason": "registration entry grants a wildcard action; prefer explicit actions",
+                }
+            )
+        if (entry.min_assurance or "standard") == "low" and capabilities:
+            warnings.append(
+                {
+                    "entry_id": entry.id,
+                    "severity": "warning",
+                    "reason": "low-assurance attestation is allowed for a capability-bearing identity",
+                }
+            )
+    return warnings
+
+
 def _match_entry(
     db: Session, customer: Customer, presented: set[str]
 ) -> RegistrationEntry | None:
@@ -601,6 +651,8 @@ def attest(
             bundle, tenant_id=customer.id, max_ttl_seconds=max_ttl
         )
         node_selectors = result.node_selectors
+        attestor_type = result.attestor_type
+        assurance_level = result.assurance_level
         record_attestation_use(db, customer.id, jti=result.jti, expires_at=result.expires_at)
         # Cloud evidence carries the workload key alongside the token (bound via
         # the audience), not inside a signed workload block.
@@ -608,6 +660,8 @@ def attest(
         workload.setdefault("workload_pubkey_pem", cloud_workload_pubkey_pem)
     else:
         node_payload, node_selectors = verify_node_attestation(db, customer, attestation_document)
+        attestor_type = str(node_payload.get("type") or "static")
+        assurance_level = "standard"
         exp_claim = node_payload.get("exp")
         if not isinstance(exp_claim, (int, float)):
             raise AttestationDeniedError(
@@ -633,6 +687,19 @@ def attest(
                 "Register an entry at POST /v1/registration-entries whose selectors are "
                 "a subset of what was attested."
             ),
+            presented_selectors=sorted(presented),
+        )
+    required_assurance = entry.min_assurance or "standard"
+    if ASSURANCE_RANK.get(assurance_level, -1) < ASSURANCE_RANK.get(required_assurance, 1):
+        raise AttestationDeniedError(
+            "Attestation assurance is lower than this registration entry requires.",
+            suggestion=(
+                "Use a stronger attestor for this workload, or lower the entry's "
+                "min_assurance if the deployment accepts that risk."
+            ),
+            attestor_type=attestor_type,
+            assurance_level=assurance_level,
+            required_assurance=required_assurance,
             presented_selectors=sorted(presented),
         )
 
@@ -663,6 +730,10 @@ def attest(
         ttl_seconds=resolved_ttl,
         selectors=matched_selectors,
         workload_pubkey_pem=workload_pubkey_pem,
+        extra_claims={
+            "attestation_type": attestor_type,
+            "assurance_level": assurance_level,
+        },
         token_typ=token_typ,
     )
 
@@ -901,6 +972,8 @@ def verify_capability(
 # JWKS (public keys) -- lets downstream services verify tokens offline.
 # --------------------------------------------------------------------------- #
 def build_jwks(db: Session, customer_id: str) -> dict:
+    settings = get_settings()
+    retired_cutoff = utcnow() - timedelta(seconds=settings.max_ttl_seconds + 300)
     keys = db.scalars(
         select(SigningKey).where(
             SigningKey.customer_id == customer_id,
@@ -909,6 +982,8 @@ def build_jwks(db: Session, customer_id: str) -> dict:
     ).all()
     jwk_list = []
     for k in keys:
+        if k.status != "active" and k.retired_at is not None and k.retired_at <= retired_cutoff:
+            continue
         public_key = serialization.load_pem_public_key(k.public_pem.encode())
         if not isinstance(public_key, rsa.RSAPublicKey):
             continue

@@ -8,17 +8,30 @@ from sqlalchemy.orm import Session
 from .. import capabilities as cap_service
 from .. import identity as identity_service
 from ..api_keys import generate_api_key
+from ..audit import read_events, verify_event_log
 from ..db import get_db
-from ..deps import get_current_customer, require_admin, verify_mtls_binding
+from ..deps import require_admin, require_scope, verify_mtls_binding
 from ..errors import (
     AgentNotFoundError,
     InvalidTokenError,
     NodeAttestorError,
     RegistrationEntryError,
 )
-from ..models import Agent, BiscuitRootKey, Customer, NodeAttestor, RegistrationEntry, new_id
+from ..models import (
+    Agent,
+    BiscuitRootKey,
+    Customer,
+    NodeAttestor,
+    RegistrationEntry,
+    TenantApiKey,
+    new_id,
+    utcnow,
+)
 from ..schemas import (
     AgentOut,
+    ApiKeyCreate,
+    ApiKeyCreateOut,
+    ApiKeyOut,
     AuthorizeRequest,
     AuthorizeResponse,
     ChallengeResponse,
@@ -36,6 +49,11 @@ from ..schemas import (
 )
 
 router = APIRouter(prefix="/v1", tags=["identity"])
+ADMIN_CUSTOMER = require_scope("admin")
+ISSUER_CUSTOMER = require_scope("issuer")
+VERIFIER_CUSTOMER = require_scope("verifier")
+READER_CUSTOMER = require_scope("reader")
+REVOKER_CUSTOMER = require_scope("revoker")
 
 
 def _credential_out(
@@ -90,13 +108,103 @@ def create_customer(body: CustomerCreate, db: Session = Depends(get_db)) -> Cust
     return CustomerOut(customer_id=customer.id, name=customer.name, api_key=api_key)
 
 
+@router.post("/api-keys", response_model=ApiKeyCreateOut, status_code=201)
+def create_api_key(
+    body: ApiKeyCreate,
+    customer: Customer = Depends(ADMIN_CUSTOMER),
+    db: Session = Depends(get_db),
+) -> ApiKeyCreateOut:
+    """Create a purpose-scoped tenant API key. The secret is returned once."""
+    api_key, lookup, encoded_hash = generate_api_key()
+    scopes = list(dict.fromkeys(body.scopes))
+    key = TenantApiKey(
+        id=new_id(),
+        customer_id=customer.id,
+        name=body.name,
+        api_key=lookup,
+        api_key_hash=encoded_hash,
+        scopes=scopes,
+        status="active",
+    )
+    db.add(key)
+    db.commit()
+    db.refresh(key)
+    identity_service.record_identity_event(
+        "api_key.created",
+        customer.id,
+        key_id=key.id,
+        name=key.name,
+        scopes=scopes,
+    )
+    return ApiKeyCreateOut(
+        id=key.id,
+        name=key.name,
+        scopes=scopes,
+        status=key.status,
+        created_at=key.created_at,
+        revoked_at=key.revoked_at,
+        api_key=api_key,
+    )
+
+
+@router.get("/api-keys", response_model=list[ApiKeyOut])
+def list_api_keys(
+    customer: Customer = Depends(ADMIN_CUSTOMER),
+    db: Session = Depends(get_db),
+) -> list[ApiKeyOut]:
+    keys = db.scalars(
+        select(TenantApiKey)
+        .where(TenantApiKey.customer_id == customer.id)
+        .order_by(TenantApiKey.created_at.desc())
+    ).all()
+    return [ApiKeyOut.model_validate(k) for k in keys]
+
+
+@router.post("/api-keys/{key_id}/revoke", response_model=ApiKeyOut)
+def revoke_api_key(
+    key_id: str,
+    customer: Customer = Depends(ADMIN_CUSTOMER),
+    db: Session = Depends(get_db),
+) -> ApiKeyOut:
+    key = db.get(TenantApiKey, key_id)
+    if key is None or key.customer_id != customer.id:
+        raise AgentNotFoundError(
+            f"No API key {key_id} for this customer.",
+            suggestion="List keys at GET /v1/api-keys.",
+        )
+    key.status = "revoked"
+    key.revoked_at = utcnow()
+    db.add(key)
+    db.commit()
+    db.refresh(key)
+    identity_service.record_identity_event(
+        "api_key.revoked", customer.id, key_id=key.id, name=key.name
+    )
+    return ApiKeyOut.model_validate(key)
+
+
+@router.get("/audit/events")
+def audit_events(
+    customer: Customer = Depends(ADMIN_CUSTOMER),
+) -> list[dict]:
+    return read_events(customer.id)
+
+
+@router.get("/audit/verify")
+def audit_verify(
+    _customer: Customer = Depends(ADMIN_CUSTOMER),
+) -> dict:
+    issues = verify_event_log()
+    return {"ok": not issues, "issues": issues}
+
+
 # --------------------------------------------------------------------------- #
 # Node attestors + registration entries (admin: configure who may attest what)
 # --------------------------------------------------------------------------- #
 @router.post("/node-attestors", response_model=NodeAttestorOut, status_code=201)
 def create_node_attestor(
     body: NodeAttestorCreate,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> NodeAttestorOut:
     attestor = identity_service.register_node_attestor(
@@ -108,7 +216,7 @@ def create_node_attestor(
 
 @router.get("/node-attestors", response_model=list[NodeAttestorOut])
 def list_node_attestors(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> list[NodeAttestorOut]:
     stmt = select(NodeAttestor).where(NodeAttestor.customer_id == customer.id)
@@ -118,7 +226,7 @@ def list_node_attestors(
 @router.delete("/node-attestors/{attestor_id}", status_code=204)
 def delete_node_attestor(
     attestor_id: str,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> None:
     attestor = db.get(NodeAttestor, attestor_id)
@@ -129,26 +237,29 @@ def delete_node_attestor(
         )
     db.delete(attestor)
     db.commit()
+    identity_service.record_identity_event(
+        "node_attestor.deleted", customer.id, attestor_id=attestor_id
+    )
 
 
 @router.post("/registration-entries", response_model=RegistrationEntryOut, status_code=201)
 def create_registration_entry(
     body: RegistrationEntryCreate,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> RegistrationEntryOut:
     entry = identity_service.register_entry(
         db, customer, agent_type=body.agent_type, selectors=body.selectors,
         capabilities=[c.model_dump(exclude_none=True) for c in body.capabilities],
         scopes=body.scopes, owner=body.owner, ttl_seconds=body.ttl_seconds,
-        description=body.description,
+        min_assurance=body.min_assurance, description=body.description,
     )
     return RegistrationEntryOut.model_validate(entry)
 
 
 @router.get("/registration-entries", response_model=list[RegistrationEntryOut])
 def list_registration_entries(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> list[RegistrationEntryOut]:
     stmt = select(RegistrationEntry).where(RegistrationEntry.customer_id == customer.id)
@@ -157,18 +268,19 @@ def list_registration_entries(
 
 @router.get("/registration-entries/lint", response_model=RegistrationLintReport)
 def lint_registration_entries(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> RegistrationLintReport:
     """Report overlapping registration entries that would tie at identify time."""
     conflicts = identity_service.lint_registration_entries(db, customer)
-    return RegistrationLintReport(ok=not conflicts, conflicts=conflicts)
+    warnings = identity_service.lint_registration_warnings(db, customer)
+    return RegistrationLintReport(ok=not conflicts, conflicts=conflicts, warnings=warnings)
 
 
 @router.delete("/registration-entries/{entry_id}", status_code=204)
 def delete_registration_entry(
     entry_id: str,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> None:
     entry = db.get(RegistrationEntry, entry_id)
@@ -179,12 +291,15 @@ def delete_registration_entry(
         )
     db.delete(entry)
     db.commit()
+    identity_service.record_identity_event(
+        "registration.deleted", customer.id, entry_id=entry_id
+    )
 
 
 @router.post("/identify", response_model=CredentialOut)
 def identify(
     body: IdentifyRequest,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ISSUER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> CredentialOut:
     """Attest a workload and mint a JWT-SVID.
@@ -200,17 +315,26 @@ def identify(
         token_typ=body.token_typ,
     )
     x509_chain = None
-    if body.x509_public_key_pem:
-        from ..x509_svid import issue_x509_svid
+    if body.x509_csr_pem or body.x509_public_key_pem:
+        from ..x509_svid import issue_x509_svid, issue_x509_svid_from_csr
 
         ttl = body.ttl_seconds or (agent.expires_at - agent.issued_at).seconds
-        x509_chain = issue_x509_svid(
-            db,
-            customer.id,
-            spiffe_id=agent.spiffe_id,
-            public_key_pem=body.x509_public_key_pem,
-            ttl_seconds=ttl or 3600,
-        )
+        if body.x509_csr_pem:
+            x509_chain = issue_x509_svid_from_csr(
+                db,
+                customer.id,
+                spiffe_id=agent.spiffe_id,
+                csr_pem=body.x509_csr_pem,
+                ttl_seconds=ttl or 3600,
+            )
+        else:
+            x509_chain = issue_x509_svid(
+                db,
+                customer.id,
+                spiffe_id=agent.spiffe_id,
+                public_key_pem=body.x509_public_key_pem or "",
+                ttl_seconds=ttl or 3600,
+            )
     return _credential_out(db, agent, token, x509_svid_chain=x509_chain)
 
 
@@ -218,7 +342,7 @@ def identify(
 def validate(
     request: Request,
     body: ValidateRequest,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(VERIFIER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> ValidateResponse:
     pop = None
@@ -249,7 +373,7 @@ def validate(
 @router.post("/agents/{agent_id}/revoke", response_model=AgentOut)
 def revoke(
     agent_id: str,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(REVOKER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> AgentOut:
     agent = identity_service.revoke_agent(db, customer, agent_id)
@@ -263,7 +387,7 @@ def revoke(
 
 @router.get("/agents", response_model=list[AgentOut])
 def list_agents(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
     status: str | None = None,
     agent_type: str | None = None,
@@ -287,7 +411,7 @@ def list_agents(
 @router.get("/agents/{agent_id}", response_model=AgentOut)
 def get_agent(
     agent_id: str,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> AgentOut:
     agent = db.get(Agent, agent_id)
@@ -301,7 +425,7 @@ def get_agent(
 
 @router.post("/keys/rotate")
 def rotate_keys(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> dict:
     key = identity_service.rotate_key(db, customer.id)
@@ -310,7 +434,7 @@ def rotate_keys(
 
 @router.get("/jwks.json")
 def jwks(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> dict:
     return identity_service.build_jwks(db, customer.id)
@@ -321,7 +445,7 @@ def jwks(
 # --------------------------------------------------------------------------- #
 @router.get("/biscuit-keys.json")
 def biscuit_keys(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(READER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> dict:
     """Publish the customer's Biscuit root public keys so capability tokens can
@@ -331,7 +455,7 @@ def biscuit_keys(
 
 @router.post("/biscuit-keys/rotate")
 def rotate_biscuit_keys(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(ADMIN_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> dict:
     key = cap_service.rotate_root_key(db, customer.id)
@@ -340,7 +464,7 @@ def rotate_biscuit_keys(
 
 @router.post("/challenge", response_model=ChallengeResponse)
 def challenge(
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(VERIFIER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> ChallengeResponse:
     """Issue a one-time nonce for the server-side proof-of-possession path."""
@@ -351,7 +475,7 @@ def challenge(
 def authorize(
     request: Request,
     body: AuthorizeRequest,
-    customer: Customer = Depends(get_current_customer),
+    customer: Customer = Depends(VERIFIER_CUSTOMER),
     db: Session = Depends(get_db),
 ) -> AuthorizeResponse:
     """Authorize an operation against a capability token (server-side path).

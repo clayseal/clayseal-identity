@@ -41,7 +41,7 @@ def session(auth):
 def verifier(session, base_url):
     claims = session.validate().claims or {}
     jwks = httpx.get(f"{base_url}/t/{claims['customer_id']}/jwks.json").json()
-    return ClaySealTokenVerifier(jwks=jwks, issuer=claims["iss"])
+    return ClaySealTokenVerifier(jwks=jwks, issuer=claims["iss"], audience=claims["customer_id"])
 
 
 @pytest.fixture
@@ -87,7 +87,9 @@ def test_verify_token_rejects_tampered_token(verifier, session):
 def test_verify_token_rejects_wrong_issuer(session, base_url):
     claims = session.validate().claims or {}
     jwks = httpx.get(f"{base_url}/t/{claims['customer_id']}/jwks.json").json()
-    verifier = ClaySealTokenVerifier(jwks=jwks, issuer="attacker.example")
+    verifier = ClaySealTokenVerifier(
+        jwks=jwks, issuer="attacker.example", audience=claims["customer_id"]
+    )
     assert asyncio.run(verifier.verify_token(session.token)) is None
 
 
@@ -97,7 +99,7 @@ def test_verify_token_callable_jwks(session, base_url):
     def fetch():
         return httpx.get(f"{base_url}/t/{claims['customer_id']}/jwks.json").json()
 
-    verifier = ClaySealTokenVerifier(jwks=fetch, issuer=claims["iss"])
+    verifier = ClaySealTokenVerifier(jwks=fetch, issuer=claims["iss"], audience=claims["customer_id"])
     assert asyncio.run(verifier.verify_token(session.token)) is not None
 
 

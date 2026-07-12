@@ -40,7 +40,11 @@ proof-of-possession.
 import { verifyToken, authorizeTool } from "@clayseal/verify";
 
 // 1. Transport: is this a valid Clay Seal agent? (reject with 401 otherwise)
-const claims = await verifyToken(bearer, { jwks: tenantJwks, issuer: "clayseal.io" });
+const claims = await verifyToken(bearer, {
+  jwks: tenantJwks,
+  issuer: "clayseal.io",
+  audience: tenantId,
+});
 if (!claims) return unauthorized();
 
 // 2. Per tool call: does the capability token authorize *this* tool?

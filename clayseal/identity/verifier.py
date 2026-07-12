@@ -65,7 +65,7 @@ def verify_offline(
     *,
     jwks: Mapping[str, Any] | Iterable[Mapping[str, Any]],
     issuer: str,
-    audience: str | Iterable[str] | None = None,
+    audience: str | Iterable[str],
     require_cnf: bool = True,
     allowed_token_types: Iterable[str] = DEFAULT_ALLOWED_TOKEN_TYPES,
     algorithms: Iterable[str] = DEFAULT_ALGORITHMS,
@@ -77,8 +77,8 @@ def verify_offline(
         token: The credential JWT returned by ``ClaySeal.identify``.
         jwks: Tenant JWKS, usually ``GET /t/{tenant}/jwks.json``.
         issuer: Expected issuer/trust domain.
-        audience: Expected audience. If omitted, the JWT ``aud`` claim is not
-            checked; resource servers should pass one whenever they know it.
+        audience: Expected audience, usually the tenant/customer ID. Required:
+            resource servers must pin the tenant they trust.
         require_cnf: Require a sender-constraining ``cnf.jkt`` claim.
         allowed_token_types: Accepted JOSE ``typ`` values.
         algorithms: Accepted JWT signing algorithms. Defaults to RS256 only.
@@ -93,6 +93,15 @@ def verify_offline(
     """
     allowed_algs = tuple(algorithms)
     allowed_types = set(allowed_token_types)
+    if audience is None:
+        raise InvalidTokenError(
+            "Offline verification requires an expected audience.",
+            suggestion=(
+                "Pass the tenant/customer ID from the token's issuer context. "
+                "Audience-less verification is unsafe for resource servers."
+            ),
+            details={"audience_required": True},
+        )
     try:
         header = jwt.get_unverified_header(token)
     except jwt.InvalidTokenError as exc:
@@ -119,7 +128,7 @@ def verify_offline(
         public_key = jwt.algorithms.RSAAlgorithm.from_jwk(jwk)
         options = {
             "require": ["exp", "iat", "sub", "jti"],
-            "verify_aud": audience is not None,
+            "verify_aud": True,
         }
         claims = jwt.decode(
             token,

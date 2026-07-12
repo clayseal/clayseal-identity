@@ -30,6 +30,7 @@ from .client import ClaySeal
 from .errors import (
     AgentNotFoundError,
     AgentRevokedError,
+    APIKeyScopeError,
     BiscuitError,
     CapabilityDeniedError,
     ClaySealError,
@@ -50,7 +51,7 @@ from .integrations import (
     protect_tool,
     protect_tools,
 )
-from .models import AgentInfo, Credential, ValidationResult
+from .models import AgentInfo, ApiKeyInfo, Credential, ValidationResult
 from .profile import AgentIdentityClaims
 from .session import AgentSession
 from .verifier import verify_offline
@@ -62,6 +63,7 @@ __all__ = [
     "AgentSession",
     "Credential",
     "AgentInfo",
+    "ApiKeyInfo",
     "ValidationResult",
     "AgentIdentityClaims",
     "TokenInspection",
@@ -82,6 +84,7 @@ __all__ = [
     "ClaySealError",
     "TransportError",
     "InvalidAPIKeyError",
+    "APIKeyScopeError",
     "InvalidTokenError",
     "TokenExpiredError",
     "AgentRevokedError",

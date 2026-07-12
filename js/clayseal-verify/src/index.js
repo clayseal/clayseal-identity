@@ -87,7 +87,7 @@ function rfc3339Now() {
  * @param {object} opts
  * @param {object} opts.jwks    Tenant JWKS (GET /t/{tenant}/jwks.json).
  * @param {string} opts.issuer  Expected issuer/trust domain.
- * @param {string|string[]} [opts.audience]
+ * @param {string|string[]} opts.audience Expected tenant/customer audience.
  * @param {string[]} [opts.allowedTokenTypes]
  * @param {boolean} [opts.requireCnf=true]
  * @returns {Promise<object|null>} Verified claims, or null if invalid.
@@ -100,6 +100,7 @@ export async function verifyToken(token, opts) {
     allowedTokenTypes = DEFAULT_ALLOWED_TOKEN_TYPES,
     requireCnf = true,
   } = opts;
+  if (audience === undefined || audience === null) return null;
   const keySet = createLocalJWKSet(jwks);
   try {
     const { payload, protectedHeader } = await jwtVerify(token, keySet, {

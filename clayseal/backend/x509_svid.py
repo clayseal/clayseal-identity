@@ -147,6 +147,27 @@ def _load_public_key(public_key_pem: str):
     )
 
 
+def _public_key_from_csr(csr_pem: str):
+    try:
+        csr = x509.load_pem_x509_csr(csr_pem.encode())
+    except (ValueError, TypeError) as exc:
+        raise AttestationDeniedError(
+            "x509_csr_pem is not a valid PEM certificate signing request.",
+            suggestion="Generate a CSR with the TLS private key held by the workload.",
+        ) from exc
+    if not csr.is_signature_valid:
+        raise AttestationDeniedError(
+            "x509_csr_pem signature is invalid.",
+            suggestion="The CSR must be signed by the private key matching its public key.",
+        )
+    public_key = csr.public_key()
+    public_pem = public_key.public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode()
+    return _load_public_key(public_pem)
+
+
 def issue_x509_svid(
     db: Session,
     customer_id: str,
@@ -161,6 +182,43 @@ def issue_x509_svid(
     """
     _require_non_root_spiffe_id(spiffe_id)
     public_key = _load_public_key(public_key_pem)
+    return _issue_x509_svid_for_public_key(
+        db,
+        customer_id,
+        spiffe_id=spiffe_id,
+        public_key=public_key,
+        ttl_seconds=ttl_seconds,
+    )
+
+
+def issue_x509_svid_from_csr(
+    db: Session,
+    customer_id: str,
+    *,
+    spiffe_id: str,
+    csr_pem: str,
+    ttl_seconds: int = DEFAULT_SVID_TTL_SECONDS,
+) -> str:
+    """Mint a leaf X.509-SVID from a CSR signed by the workload TLS key."""
+    _require_non_root_spiffe_id(spiffe_id)
+    public_key = _public_key_from_csr(csr_pem)
+    return _issue_x509_svid_for_public_key(
+        db,
+        customer_id,
+        spiffe_id=spiffe_id,
+        public_key=public_key,
+        ttl_seconds=ttl_seconds,
+    )
+
+
+def _issue_x509_svid_for_public_key(
+    db: Session,
+    customer_id: str,
+    *,
+    spiffe_id: str,
+    public_key,
+    ttl_seconds: int,
+) -> str:
     ca = get_or_create_ca(db, customer_id)
     ca_cert = x509.load_pem_x509_certificate(ca.cert_pem.encode())
     ca_key = serialization.load_pem_private_key(
@@ -221,6 +279,7 @@ def x509_trust_bundle(db: Session, customer_id: str) -> dict:
     """Return the tenant's X.509 trust bundle in SPIFFE bundle (JWKS) form plus
     a PEM convenience: every active/retired CA cert, so a verifier can validate
     leaves issued by the current and recently-rotated CAs."""
+    cutoff = utcnow() - timedelta(seconds=DEFAULT_SVID_TTL_SECONDS + 300)
     cas = list(
         db.scalars(
             select(X509CaKey)
@@ -231,6 +290,8 @@ def x509_trust_bundle(db: Session, customer_id: str) -> dict:
     keys = []
     pem_parts = []
     for ca in cas:
+        if ca.status != "active" and ca.retired_at is not None and ca.retired_at <= cutoff:
+            continue
         cert = x509.load_pem_x509_certificate(ca.cert_pem.encode())
         der = cert.public_bytes(serialization.Encoding.DER)
         keys.append(

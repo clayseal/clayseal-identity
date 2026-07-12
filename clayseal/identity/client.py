@@ -20,7 +20,7 @@ from clayseal._core import (
 from ._http import HttpClient
 from .errors import ClaySealError
 from .logging import get_logger
-from .models import AgentInfo, Credential, ValidationResult
+from .models import AgentInfo, ApiKeyInfo, Credential, ValidationResult
 from .session import AgentSession
 
 DEFAULT_BASE_URL = "http://localhost:8000"
@@ -166,15 +166,15 @@ class ClaySeal:
                 capabilities=capabilities,
             )
         x509_private_pem = None
-        x509_public_pem = None
+        x509_csr_pem = None
         if request_x509:
-            from .x509 import generate_ec_keypair
+            from .x509 import generate_ec_keypair_and_csr
 
-            x509_private_pem, x509_public_pem = generate_ec_keypair()
+            x509_private_pem, x509_csr_pem = generate_ec_keypair_and_csr()
         data = self.identify_with_attestation(
             attestation_document,
             ttl_seconds=ttl_seconds,
-            x509_public_key_pem=x509_public_pem,
+            x509_csr_pem=x509_csr_pem,
         )
         return AgentSession(
             self,
@@ -206,19 +206,23 @@ class ClaySeal:
         *,
         ttl_seconds: int | None = None,
         x509_public_key_pem: str | None = None,
+        x509_csr_pem: str | None = None,
     ) -> dict:
         """Send a platform-issued attestation document to the backend.
 
         This is the production issuance path. It returns the raw credential
         payload so callers that hold the workload private key can pass it to
         :meth:`session_from_token` with ``workload_private_pem``. Pass
-        ``x509_public_key_pem`` to also receive an X.509-SVID for mTLS.
+        ``x509_csr_pem`` to also receive an X.509-SVID for mTLS. The older
+        ``x509_public_key_pem`` path is still accepted for compatibility.
         """
         body: dict = {"attestation_document": attestation_document}
         if ttl_seconds is not None:
             body["ttl_seconds"] = ttl_seconds
         if x509_public_key_pem is not None:
             body["x509_public_key_pem"] = x509_public_key_pem
+        if x509_csr_pem is not None:
+            body["x509_csr_pem"] = x509_csr_pem
         return self._http.post("/v1/identify", json=body)
 
     def fetch_x509_bundle(self, tenant_id: str) -> str:
@@ -276,3 +280,15 @@ class ClaySeal:
 
     def revoke(self, agent_id: str) -> AgentInfo:
         return AgentInfo.from_api(self._http.post(f"/v1/agents/{agent_id}/revoke"))
+
+    # --- tenant API keys ----------------------------------------------------- #
+    def create_api_key(self, name: str, scopes: list[str]) -> ApiKeyInfo:
+        """Create a scoped tenant API key. The returned ``api_key`` is shown once."""
+        data = self._http.post("/v1/api-keys", json={"name": name, "scopes": scopes})
+        return ApiKeyInfo.from_api(data)
+
+    def api_keys(self) -> list[ApiKeyInfo]:
+        return [ApiKeyInfo.from_api(item) for item in self._http.get("/v1/api-keys")]
+
+    def revoke_api_key(self, key_id: str) -> ApiKeyInfo:
+        return ApiKeyInfo.from_api(self._http.post(f"/v1/api-keys/{key_id}/revoke"))

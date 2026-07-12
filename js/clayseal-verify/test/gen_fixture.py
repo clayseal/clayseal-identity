@@ -68,6 +68,7 @@ def main(out_path: str) -> None:
 
     fixture = {
         "issuer": claims["iss"],
+        "audience": claims["customer_id"],
         "jwks": jwks,
         "token": session.token,
         "agent_id": session.agent_id,

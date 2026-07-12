@@ -29,6 +29,7 @@ test("verifyToken accepts a Python-minted JWT-SVID", async () => {
   const claims = await verifyToken(fx.token, {
     jwks: fx.jwks,
     issuer: fx.issuer,
+    audience: fx.audience,
   });
   assert.ok(claims);
   assert.equal(claims.agent_id, fx.agent_id);
@@ -37,13 +38,17 @@ test("verifyToken accepts a Python-minted JWT-SVID", async () => {
 
 test("verifyToken rejects a tampered token", async () => {
   const bad = fx.token.slice(0, -4) + "AAAA";
-  assert.equal(await verifyToken(bad, { jwks: fx.jwks, issuer: fx.issuer }), null);
+  assert.equal(
+    await verifyToken(bad, { jwks: fx.jwks, issuer: fx.issuer, audience: fx.audience }),
+    null,
+  );
 });
 
 test("verifyToken rejects the wrong issuer", async () => {
   const claims = await verifyToken(fx.token, {
     jwks: fx.jwks,
     issuer: "attacker.example",
+    audience: fx.audience,
   });
   assert.equal(claims, null);
 });

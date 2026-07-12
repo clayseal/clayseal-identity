@@ -16,7 +16,7 @@ class AgentIdentityVerifier:
         *,
         jwks: Mapping[str, Any] | Iterable[Mapping[str, Any]],
         issuer: str,
-        audience: str | Iterable[str] | None = None,
+        audience: str | Iterable[str],
         require_cnf: bool = True,
     ) -> None:
         self.jwks = jwks
@@ -55,7 +55,7 @@ class AgentIdentityVerifier:
         *,
         jwks: Mapping[str, Any] | Iterable[Mapping[str, Any]],
         issuer: str,
-        audience: str | Iterable[str] | None = None,
+        audience: str | Iterable[str],
         require_cnf: bool = True,
     ):
         from fastapi import Header

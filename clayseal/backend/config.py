@@ -98,11 +98,17 @@ class Settings:
             os.getenv("CLAYSEAL_ATTESTATION_MAX_TTL", "300")
         )
 
-        # SPIFFE trust domain. Every issued JWT-SVID's subject is a SPIFFE ID
-        # under this domain (spiffe://{trust_domain}/customer/{id}/agent/{type}),
+        # SPIFFE trust domain. Every issued JWT-SVID's subject is a per-run
+        # SPIFFE ID under this domain
+        # (spiffe://{trust_domain}/customer/{id}/agent/{type}/run/{agent_id}),
         # and it doubles as the JWT issuer (`iss`).
         self.trust_domain: str = os.getenv("CLAYSEAL_TRUST_DOMAIN", "clayseal.io")
         self.jwt_issuer: str = os.getenv("CLAYSEAL_ISSUER", self.trust_domain)
+        self.public_base_url: str | None = (
+            os.getenv("CLAYSEAL_PUBLIC_BASE_URL")
+            or os.getenv("CLAYSEAL_ISSUER_URL")
+            or None
+        )
         self.jwt_algorithm: str = "RS256"
         # Minimum key size for the prototype node-attestation RSA trust anchor.
         # ClaySeal-issued credentials use Ed25519.

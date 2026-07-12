@@ -150,7 +150,15 @@ def ensure_node_attestor(client, headers) -> None:
 
 
 def register_entry(
-    client, headers, *, agent_type, scopes=None, capabilities=None, owner=None, ttl=None
+    client,
+    headers,
+    *,
+    agent_type,
+    scopes=None,
+    capabilities=None,
+    owner=None,
+    ttl=None,
+    min_assurance=None,
 ):
     """Create a registration entry pre-approving ``agent_type`` + its rights.
 
@@ -168,6 +176,8 @@ def register_entry(
         body["owner"] = owner
     if ttl is not None:
         body["ttl_seconds"] = ttl
+    if min_assurance is not None:
+        body["min_assurance"] = min_assurance
     listing = client.get("/v1/registration-entries", headers=headers)
     assert listing.status_code == 200, listing.text
     for entry in listing.json():
@@ -178,6 +188,7 @@ def register_entry(
             and entry.get("scopes", []) == body.get("scopes", [])
             and entry.get("owner") == body.get("owner")
             and entry.get("ttl_seconds") == body.get("ttl_seconds")
+            and entry.get("min_assurance", "standard") == body.get("min_assurance", "standard")
         ):
             class _Existing:
                 status_code = 200

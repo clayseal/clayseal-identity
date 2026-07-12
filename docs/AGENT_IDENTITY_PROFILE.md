@@ -52,7 +52,7 @@ New credentials use the standard SPIFFE JWT-SVID `typ` value, `JWT`. Verifiers m
 ```json
 {
   "iss": "clayseal.io",
-  "sub": "spiffe://clayseal.io/customer/acme/agent/code-reviewer",
+  "sub": "spiffe://clayseal.io/customer/acme/agent/code-reviewer/run/agent_123",
   "aud": "tools-api",
   "iat": 1783575000,
   "exp": 1783575900,
@@ -60,6 +60,7 @@ New credentials use the standard SPIFFE JWT-SVID `typ` value, `JWT`. Verifiers m
   "agent_id": "agent_123",
   "agent_type": "code-reviewer",
   "owner": "alice@example.com",
+  "principal": "alice@example.com",
   "scope": ["repo:read"],
   "selectors": ["k8s:ns:agents", "k8s:sa:reviewer"],
   "cnf": {"jkt": "base64url-thumbprint"}

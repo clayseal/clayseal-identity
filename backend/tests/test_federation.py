@@ -10,6 +10,7 @@ from __future__ import annotations
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from clayseal.backend.config import get_settings
 from clayseal.identity import verify_offline
 from clayseal.identity.errors import InvalidTokenError
 
@@ -24,6 +25,20 @@ def test_openid_configuration_is_public_and_points_at_jwks(client, customer):
     assert doc["issuer"]
     assert doc["jwks_uri"].endswith(f"/t/{cid}/jwks.json")
     assert doc["id_token_signing_alg_values_supported"] == ["RS256"]
+
+
+def test_openid_configuration_uses_configured_public_base_url(client, customer, monkeypatch):
+    monkeypatch.setenv("CLAYSEAL_PUBLIC_BASE_URL", "https://identity.example.com/root/")
+    get_settings.cache_clear()
+    try:
+        cid = customer["customer_id"]
+        resp = client.get(f"/t/{cid}/.well-known/openid-configuration")
+        assert resp.status_code == 200
+        assert resp.json()["jwks_uri"] == (
+            f"https://identity.example.com/root/t/{cid}/jwks.json"
+        )
+    finally:
+        get_settings.cache_clear()
 
 
 def test_agent_identity_configuration_is_public(client, customer):

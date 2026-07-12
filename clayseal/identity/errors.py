@@ -52,6 +52,10 @@ class InvalidAPIKeyError(ClaySealError):
     code = "invalid_api_key"
 
 
+class APIKeyScopeError(ClaySealError):
+    code = "api_key_scope_denied"
+
+
 # --- identity / tokens ----------------------------------------------------- #
 class InvalidTokenError(ClaySealError):
     code = "invalid_token"
@@ -97,6 +101,7 @@ class CapabilityDeniedError(ClaySealError):
 # Map backend error codes -> SDK exception classes for the HTTP layer.
 ERROR_CODE_MAP: dict[str, type[ClaySealError]] = {
     "invalid_api_key": InvalidAPIKeyError,
+    "api_key_scope_denied": APIKeyScopeError,
     "invalid_token": InvalidTokenError,
     "token_expired": TokenExpiredError,
     "agent_revoked": AgentRevokedError,

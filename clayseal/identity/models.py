@@ -108,6 +108,29 @@ class AgentInfo:
 
 
 @dataclass
+class ApiKeyInfo:
+    id: str
+    name: str
+    scopes: list[str]
+    status: str
+    created_at: str = ""
+    revoked_at: str | None = None
+    api_key: str | None = None
+
+    @classmethod
+    def from_api(cls, d: dict) -> ApiKeyInfo:
+        return cls(
+            id=d["id"],
+            name=d["name"],
+            scopes=list(d.get("scopes", [])),
+            status=d.get("status", ""),
+            created_at=d.get("created_at", ""),
+            revoked_at=d.get("revoked_at"),
+            api_key=d.get("api_key"),
+        )
+
+
+@dataclass
 class ValidationResult:
     valid: bool
     claims: dict[str, Any] | None = None

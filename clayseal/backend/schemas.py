@@ -34,6 +34,28 @@ class CustomerOut(BaseModel):
     api_key: str
 
 
+class ApiKeyCreate(BaseModel):
+    name: ShortText
+    scopes: list[
+        Literal["admin", "issuer", "verifier", "reader", "revoker"]
+    ] = Field(..., min_length=1, max_length=5)
+
+
+class ApiKeyOut(BaseModel):
+    id: str
+    name: str
+    scopes: list[str]
+    status: str
+    created_at: datetime
+    revoked_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ApiKeyCreateOut(ApiKeyOut):
+    api_key: str
+
+
 # --- Node attestors (admin: register trust anchors) ------------------------ #
 class NodeAttestorCreate(BaseModel):
     type: str = Field(..., pattern="^(k8s_psat|aws_iid|gcp_iit)$")
@@ -81,6 +103,7 @@ class RegistrationEntryCreate(BaseModel):
     scopes: list[ScopeText] = Field(default_factory=list, max_length=MAX_SCOPES_PER_ENTRY)
     owner: str | None = Field(default=None, max_length=200)
     ttl_seconds: int | None = None
+    min_assurance: Literal["low", "standard", "high"] = "standard"
     description: str = Field(default="", max_length=500)
 
 
@@ -93,6 +116,7 @@ class RegistrationEntryOut(BaseModel):
     scopes: list[str]
     owner: str | None = None
     ttl_seconds: int | None = None
+    min_assurance: str = "standard"
     description: str
     created_at: datetime
 
@@ -108,9 +132,16 @@ class RegistrationOverlapConflict(BaseModel):
     reason: str
 
 
+class RegistrationLintWarning(BaseModel):
+    entry_id: str
+    severity: Literal["warning"]
+    reason: str
+
+
 class RegistrationLintReport(BaseModel):
     ok: bool
     conflicts: list[RegistrationOverlapConflict]
+    warnings: list[RegistrationLintWarning] = Field(default_factory=list)
 
 
 # --- Identity -------------------------------------------------------------- #
@@ -129,6 +160,9 @@ class IdentifyRequest(BaseModel):
     # Optional EC/RSA public key (SPKI PEM) to also receive an X.509-SVID for
     # mTLS, bound to the same SPIFFE ID. The workload keeps the private key.
     x509_public_key_pem: str | None = Field(default=None, max_length=MAX_PEM_CHARS)
+    # Preferred mTLS path: a CSR proves possession of the TLS private key before
+    # the service signs the SPIFFE X.509-SVID.
+    x509_csr_pem: str | None = Field(default=None, max_length=MAX_PEM_CHARS)
 
 
 class CredentialOut(BaseModel):

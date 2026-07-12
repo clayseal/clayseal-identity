@@ -36,6 +36,11 @@ class InvalidAPIKeyError(ClaySealError):
     http_status = 401
 
 
+class APIKeyScopeError(ClaySealError):
+    code = "api_key_scope_denied"
+    http_status = 403
+
+
 class TTLOutOfRangeError(ClaySealError):
     code = "ttl_out_of_range"
     http_status = 400

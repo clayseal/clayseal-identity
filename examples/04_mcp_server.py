@@ -55,7 +55,7 @@ def main() -> None:
     claims = session.validate().claims or {}
     tenant_id = claims["customer_id"]
     jwks = httpx.get(f"{base_url}/t/{tenant_id}/jwks.json").json()
-    verifier = ClaySealTokenVerifier(jwks=jwks, issuer=claims["iss"])
+    verifier = ClaySealTokenVerifier(jwks=jwks, issuer=claims["iss"], audience=tenant_id)
     guard = ToolGuard(
         biscuit_root_public_key=session.credential.biscuit_root_public_key,
         server_url=MCP_URL,

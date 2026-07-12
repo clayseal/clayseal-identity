@@ -21,6 +21,7 @@ Then read the section that matches what you are building:
 | Read what a token contains | [Token inspection](#token-inspection) |
 | Verify tokens in another service | [Offline resource-server verification](#offline-resource-server-verification) |
 | Add identity to FastAPI, MCP, or LangChain-style tools | [Framework helpers](#framework-helpers) |
+| Create least-privilege service keys | [Scoped tenant API keys](#scoped-tenant-api-keys) |
 | Run the hosted service | [Running the hosted identity service](#running-the-hosted-identity-service) |
 
 ---
@@ -180,6 +181,34 @@ For production, do not enable dev attestation. Register a node attestor and
 registration entry, then call `identify_with_attestation(attestation_document)`
 with evidence issued by your workload environment.
 
+### Scoped tenant API keys
+
+The tenant key returned by `create_tenant` is a bootstrap/admin key. Do not put
+it inside an agent loop. For production, create smaller keys for each component
+that talks to the identity service:
+
+```python
+issuer_key = auth.create_api_key("agent issuer", ["issuer"]).api_key
+verifier_key = auth.create_api_key("tool gateway", ["verifier"]).api_key
+reader_key = auth.create_api_key("dashboard", ["reader"]).api_key
+```
+
+Available scopes are `admin`, `issuer`, `verifier`, `reader`, and `revoker`.
+`admin` can create/revoke scoped keys and change tenant configuration.
+`issuer` can mint credentials. `verifier` can validate or authorize presented
+tokens. `reader` can list metadata and public keys. `revoker` can revoke agent
+runs.
+
+If a key leaks, revoke it:
+
+```python
+auth.revoke_api_key(reader_key_id)
+```
+
+The service rechecks scoped-key status and current scopes on cached auth hits,
+so revocation takes effect immediately rather than waiting for the API-key cache
+TTL.
+
 ### Token inspection
 
 Inspection is for understanding a token, not trusting it. It decodes the JOSE
@@ -321,11 +350,16 @@ private-preview access can use the layer-specific guides for full-stack wiring.
 
 ## Security and operations notes
 
-**Key management.** Default examples generate Ed25519 keys locally. Production should use a KMS or HSM where policy requires it; the receipts layer has optional KMS providers for signing at rest.
+**Key management.** Default examples generate Ed25519 keys locally. Production
+should use a KMS or HSM where policy requires it; the identity service supports
+KMS-backed encryption for stored signing material.
 
 **Clock skew.** JWT validation respects `exp`/`nbf`. Ensure NTP on agents and verifiers.
 
-**Principal binding.** If compliance requires human-in-the-loop authorization, always set `principal` at identify time and verify it appears in downstream receipts.
+**Principal binding.** If compliance requires human-in-the-loop authorization,
+set `owner` when identifying the agent. The issued token carries both `owner`
+and `principal` so downstream systems can bind actions back to the responsible
+human or service account.
 
 **Rotation.** Plan for agent key rotation: register a new agent ID or rotate keys with overlap period where both verify.
 

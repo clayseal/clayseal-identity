@@ -35,13 +35,18 @@ def to_epoch(dt: datetime) -> int:
     return int(dt.timestamp())
 
 
-def spiffe_id(trust_domain: str, customer_id: str, agent_type: str) -> str:
-    """Build the SPIFFE ID for an agent of ``agent_type`` owned by a customer.
+def spiffe_id(
+    trust_domain: str, customer_id: str, agent_type: str, agent_id: str | None = None
+) -> str:
+    """Build the SPIFFE ID for an agent run owned by a customer.
 
-    Mirrors the production SPIRE layout:
-    ``spiffe://clayseal.io/customer/{customer_id}/agent/{agent_type}``.
+    The stable type is still visible in the path, but the concrete issued
+    credential gets its own run segment when ``agent_id`` is known. That keeps
+    generic SPIFFE/JWT consumers from collapsing every run of one agent type into
+    the same ``sub``.
     """
-    return f"spiffe://{trust_domain}/customer/{customer_id}/agent/{agent_type}"
+    base = f"spiffe://{trust_domain}/customer/{customer_id}/agent/{agent_type}"
+    return f"{base}/run/{agent_id}" if agent_id else base
 
 
 class Customer(Base):
@@ -55,6 +60,29 @@ class Customer(Base):
     api_key: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     api_key_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class TenantApiKey(Base):
+    """A scoped tenant API key.
+
+    The original ``customers.api_key`` remains the bootstrap/admin compatibility
+    key. New deployments should mint these purpose-specific keys instead.
+    """
+
+    __tablename__ = "tenant_api_keys"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    customer_id: Mapped[str] = mapped_column(
+        ForeignKey("customers.id"), index=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    # Public lookup prefix only; the full key is shown once and stored hashed.
+    api_key: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    api_key_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    scopes: Mapped[list] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String, default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class CapabilityChallenge(Base):
@@ -234,6 +262,7 @@ class RegistrationEntry(Base):
     scopes: Mapped[list] = mapped_column(JSON, default=list)
     owner: Mapped[str | None] = mapped_column(String, nullable=True)
     ttl_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    min_assurance: Mapped[str] = mapped_column(String, default="standard")
     description: Mapped[str] = mapped_column(String, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 

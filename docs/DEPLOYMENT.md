@@ -22,7 +22,7 @@ PyPI package: `clayseal-identity`). Deployment of the upper Clay Seal layers
 | `CLAYSEAL_HTTP_ALLOWED_HOSTS` | Accepted inbound HTTP Host headers |
 | `CLAYSEAL_CORS_ORIGINS` | Allowed browser-client origins (no `*`) |
 | `CLAYSEAL_MANAGE_SCHEMA` | `alembic` |
-| `CLAYSEAL_API_URL` | Clay Seal Identity base URL (required for attested receipt profiles) |
+| `CLAYSEAL_PUBLIC_BASE_URL` | Public Clay Seal Identity base URL used in discovery metadata |
 
 ## Node attestors
 
@@ -50,3 +50,4 @@ it. Protect the anchor key like a root key.
 - Core production policy violations are present
 - Unmigrated tenants lack `api_key_hash`
 - `CLAYSEAL_MANAGE_SCHEMA=auto`
+- `CLAYSEAL_PUBLIC_BASE_URL` is missing

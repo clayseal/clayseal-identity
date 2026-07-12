@@ -52,7 +52,11 @@ from clayseal.identity.integrations.mcp_server import (
     ClaySealTokenVerifier, ToolGuard, build_auth_settings,
 )
 
-verifier = ClaySealTokenVerifier(jwks=tenant_jwks, issuer="clayseal.io")
+verifier = ClaySealTokenVerifier(
+    jwks=tenant_jwks,
+    issuer="clayseal.io",
+    audience=tenant_id,
+)
 guard = ToolGuard(
     biscuit_root_public_key=tenant_root_public_hex,
     server_url="https://tools.example.com/mcp",
