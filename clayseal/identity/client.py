@@ -60,6 +60,7 @@ class ClaySeal:
         if mtls_cert and mtls_key and transport is None:
             import ssl
             ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
             ssl_ctx.load_cert_chain(certfile=mtls_cert, keyfile=mtls_key)
             if mtls_ca:
                 ssl_ctx.load_verify_locations(cafile=mtls_ca)

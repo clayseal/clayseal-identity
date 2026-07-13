@@ -97,6 +97,7 @@ def mtls_context(
     ctx = ssl.SSLContext(
         ssl.PROTOCOL_TLS_CLIENT if purpose is ssl.Purpose.SERVER_AUTH else ssl.PROTOCOL_TLS_SERVER
     )
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ctx.load_cert_chain(certfile=paths["svid"], keyfile=paths["key"])
     ctx.load_verify_locations(cafile=paths["bundle"])
     ctx.verify_mode = ssl.CERT_REQUIRED

@@ -38,7 +38,7 @@ def migrate(*, dry_run: bool) -> int:
             customer.api_key = lookup
             migrated += 1
             action = "would migrate" if dry_run else "migrated"
-            print(f"{action} customer_id={customer.id} lookup_prefix={customer.api_key}")
+            print(f"{action} customer_id={customer.id}")
         if dry_run:
             db.rollback()
         else:

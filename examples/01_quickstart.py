@@ -35,7 +35,7 @@ def main() -> None:
     common.info(f"agent_type = {session.agent_type}")
     common.info(f"owner      = {session.owner}")
     common.detail(f"scopes = {session.scopes}")
-    common.detail(f"token  = {session.token[:32]}...")
+    common.detail("token  = minted and kept in memory (redacted)")
 
     # 2. Validate the freshly issued token.
     common.step("Validate the token")

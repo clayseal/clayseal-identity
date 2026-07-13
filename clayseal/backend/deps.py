@@ -1,7 +1,6 @@
 """Shared FastAPI dependencies."""
 from __future__ import annotations
 
-import hashlib
 import hmac
 import logging
 from collections.abc import Callable
@@ -16,6 +15,7 @@ from .cache import TTLCache
 from .config import get_settings
 from .db import get_db
 from .errors import APIKeyScopeError, InvalidAPIKeyError, InvalidTokenError
+from .fingerprints import sensitive_fingerprint
 from .models import Customer, TenantApiKey
 
 _logger = logging.getLogger("clayseal.backend.auth")
@@ -50,7 +50,7 @@ def clear_api_key_cache() -> None:
 
 
 def _cache_key(api_key: str) -> str:
-    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+    return sensitive_fingerprint(api_key)
 
 
 def _authenticate_customer(db: Session, x_api_key: str) -> AuthContext:

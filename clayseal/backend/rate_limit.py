@@ -18,7 +18,6 @@ Disabled by default; on automatically when ``CLAYSEAL_ENV=production`` (or via
 """
 from __future__ import annotations
 
-import hashlib
 import threading
 import time
 from collections.abc import Awaitable, Callable
@@ -28,6 +27,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from .config import get_settings
+from .fingerprints import sensitive_fingerprint
 
 _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Liveness/readiness probes must never be throttled -- an orchestrator/ALB polls
@@ -94,7 +94,7 @@ def _api_key_id(request: Request) -> str | None:
     api_key = request.headers.get("X-API-Key")
     if not api_key:
         return None
-    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()[:16]
+    return sensitive_fingerprint(api_key, length=16)
 
 
 def _too_many() -> JSONResponse:

@@ -176,7 +176,7 @@ def bootstrap(org_name: str = "Acme AI"):
     tenant = ClaySeal.create_tenant(org_name, base_url=base_url)
     api_key = tenant["api_key"]
     detail(f"Created tenant {org_name!r}.")
-    info(f"API key: {code(api_key)}")
+    detail("Created a throwaway tenant API key for this example (redacted).")
     detail(f"API base URL: {base_url}")
     if _server_started:
         warn("Embedded backend — the dashboard won't see this data unless you set "

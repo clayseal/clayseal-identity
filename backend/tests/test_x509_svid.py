@@ -199,11 +199,13 @@ def test_svid_completes_a_real_mtls_handshake(customer, tmp_path):
     ca_file.write_text(bundle["pem"])
 
     server_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    server_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     server_ctx.load_cert_chain(certfile=str(cert_file), keyfile=str(key_file))
     server_ctx.load_verify_locations(cafile=str(ca_file))
     server_ctx.verify_mode = ssl.CERT_REQUIRED  # require the client's SVID too
 
     client_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    client_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     client_ctx.load_verify_locations(cafile=str(ca_file))
     client_ctx.load_cert_chain(certfile=str(cert_file), keyfile=str(key_file))
     client_ctx.check_hostname = False  # SPIFFE identifies by URI SAN, not hostname
