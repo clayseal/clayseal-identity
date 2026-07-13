@@ -26,8 +26,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from .api_keys import api_key_lookup_prefix
 from .config import get_settings
-from .fingerprints import sensitive_fingerprint
 
 _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Liveness/readiness probes must never be throttled -- an orchestrator/ALB polls
@@ -94,7 +94,7 @@ def _api_key_id(request: Request) -> str | None:
     api_key = request.headers.get("X-API-Key")
     if not api_key:
         return None
-    return sensitive_fingerprint(api_key, length=16)
+    return api_key_lookup_prefix(api_key) or "malformed"
 
 
 def _too_many() -> JSONResponse:

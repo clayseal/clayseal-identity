@@ -29,14 +29,15 @@ class AuthContext:
     key_id: str
     key_kind: str
 
-# Verified-API-key cache: sha256(api_key) -> (customer_id, verified_api_key_hash).
+# Verified-API-key cache: process-local fingerprint(api_key) -> auth metadata.
 # Authenticating a request runs PBKDF2 (200k iterations) against the stored hash,
 # which is deliberately slow; doing it on *every* call is wasteful when the same
 # key is presented over and over. Only keys that already passed full PBKDF2
-# verification are cached, and on a hit we re-check the customer's *current*
-# api_key_hash with a constant-time compare, so a rotated/rehashed key falls out
-# of the fast path immediately (bounded further by a short TTL). The cache key is
-# a SHA-256 of the raw key, never the key itself.
+# verification are cached, and on a hit we re-check the customer's or scoped key's
+# *current* api_key_hash with a constant-time compare, so a rotated/rehashed key
+# falls out of the fast path immediately (bounded further by a short TTL). The
+# cache key is a process-local PBKDF2 fingerprint of the raw key, never the key
+# itself.
 _settings = get_settings()
 _verified_key_cache: TTLCache[str, tuple[str, str, str, tuple[str, ...], str]] = TTLCache(
     max_size=_settings.api_key_cache_max_size,

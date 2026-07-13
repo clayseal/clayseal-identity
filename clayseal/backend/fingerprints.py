@@ -5,17 +5,20 @@ password hashes, database identifiers, audit facts, or cross-process stable IDs.
 """
 from __future__ import annotations
 
-import hmac
+import hashlib
 import secrets
 
 _PROCESS_FINGERPRINT_KEY = secrets.token_bytes(32)
+_FINGERPRINT_ITERATIONS = 50_000
 
 
 def sensitive_fingerprint(value: str, *, length: int | None = None) -> str:
     """Return a keyed, non-reversible fingerprint for a sensitive string."""
-    digest = hmac.new(
-        _PROCESS_FINGERPRINT_KEY,
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
         value.encode("utf-8"),
-        digestmod="sha256",
-    ).hexdigest()
+        _PROCESS_FINGERPRINT_KEY,
+        _FINGERPRINT_ITERATIONS,
+        dklen=32,
+    ).hex()
     return digest[:length] if length is not None else digest
