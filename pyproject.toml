@@ -4,13 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clayseal-identity"
-version = "0.6.0"
+version = "0.6.1"
 description = "Clay Seal layer 1 — attested agent identity and Biscuit capability tokens"
 readme = "README.md"
 license = { text = "MIT" }
 # Floor 3.11: matches the CI matrix, and biscuit-python ships no macOS wheel
 # for CPython 3.10 (a 3.10 floor would mean a Rust source build on Mac).
 requires-python = ">=3.11,<3.14"
+# Trove classifiers so PyPI and tooling report the supported interpreters
+# (the pypi/pyversions badge reads these, not requires-python).
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 # Client SDK (clayseal.identity) runtime deps only — deliberately minimal so
 # `pip install clayseal-identity` stays lightweight. The bundled FastAPI identity
 # service (clayseal.backend) and its heavy deps live behind the [server] extra.

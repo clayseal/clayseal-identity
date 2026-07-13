@@ -28,6 +28,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - README, deployment docs, and integration examples were tightened for
   open-source users evaluating the repo cold.
 
+## [0.6.1] - 2026-07-13
+
+### Added
+
+- PyPI trove classifiers (`Programming Language :: Python :: 3.11`–`3.13` and
+  others) so PyPI and the README badges report the supported interpreters. The
+  `requires-python` constraint was already correct; the classifiers make it
+  visible to tooling that reads them instead of `requires-python`.
+- An identity token inspector for reading and checking issued credentials.
+
+### Security
+
+- PBKDF2 for API-key cache fingerprints and HMAC for sensitive request
+  fingerprints.
+- Hardened identity auth and verification defaults, and resolved the outstanding
+  code-scanning alerts.
+
+### Docs
+
+- Open-source launch documentation and README badges.
+
 ## [0.6.0] - 2026-07-10
 
 ### Changed

@@ -56,7 +56,7 @@ from .profile import AgentIdentityClaims
 from .session import AgentSession
 from .verifier import verify_offline
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     "ClaySeal",
