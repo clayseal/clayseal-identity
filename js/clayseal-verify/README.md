@@ -18,6 +18,12 @@ WebAssembly ES module imports by default only on recent releases; on Node 20–2
 run with `--experimental-wasm-modules` (e.g. `node --experimental-wasm-modules
 server.js`). Bundlers (webpack, Vite, esbuild) handle the `.wasm` import for you.
 
+## Examples
+
+A runnable [Express server example](examples/express-server.mjs) shows how to
+protect an HTTP endpoint with `verifyToken` — see its `README.md` for setup
+and usage.
+
 ## What it checks
 
 A Clay Seal request carries three things, added by the client's

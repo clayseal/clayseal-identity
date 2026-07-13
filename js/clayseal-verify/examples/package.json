@@ -1,0 +1,13 @@
+{
+  "name": "@clayseal/verify-example-express",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "cd .. && npm install --ignore-scripts --no-audit --no-fund",
+    "start": "node --experimental-wasm-modules --no-warnings express-server.mjs"
+  },
+  "dependencies": {
+    "@clayseal/verify": "file:..",
+    "express": "^5.1.0"
+  }
+}
