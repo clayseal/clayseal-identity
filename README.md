@@ -3,70 +3,31 @@
 <img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
 [![PyPI](https://img.shields.io/pypi/v/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
-[![npm @clayseal/verify](https://img.shields.io/npm/v/%40clayseal%2Fverify?label=npm%20%40clayseal%2Fverify)](https://www.npmjs.com/package/@clayseal/verify)
-[![Python versions](https://img.shields.io/pypi/pyversions/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
 [![CI](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml/badge.svg)](https://github.com/clayseal/clayseal-identity/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/pypi/l/clayseal-identity)](LICENSE)
+[![Python](https://img.shields.io/pypi/pyversions/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Clay Seal Identity gives every agent run its own short-lived, verifiable
-credential instead of asking agents to borrow a long-lived human or service API
-key. It is layer 1 of Clay Seal, published as `clayseal-identity` and imported
-from `clayseal.identity`.
+Autonomous agents increasingly act on behalf of humans and other services —
+calling tools, hitting APIs, delegating to sub-agents. Most of them do it with
+no verifiable identity at all: a shared API key, a bearer token with no
+holder-binding, or nothing but a name string in a prompt. Clay Seal Identity
+gives agents a real, cryptographically attested identity, so the rest of your
+system can answer:
 
-Use it when an agent is about to touch real systems and the receiving service
-needs to know: who is this agent, who started it, when does this credential
-expire, and is the caller holding the workload key the token was bound to?
+- **Which agent is acting?** Every credential carries a stable, SPIFFE-shaped
+  identifier.
+- **Who's accountable for it?** Delegation from a human or service principal
+  is baked into the credential, not just logged separately.
+- **Is this credential actually theirs?** Tokens are signed and bound to a
+  holder key, so a stolen token alone isn't enough to replay it.
+- **Can I verify that without calling home?** Yes — verification is offline
+  and doesn't require a round trip to an issuing service.
 
-This repo is intentionally just the identity layer. The next Clay Seal layers,
-now in private preview, add runtime capability scoping and receipts for actions
-that need stronger enforcement than identity alone can provide.
+Clay Seal Identity is layer 1 of Clay Seal. The package is published on PyPI
+as [`clayseal-identity`](https://pypi.org/project/clayseal-identity/) and
+imports from `clayseal.identity`.
 
-Use this repo when you need to answer:
-
-- Which agent is acting?
-- Which human or service principal delegated that action?
-- Is the credential short-lived, signed, and bound to the holder key?
-- Can downstream systems verify the identity offline?
-
-## Start Here
-
-Try the zero-config demo from a clone:
-
-```bash
-git clone https://github.com/clayseal/clayseal-identity.git
-cd clayseal-identity
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-python examples/01_quickstart.py
-python examples/05_inspect_token.py
-```
-
-The examples start a throwaway local identity service, mint a demo credential,
-validate it, revoke it, and show what the token contains. Nothing touches your
-real cloud account, database, or agent system.
-
-Install the SDK in your own app:
-
-```bash
-pip install clayseal-identity
-```
-
-Add the hosted identity service dependencies only if you plan to run the
-FastAPI issuance/validation service yourself:
-
-```bash
-pip install "clayseal-identity[server]"
-```
-
-| If you want to... | Go here |
-| --- | --- |
-| issue and validate your first agent token | `examples/01_quickstart.py` |
-| inspect what a token says | `examples/05_inspect_token.py` |
-| verify a token with only JWKS | [docs/FEDERATION.md](docs/FEDERATION.md) |
-| protect FastAPI, MCP, or LangChain-style tools | [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) |
-| run the identity service in production | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-
-## What You Get
+## Current State
 
 Implemented today:
 
@@ -206,31 +167,6 @@ verifier (`@clayseal/verify`) for Node MCP servers and OpenClaw tool plugins,
 and an [agentskills.io](https://agentskills.io) skill for Hermes Agent. See
 [integrations/](integrations).
 
-The package is SDK-first: issue tokens, verify them offline, and wire framework checks through `clayseal.identity` APIs in your application code and tests.
-
-The current SDK flow is service-backed: create or point at a tenant, then call
-`identify`. `dev_attestation=True` is only for localhost demos/tests; production
-callers pass a platform-issued attestation document.
-
-```python
-from clayseal.identity import ClaySeal
-
-tenant = ClaySeal.create_tenant("Acme AI", base_url="http://localhost:8000")
-auth = ClaySeal(
-    api_key=tenant["api_key"],
-    base_url="http://localhost:8000",
-    dev_attestation=True,  # localhost demos/tests only
-)
-
-session = auth.identify(
-    agent_type="researcher",
-    owner="alice@example.org",
-    capabilities=[{"resource": "repo", "action": "read"}],
-)
-
-claims = session.validate().claims
-assert claims["sub"].startswith("spiffe://")
-```
 
 ### Inspect a token
 
@@ -284,8 +220,16 @@ Reference:
 - [Identity profiles](docs/IDENTITY_PROFILES.md)
 - [Privacy and data handling](docs/PRIVACY.md)
 
-## Compatibility Note
 
-The public brand is Clay Seal. The package names and import paths intentionally
-remain `clayseal-*` / `clayseal.*` for now so existing integrations keep
-working.
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev
+setup, tests, and how to submit changes. Please also read our
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+Found a security issue? Do **not** open a public issue — see
+[SECURITY.md](SECURITY.md) for how to report it privately.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
