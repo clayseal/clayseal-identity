@@ -15,6 +15,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CSR-based X.509-SVID issuance: the SDK now proves possession of the TLS key
   by sending a signed CSR instead of a raw public key.
 - Admin audit endpoints for reading and verifying the identity event log.
+- Runnable Express.js JWT-SVID verification example
+  (`js/clayseal-verify/examples/`) with env-var-driven configuration
+  and startup validation.
 
 ### Changed
 
