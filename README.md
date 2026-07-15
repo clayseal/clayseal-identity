@@ -7,7 +7,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/clayseal-identity)](https://pypi.org/project/clayseal-identity/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Autonomous agents increasingly act on behalf of humans and other services —
+Autonomous agents increasingly act on behalf of humans and other services:
 calling tools, hitting APIs, delegating to sub-agents. Most of them do it with
 no verifiable identity at all: a shared API key, a bearer token with no
 holder-binding, or nothing but a name string in a prompt. Clay Seal Identity
@@ -20,12 +20,14 @@ system can answer:
   is baked into the credential, not just logged separately.
 - **Is this credential actually theirs?** Tokens are signed and bound to a
   holder key, so a stolen token alone isn't enough to replay it.
-- **Can I verify that without calling home?** Yes — verification is offline
+- **Can I verify that without calling home?** Yes. Verification is offline
   and doesn't require a round trip to an issuing service.
 
 Clay Seal Identity is layer 1 of Clay Seal. The package is published on PyPI
 as [`clayseal-identity`](https://pypi.org/project/clayseal-identity/) and
 imports from `clayseal.identity`.
+Clay Seal Receipts is available separately as `clayseal-receipts`; the
+capabilities layer remains in private preview.
 
 ## Current State
 
@@ -67,7 +69,7 @@ receipts live in the sibling layers:
 | --- | --- | --- |
 | L1 | this repo | Agent identity and credential issuance |
 | L2 | Clay Seal Capabilities (private preview) | Commit tokens, mandates, leases, budgets |
-| L3 | Clay Seal Receipts (private preview) | Verifiable execution receipts and audit |
+| L3 | Clay Seal Receipts (`clayseal-receipts`) | Verifiable execution receipts and audit |
 
 This package stands alone: it has no dependency on the other layers, and every
 runtime dependency resolves from public PyPI.
@@ -142,7 +144,7 @@ python examples/04_mcp_server.py   # lock down an MCP server (needs the [mcp] ex
 Most MCP servers in the wild are reachable by anything that can open a
 connection. With the `[mcp]` extra, a FastMCP server accepts only Clay
 Seal-credentialed agents, and each tool call is authorized against the
-caller's capability token — attenuation included, so an agent that narrowed
+caller's capability token: attenuation included, so an agent that narrowed
 itself mid-task is held to the narrowed rights:
 
 ```python
@@ -162,7 +164,7 @@ Details in [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md).
 
 ### Framework integrations
 
-Native on-ramps for the frameworks agents actually run in — a JavaScript
+Native on-ramps for the frameworks agents actually run in: a JavaScript
 verifier (`@clayseal/verify`) for Node MCP servers and OpenClaw tool plugins,
 and an [agentskills.io](https://agentskills.io) skill for Hermes Agent. See
 [integrations/](integrations).
@@ -223,13 +225,13 @@ Reference:
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for dev
 setup, tests, and how to submit changes. Please also read our
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Found a security issue? Do **not** open a public issue — see
+Found a security issue? Do **not** open a public issue. See
 [SECURITY.md](SECURITY.md) for how to report it privately.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "clayseal-identity"
 version = "0.6.1"
-description = "Clay Seal layer 1 — attested agent identity and Biscuit capability tokens"
+description = "Clay Seal layer 1 for attested agent identity and Biscuit capability tokens"
 readme = "README.md"
 license = { text = "MIT" }
 # Floor 3.11: matches the CI matrix, and biscuit-python ships no macOS wheel
@@ -24,7 +24,7 @@ classifiers = [
   "Topic :: Security",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-# Client SDK (clayseal.identity) runtime deps only — deliberately minimal so
+# Client SDK (clayseal.identity) runtime deps only: deliberately minimal so
 # `pip install clayseal-identity` stays lightweight. The bundled FastAPI identity
 # service (clayseal.backend) and its heavy deps live behind the [server] extra.
 dependencies = [
@@ -57,7 +57,7 @@ server = [
 # AWS KMS envelope-encryption provider for signing/Biscuit keys at rest
 # (CLAYSEAL_SECRET_ENCRYPTION_PROVIDER=aws_kms). boto3 is lazy-imported by
 # secret_encryption.AwsKmsProvider, so it is only required when that provider
-# is selected — install `clayseal-identity[kms]` in prod.
+# is selected: install `clayseal-identity[kms]` in prod.
 kms = ["boto3>=1.43.45"]
 # Server-side MCP authorization (clayseal.identity.integrations.mcp_server):
 # plug ClaySealTokenVerifier + ToolGuard into an official-SDK FastMCP server.

@@ -1,4 +1,4 @@
-# Developer guide — Clay Seal Identity (Layer 1)
+# Developer guide: Clay Seal Identity (Layer 1)
 
 This document is written for engineers who need to **run, integrate, or extend** the identity layer of Clay Seal. It assumes you are comfortable with Python and basic PKI concepts, but not that you have read the rest of the codebase first.
 
@@ -45,9 +45,9 @@ Concretely, this repo provides:
 
 What this repo deliberately does **not** include:
 
-- Dynamic capability narrowing, commit tokens, mandates, leases, or budget enforcement — that is the Clay Seal Capabilities layer (layer 2, private preview).
-- Suspicious-sequence checks, such as catching multiple individually allowed actions that evade a cumulative limit — that is part of the forthcoming runtime capability layer.
-- Execution receipts, audit logs, MCP gateways, or policy proofs — that is the Clay Seal Receipts layer (layer 3, private preview).
+- Dynamic capability narrowing, commit tokens, mandates, leases, or budget enforcement. That is the Clay Seal Capabilities layer (layer 2, private preview).
+- Suspicious-sequence checks, such as catching multiple individually allowed actions that evade a cumulative limit. That is part of the forthcoming runtime capability layer.
+- Execution receipts, audit logs, MCP gateways, or policy proofs. That is Clay Seal Receipts, published separately as `clayseal-receipts`.
 
 If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
 
@@ -63,7 +63,7 @@ Think of the stack as increasing specificity:
 |-------|------------|---------------------|
 | L1 Identity | **this repo** | Who is acting, with what attested key? |
 | L2 Capabilities | Clay Seal Capabilities (private preview) | What are they allowed to do right now (scoped, attenuated)? |
-| L3 Receipts | Clay Seal Receipts (private preview) | What did they actually do, and can a third party verify it? |
+| L3 Receipts | Clay Seal Receipts (`clayseal-receipts`) | What did they actually do, and can a third party verify it? |
 
 Layer 1 exports facts. Layer 2 narrows them into action-scoped tokens. Layer 3 records decisions and builds tamper-evident proofs.
 
@@ -98,9 +98,9 @@ From a pinned tag (recommended when you need a reproducible install):
 pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"
 ```
 
-This package stands alone — no other Clay Seal layer is required. The upper
-layers (capabilities, receipts) are in private preview; partners with access
-install them on top, in order, from their own pinned tags.
+This package stands alone. No other Clay Seal layer is required. Clay Seal
+Receipts is published separately as `clayseal-receipts`; capabilities remains in
+private preview.
 
 ### Python version
 
@@ -116,10 +116,10 @@ Supported: **3.11 through 3.13** (see `pyproject.toml`). Biscuit’s native whee
 
 Typical flow:
 
-1. **Register trust** — create a tenant, node attestor, and registration entry.
-2. **Identify** — present attestation evidence and mint a short-lived credential.
-3. **Use** — carry the credential on outbound calls and authorize local capabilities.
-4. **Verify** — validate online with PoP or offline with issuer + JWKS.
+1. **Register trust**: create a tenant, node attestor, and registration entry.
+2. **Identify**: present attestation evidence and mint a short-lived credential.
+3. **Use**: carry the credential on outbound calls and authorize local capabilities.
+4. **Verify**: validate online with PoP or offline with issuer + JWKS.
 
 ### Credentials and JWT-SVID shape
 
@@ -127,9 +127,9 @@ Credentials are signed JWTs with SPIFFE-compatible claims (`sub`, `iss`, `aud`, 
 
 Design intent:
 
-- **Short TTL** — compromise window is minutes, not days.
-- **Explicit principal** — tie the agent to a named human or service account when required.
-- **Key binding** — `cnf` (confirmation) claim ties the token to a holder key.
+- **Short TTL**: compromise window is minutes, not days.
+- **Explicit principal**: tie the agent to a named human or service account when required.
+- **Key binding**: `cnf` (confirmation) claim ties the token to a holder key.
 
 ### Biscuit tokens
 
@@ -141,7 +141,7 @@ When this package is used with the upper Clay Seal layers, `Credential.to_bindin
 
 ---
 
-## Operating the SDK — step by step
+## Operating the SDK: step by step
 
 ### Quickstart example
 
@@ -291,7 +291,7 @@ Typical deployment pattern:
 2. Pin trust roots for verifiers (JWKS or configured public keys).
 3. Issue credentials with TTL aligned to your agent heartbeat (often 5–15 minutes).
 
-For local development, `--reload` is fine. For production, use a proper ASGI server layout (multiple workers only if your signing backend supports it — often you want a single signer or HSM-backed key).
+For local development, `--reload` is fine. For production, use a proper ASGI server layout (multiple workers only if your signing backend supports it: often you want a single signer or HSM-backed key).
 
 ---
 
@@ -310,7 +310,7 @@ CI runs the same suites on Python 3.11 and 3.13.
 
 | Path | Purpose |
 |------|---------|
-| `clayseal/identity/` | Public SDK — start here |
+| `clayseal/identity/` | Public SDK: start here |
 | `clayseal/backend/` | FastAPI identity service (the `[server]` extra) |
 | `backend/tests/` | Service-level tests |
 | `sdk/python/tests/` | SDK unit tests |
@@ -337,14 +337,15 @@ If imports fail with “cannot import name X from clayseal”, you almost always
 ## Integrating with layer 2 and 3
 
 Layer 2 (capabilities) and layer 3 (receipts) consume the credential this layer
-issues through their own identity adapters — you do not change layer 1 code to
-integrate, nor for OIDC, Auth0, SPIRE, or AWS STS. Those adapters, and the
-cross-layer `IdentitySession` abstraction, live in the private-preview sibling
-packages. Layer 1 remains the **native** stack when you want the full Clay Seal
-attestation model.
+issues through their own identity adapters. You do not change layer 1 code to
+integrate, nor for OIDC, Auth0, SPIRE, or AWS STS. For receipts, install
+`clayseal-receipts[identity]` and pass a Clay Seal identity session into the
+receipts wrapper. Layer 1 remains the **native** stack when you want the full
+Clay Seal attestation model.
 
-Layer 3 accepts the same identity facts through its own adapter. Partners with
-private-preview access can use the layer-specific guides for full-stack wiring.
+Layer 3 accepts the same identity facts through its own adapter. Use the
+`clayseal-receipts` guide for receipt wiring, and use the capabilities guide
+only if you have access to the private-preview layer.
 
 ---
 
@@ -396,7 +397,7 @@ employee, customer, or regulated data.
 
 ## Releases and versioning
 
-This repo is tagged independently (`v0.6.0`, etc.). **Always tag identity before capabilities and receipts** — downstream `pyproject.toml` files pin this repo by git URL and tag.
+This repo is tagged independently (`v0.6.0`, etc.). **Always tag identity before capabilities and receipts** because downstream `pyproject.toml` files pin this repo by git URL and tag.
 
 Checklist for maintainers:
 
