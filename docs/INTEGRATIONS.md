@@ -23,6 +23,76 @@ def tool(identity = Depends(require_agent)):
     return {"agent_id": identity.agent_id, "agent_type": identity.agent_type}
 ```
 
+### FastAPI middleware
+
+For applications that need to verify every protected request before routing,
+wrap the existing verifier in a small middleware. The verifier checks the
+token signature, issuer, audience, expiration, and the presence of a
+confirmation (`cnf`) claim when `require_cnf=True`.
+
+```python
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+
+from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
+
+app = FastAPI()
+
+verifier = AgentIdentityVerifier(
+    jwks=tenant_jwks,
+    issuer="clayseal.io",
+    audience="tools-api",
+    require_cnf=True,
+)
+
+PUBLIC_PATHS = {"/health"}
+
+
+@app.middleware("http")
+async def verify_agent_identity(request: Request, call_next):
+    if request.url.path in PUBLIC_PATHS:
+        return await call_next(request)
+
+    try:
+        identity = verifier(request.headers.get("Authorization", ""))
+    except HTTPException as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    request.state.agent_identity = identity
+
+    # Demonstration only: replace this with your application's
+    # authorization policy.
+    if request.url.path.startswith("/admin") and identity.agent_type != "admin":
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "agent is not allowed to access this resource"},
+        )
+
+    return await call_next(request)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/tool")
+def tool(request: Request):
+    identity = request.state.agent_identity
+    return {
+        "agent_id": identity.agent_id,
+        "agent_type": identity.agent_type,
+    }
+```
+
+A missing, malformed, expired, incorrectly issued, or incorrectly targeted
+token returns `401`. A valid identity that does not satisfy the application
+authorization rule returns `403`. Keep application-specific authorization
+rules separate from token verification.
+
 ## MCP clients
 
 Attach the agent's identity to an MCP HTTP transport. Three headers travel
