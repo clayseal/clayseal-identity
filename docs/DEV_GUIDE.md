@@ -209,6 +209,8 @@ The service rechecks scoped-key status and current scopes on cached auth hits,
 so revocation takes effect immediately rather than waiting for the API-key cache
 TTL.
 
+For production deployments, see the [sidecar/gateway pattern](DEPLOYMENT.md#recommended-deployment-shape-sidecargateway) — it keeps these keys out of the agent process entirely.
+
 ### Token inspection
 
 Inspection is for understanding a token, not trusting it. It decodes the JOSE

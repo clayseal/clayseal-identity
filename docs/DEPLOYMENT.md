@@ -51,3 +51,47 @@ it. Protect the anchor key like a root key.
 - Unmigrated tenants lack `api_key_hash`
 - `CLAYSEAL_MANAGE_SCHEMA=auto`
 - `CLAYSEAL_PUBLIC_BASE_URL` is missing
+
+---
+
+## Recommended deployment shape: sidecar/gateway
+
+Scoped keys reduce blast radius, but the safest pattern is to **keep tenant API keys out of the agent process entirely**.
+
+### Which key goes where
+
+| Component | Holds | Why |
+|-----------|-------|-----|
+| **Sidecar / gateway** (Envoy, nginx, or a thin proxy next to the agent) | `issuer` key | Calls `POST /v1/identify` to mint the agent's short-lived JWT-SVID. The agent never sees the API key — only the signed token. |
+| **Resource server** (the service the agent calls) | `verifier` key (or offline JWKS) | Calls `POST /v1/validate` / `POST /v1/authorize` to check the agent's token. |
+| **Operator workstation / CI/CD** | `admin` (bootstrap) key | Tenant setup, key rotation, audit. Never deployed into a pod. |
+
+### Request flow
+
+```
+Agent ───(unsigned request)──▶  Sidecar
+                                    │
+                          (issuer key)──▶ Clay Seal Identity
+                                    │        POST /v1/identify
+                                    │◀─────── JWT-SVID (5min TTL)
+                                    │
+Sidecar ───(request + JWT)──────▶  Resource Server
+                                        │
+                              (verifier key)──▶ Clay Seal Identity
+                                        │        POST /v1/validate
+                                        │◀─────── ok / 401
+                                        │
+Resource Server ◀───(response)──────  Sidecar ◀───(response)── Agent
+```
+
+### Why this matters
+
+A tenant API key inside the agent process — even an `issuer`-only key — can be exfiltrated through prompt injection or a compromised tool. With the sidecar pattern:
+
+- The agent holds **only a short-lived, sender-constrained JWT** tied to its workload key. Compromising the agent yields a token that expires in minutes and can't be replayed from another machine.
+- The sidecar holds the long-lived key but has **no LLM context, no tools, no prompt** — it's a narrow network proxy with one job.
+- The admin key never touches a compute node that runs agent workloads.
+
+### Creating the keys
+
+See [Scoped tenant API keys in the dev guide](DEV_GUIDE.md#scoped-tenant-api-keys) for how to create `issuer` and `verifier` keys for this pattern.
