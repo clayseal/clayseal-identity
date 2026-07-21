@@ -65,7 +65,7 @@ mcp = ["mcp>=1.28.1"]
 # Full development environment: client + server + test/lint/type tooling.
 dev = [
   "clayseal-identity[server,mcp]",
-  "pytest>=8.0",
+  "pytest>=9.1.1",
   "pytest-asyncio>=1.4.0",
   "pytest-cov>=7.1.0",
   "ruff>=0.6",
