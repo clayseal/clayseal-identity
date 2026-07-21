@@ -23,6 +23,76 @@ def tool(identity = Depends(require_agent)):
     return {"agent_id": identity.agent_id, "agent_type": identity.agent_type}
 ```
 
+### Offline FastAPI middleware
+
+For lower-risk applications that need verified identity context on every
+request, wrap the existing offline verifier in a small middleware. The verifier
+checks the token signature, issuer, audience, expiration, and the presence of a
+confirmation (`cnf.jkt`) claim when `require_cnf=True`.
+
+```python
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+
+from clayseal.identity.integrations.fastapi import AgentIdentityVerifier
+
+app = FastAPI()
+
+verifier = AgentIdentityVerifier(
+    jwks=tenant_jwks,
+    issuer="clayseal.io",
+    audience="tools-api",
+    require_cnf=True,
+)
+
+PUBLIC_PATHS = {"/health"}
+
+
+@app.middleware("http")
+async def verify_agent_identity(request: Request, call_next):
+    if request.url.path in PUBLIC_PATHS:
+        return await call_next(request)
+
+    try:
+        identity = verifier(request.headers.get("Authorization", ""))
+    except HTTPException as exc:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    request.state.agent_identity = identity
+    return await call_next(request)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/tool")
+def tool(request: Request):
+    identity = request.state.agent_identity
+    return {
+        "agent_id": identity.agent_id,
+        "agent_type": identity.agent_type,
+    }
+```
+
+A missing, malformed, expired, incorrectly issued, or incorrectly targeted
+token returns `401`.
+
+> **Security boundary:** `require_cnf=True` verifies that the signed token names
+> a holder key; it does not prove that this HTTP requester possesses that key.
+> This middleware also cannot detect revocation, so someone who copies a valid
+> JWT can replay it until it expires. Treat the resulting identity as a
+> reduced-assurance identity label, not as sufficient authorization for a
+> sensitive route. Before returning protected data or performing a tool action,
+> require fresh request-bound proof-of-possession through `/v1/validate`, or use
+> `ToolGuard` (or an equivalent server-side capability check). Only then apply
+> application-specific policy, returning `403` when an authenticated caller is
+> not authorized.
+
 ## MCP clients
 
 Attach the agent's identity to an MCP HTTP transport. Three headers travel
