@@ -23,12 +23,12 @@ def tool(identity = Depends(require_agent)):
     return {"agent_id": identity.agent_id, "agent_type": identity.agent_type}
 ```
 
-### FastAPI middleware
+### Offline FastAPI middleware
 
-For applications that need to verify every protected request before routing,
-wrap the existing verifier in a small middleware. The verifier checks the
-token signature, issuer, audience, expiration, and the presence of a
-confirmation (`cnf`) claim when `require_cnf=True`.
+For lower-risk applications that need verified identity context on every
+request, wrap the existing offline verifier in a small middleware. The verifier
+checks the token signature, issuer, audience, expiration, and the presence of a
+confirmation (`cnf.jkt`) claim when `require_cnf=True`.
 
 ```python
 from fastapi import FastAPI, HTTPException, Request
@@ -62,15 +62,6 @@ async def verify_agent_identity(request: Request, call_next):
         )
 
     request.state.agent_identity = identity
-
-    # Demonstration only: replace this with your application's
-    # authorization policy.
-    if request.url.path.startswith("/admin") and identity.agent_type != "admin":
-        return JSONResponse(
-            status_code=403,
-            content={"detail": "agent is not allowed to access this resource"},
-        )
-
     return await call_next(request)
 
 
@@ -89,9 +80,18 @@ def tool(request: Request):
 ```
 
 A missing, malformed, expired, incorrectly issued, or incorrectly targeted
-token returns `401`. A valid identity that does not satisfy the application
-authorization rule returns `403`. Keep application-specific authorization
-rules separate from token verification.
+token returns `401`.
+
+> **Security boundary:** `require_cnf=True` verifies that the signed token names
+> a holder key; it does not prove that this HTTP requester possesses that key.
+> This middleware also cannot detect revocation, so someone who copies a valid
+> JWT can replay it until it expires. Treat the resulting identity as a
+> reduced-assurance identity label, not as sufficient authorization for a
+> sensitive route. Before returning protected data or performing a tool action,
+> require fresh request-bound proof-of-possession through `/v1/validate`, or use
+> `ToolGuard` (or an equivalent server-side capability check). Only then apply
+> application-specific policy, returning `403` when an authenticated caller is
+> not authorized.
 
 ## MCP clients
 
