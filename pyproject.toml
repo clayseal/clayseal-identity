@@ -61,7 +61,8 @@ server = [
 kms = ["boto3>=1.43.51"]
 # Server-side MCP authorization (clayseal.identity.integrations.mcp_server):
 # plug ClaySealTokenVerifier + ToolGuard into an official-SDK FastMCP server.
-mcp = ["mcp>=1.28.1"]
+# Pin below 2.0: mcp 2.0 removed `request_ctx` from mcp.server.lowlevel.server.
+mcp = ["mcp>=1.28.1,<2"]
 # Full development environment: client + server + test/lint/type tooling.
 dev = [
   "clayseal-identity[server,mcp]",
