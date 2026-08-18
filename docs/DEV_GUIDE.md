@@ -49,9 +49,7 @@ What this repo deliberately does **not** include:
 - Suspicious-sequence checks, such as catching multiple individually allowed actions that evade a cumulative limit. That is part of the forthcoming runtime capability layer.
 - Execution receipts, audit logs, MCP gateways, or policy proofs. That is Clay Seal Receipts, published separately as `clayseal-receipts`.
 
-If you only need “who is this agent, and can I trust the credential?”, you can stop at this repo. If you need “what did the agent do, under what scope, with verifiable proof?”, you will eventually install layers 2 and 3 as well.
-
-Known security boundaries and planned fixes are tracked in [SECURITY_BACKLOG.md](SECURITY_BACKLOG.md).
+If you only need who this agent is, and can I trust the credential, you can stop at this repo. If you need what the agent did, under what scope, with verifiable proof, install `clayseal-receipts` as well.
 
 ---
 

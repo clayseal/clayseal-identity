@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "clayseal-identity"
 version = "0.6.1"
-description = "Clay Seal layer 1 for attested agent identity and Biscuit capability tokens"
+description = "Short-lived attested identity for AI agents"
 readme = "README.md"
 license = { text = "MIT" }
 # Floor 3.11: matches the CI matrix, and biscuit-python ships no macOS wheel

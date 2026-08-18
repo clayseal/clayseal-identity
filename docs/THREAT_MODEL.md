@@ -4,11 +4,8 @@ Clay Seal Identity answers one narrow question: **which attested workload is
 acting?** It is not a full agent sandbox, policy engine, or audit system by
 itself.
 
-That boundary is intentional. Clay Seal's forthcoming runtime capability layer
-is where task-scoped mandates, leases, budgets, and suspicious-sequence checks
-belong. The receipts layer is where action decisions become auditable. The
-known gaps between identity and those upper layers are tracked in
-[SECURITY_BACKLOG.md](SECURITY_BACKLOG.md).
+That boundary is intentional. Receipts (`clayseal-receipts`) are where action
+decisions become auditable.
 
 ## Attestation Model — read this first
 
