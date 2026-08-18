@@ -64,8 +64,7 @@ backends.
 
 - **A legitimate agent doing a harmful sequence of authorized actions.** Identity
   will not catch patterns such as two `$999` payments used to avoid a `$1000`
-  review threshold. Use the forthcoming layer 2 runtime capability sandbox and
-  layer 3 receipts for stateful enforcement.
+  review threshold. Use receipts and server-side policy for stateful enforcement.
 - **Compromise of the workload private key while the credential is live.** Keep
   TTLs short and rotate workload keys.
 - **A compromised static trust-anchor private key.** For the on-prem static

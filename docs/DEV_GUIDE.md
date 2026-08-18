@@ -1,4 +1,4 @@
-# Developer guide: Clay Seal Identity (Layer 1)
+# Developer guide: Clay Seal Identity
 
 This document is written for engineers who need to **run, integrate, or extend** the identity layer of Clay Seal. It assumes you are comfortable with Python and basic PKI concepts, but not that you have read the rest of the codebase first.
 
@@ -28,44 +28,18 @@ Then read the section that matches what you are building:
 
 ## What this repository is for
 
-**Clay Seal Identity** is layer 1 of the Clay Seal stack. Its package name is
-still `clayseal-identity`, and its Python namespace is still
-`clayseal.identity`, but the product name developers and customers should see
-is Clay Seal. Its job is narrow and important: give every autonomous agent a
-**cryptographically attested identity** that downstream systems can verify
-offline.
+**Clay Seal Identity** gives every autonomous agent a cryptographically attested
+identity that downstream systems can verify offline. Package:
+`clayseal-identity`. Import: `clayseal.identity`.
 
-Concretely, this repo provides:
+This repo provides:
 
-- A Python SDK (`ClaySeal`) that mints and verifies **JWT-SVID-style credentials** (RS256-signed, short-lived, SPIFFE-shaped).
-- Ed25519 workload keys used for sender-constraining (`cnf.jkt`) and local proof-of-possession.
-- **Biscuit capability tokens** for offline, attenuatable authorization facts.
-- **Proof-of-possession** binding so a stolen bearer token cannot be replayed from another machine.
-- An optional **hosted FastAPI identity service** (`clayseal.backend`) for teams that want issuance and validation as a network endpoint rather than an in-process library.
+- A Python SDK (`ClaySeal`) that mints and verifies short-lived JWT-SVID-style credentials (RS256, SPIFFE-shaped).
+- Ed25519 workload keys for sender-constraining (`cnf.jkt`) and local proof-of-possession.
+- Biscuit capability tokens for offline, attenuatable authorization facts.
+- An optional hosted FastAPI identity service (`clayseal.backend`).
 
-What this repo deliberately does **not** include:
-
-- Dynamic capability narrowing, commit tokens, mandates, leases, or budget enforcement. That is the Clay Seal Capabilities layer (layer 2, private preview).
-- Suspicious-sequence checks, such as catching multiple individually allowed actions that evade a cumulative limit. That is part of the forthcoming runtime capability layer.
-- Execution receipts, audit logs, MCP gateways, or policy proofs. That is Clay Seal Receipts, published separately as `clayseal-receipts`.
-
-If you only need who this agent is, and can I trust the credential, you can stop at this repo. If you need what the agent did, under what scope, with verifiable proof, install `clayseal-receipts` as well.
-
----
-
-## How the three layers fit together
-
-Think of the stack as increasing specificity:
-
-| Layer | Repository | Question it answers |
-|-------|------------|---------------------|
-| L1 Identity | **this repo** | Who is acting, with what attested key? |
-| L2 Capabilities | Clay Seal Capabilities (private preview) | What are they allowed to do right now (scoped, attenuated)? |
-| L3 Receipts | Clay Seal Receipts (`clayseal-receipts`) | What did they actually do, and can a third party verify it? |
-
-Layer 1 exports facts. Layer 2 narrows them into action-scoped tokens. Layer 3 records decisions and builds tamper-evident proofs.
-
-Import convention matters: **in this repo**, always import from the identity namespace:
+It does not record what the agent did. That is [clayseal-receipts](https://github.com/clayseal/clayseal-receipts).
 
 ```python
 from clayseal.identity import ClaySeal
@@ -96,9 +70,7 @@ From a pinned tag (recommended when you need a reproducible install):
 pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"
 ```
 
-This package stands alone. No other Clay Seal layer is required. Clay Seal
-Receipts is published separately as `clayseal-receipts`; capabilities remains in
-private preview.
+This package stands alone. Receipts are published separately as `clayseal-receipts`.
 
 ### Python version
 
@@ -131,11 +103,12 @@ Design intent:
 
 ### Biscuit tokens
 
-Biscuits provide **attenuation**: a parent token can derive child tokens that carry *fewer* rights, never more. Layer 1 includes Biscuit primitives because identity and capability facts often travel together, but **dynamic scoping logic** (commit tokens, leases, mandates) lives in layer 2.
+Biscuits provide **attenuation**: a parent token can derive child tokens that carry *fewer* rights, never more.
 
-### AuthorityBinding (shared with L2/L3)
+### AuthorityBinding
 
-When this package is used with the upper Clay Seal layers, `Credential.to_binding_dict()` produces the authority facts the receipts runtime consumes (its `AuthorityBinding` type normalizes them for L2/L3). This repo itself has no dependency on those layers.
+`Credential.to_binding_dict()` produces the authority facts the receipts runtime
+can consume. This repo has no dependency on receipts.
 
 ---
 
@@ -258,12 +231,11 @@ headers = tool_headers(session)
 FastAPI services can use `AgentIdentityVerifier.dependency(...)` to protect tool
 endpoints with offline JWKS verification. See [INTEGRATIONS.md](INTEGRATIONS.md).
 
-### Sessions and downstream layers
+### Sessions and receipts
 
-After identification, hand the issued credential to layer 2 (capabilities) or
-layer 3 (receipts). A lower layer never imports a higher one, so the cross-layer
-wiring lives in those packages, not here. Partners with access should use the
-identity adapters those layers provide rather than hand-rolling claim dicts.
+After identification, hand the issued credential to receipts if you need an
+audit trail. A lower layer never imports a higher one. Use the identity adapters
+in `clayseal-receipts` instead of hand-rolling claim dicts.
 
 ### Production attestation
 
@@ -334,18 +306,12 @@ If imports fail with “cannot import name X from clayseal”, you almost always
 
 ---
 
-## Integrating with layer 2 and 3
+## Integrating with receipts
 
-Layer 2 (capabilities) and layer 3 (receipts) consume the credential this layer
-issues through their own identity adapters. You do not change layer 1 code to
-integrate, nor for OIDC, Auth0, SPIRE, or AWS STS. For receipts, install
-`clayseal-receipts[identity]` and pass a Clay Seal identity session into the
-receipts wrapper. Layer 1 remains the **native** stack when you want the full
-Clay Seal attestation model.
-
-Layer 3 accepts the same identity facts through its own adapter. Use the
-`clayseal-receipts` guide for receipt wiring, and use the capabilities guide
-only if you have access to the private-preview layer.
+Receipts consume the credential this layer issues through their own identity
+adapters. You do not change this repo to integrate OIDC, Auth0, SPIRE, or AWS
+STS. Install `clayseal-receipts[identity]` and pass a Clay Seal identity session
+into the receipts wrapper.
 
 ---
 
@@ -397,7 +363,7 @@ employee, customer, or regulated data.
 
 ## Releases and versioning
 
-This repo is tagged independently (`v0.6.0`, etc.). **Always tag identity before capabilities and receipts** because downstream `pyproject.toml` files pin this repo by git URL and tag.
+This repo is tagged independently (`v0.6.0`, etc.).
 
 Checklist for maintainers:
 
@@ -405,7 +371,7 @@ Checklist for maintainers:
 2. Add a `CHANGELOG.md` section.
 3. Run tests locally.
 4. Tag and push.
-5. Only then cut dependent layer releases.
+5. Only then cut dependent receipts releases.
 
 Partners should pin:
 
@@ -417,9 +383,7 @@ pip install "git+https://github.com/clayseal/clayseal-identity.git@v0.6.0"
 
 ## Where to go next
 
-- **Scope and commit tokens** → Clay Seal Capabilities developer guide (private preview)
-- **Receipts, audit, MCP gateway** → Clay Seal Receipts developer guide (private preview)
-- **Cross-provider identity** → Capabilities cross-layer integration guide (private preview)
+- **Receipts, audit, MCP gateway** → [clayseal-receipts](https://github.com/clayseal/clayseal-receipts)
 - **Agent identity profile** → [docs/AGENT_IDENTITY_PROFILE.md](AGENT_IDENTITY_PROFILE.md)
 - **Framework integration helpers** → [docs/INTEGRATIONS.md](INTEGRATIONS.md)
 - **Privacy and data handling** → [docs/PRIVACY.md](PRIVACY.md)
